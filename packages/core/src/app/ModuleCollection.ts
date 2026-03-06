@@ -1,6 +1,6 @@
-import { Prettify } from "../generic";
-import { Emitter } from "./Emitter";
-import { Factory, FactoryCollection, InferFactoryType } from "./Factory";
+import { Prettify } from "../generic.js";
+import { Emitter } from "./Emitter.js";
+import { Factory, FactoryCollection, InferFactoryType } from "./Factory.js";
 
 /**
  * A Application instance that manages modules and their lifecycle. Includes methods to add, remove, and access modules,

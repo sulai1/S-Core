@@ -1,6 +1,6 @@
 
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
-import { Database,  SqliteDialect } from "../../../src";
+import { Database,  SqliteDialect } from "../../../src/index.js";
 import { selectFunctionDefinitions } from "@s-core/core";
 
 const SchemaA = {

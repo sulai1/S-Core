@@ -1,4 +1,4 @@
-import { ConstructorOrCallable, RemoveNeverProps } from "../../generic";
+import { ConstructorOrCallable, RemoveNeverProps } from "../../generic.js";
 
 export type FunctionsType = Record<string, readonly unknown[]>;
 

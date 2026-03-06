@@ -1,17 +1,17 @@
-import { OpenAPIV3 } from "express-openapi-validator/dist/framework/types";
-import { DataSourceSchema } from "./DatasourceSchema";
+import type { OpenAPIV3_1  } from "openapi-types";
+import { DataSourceSchema } from "./DatasourceSchema.js";
 
 
 export function createComponents<Tables extends DataSourceSchema>(
-    tables: Record<keyof Tables, OpenAPIV3.SchemaObject>,
-    creationTables: Record<`${(keyof Tables) & string}_create`, OpenAPIV3.SchemaObject>,
-    primaryKeyTables: Record<`${(keyof Tables) & string}_pk`, OpenAPIV3.SchemaObject>,
-    partialTables: Record<`${(keyof Tables) & string}_partial`, OpenAPIV3.SchemaObject>,
-    columnName: OpenAPIV3.SchemaObject,
-    tableColumnName: OpenAPIV3.SchemaObject,
-): OpenAPIV3.ComponentsObject {
+    tables: Record<keyof Tables, OpenAPIV3_1.SchemaObject>,
+    creationTables: Record<`${(keyof Tables) & string}_create`, OpenAPIV3_1.SchemaObject>,
+    primaryKeyTables: Record<`${(keyof Tables) & string}_pk`, OpenAPIV3_1.SchemaObject>,
+    partialTables: Record<`${(keyof Tables) & string}_partial`, OpenAPIV3_1.SchemaObject>,
+    columnName: OpenAPIV3_1.SchemaObject,
+    tableColumnName: OpenAPIV3_1.SchemaObject,
+): OpenAPIV3_1.ComponentsObject {
 
-    const value: OpenAPIV3.SchemaObject = {
+    const value: OpenAPIV3_1.SchemaObject = {
         type: "object",
         properties: {
             value: {
@@ -25,7 +25,7 @@ export function createComponents<Tables extends DataSourceSchema>(
         required: ["value"],
     };
 
-    const expression: OpenAPIV3.SchemaObject = {
+    const expression: OpenAPIV3_1.SchemaObject = {
         anyOf: [
             { $ref: "#/components/schemas/value" },
             { $ref: "#/components/schemas/function" },
@@ -33,7 +33,7 @@ export function createComponents<Tables extends DataSourceSchema>(
         ],
     }
 
-    const anyFunction: OpenAPIV3.NonArraySchemaObject = {
+    const anyFunction: OpenAPIV3_1.NonArraySchemaObject = {
         type: "object",
         properties: {
             function: {
@@ -57,7 +57,7 @@ export function createComponents<Tables extends DataSourceSchema>(
         required: ["function", "params"],
     };
 
-    const findRequest: OpenAPIV3.SchemaObject = {
+    const findRequest: OpenAPIV3_1.SchemaObject = {
         type: "object",
         properties: {
             where: {
@@ -105,7 +105,7 @@ export function createComponents<Tables extends DataSourceSchema>(
         },
     }
 
-    const tableFunction: OpenAPIV3.SchemaObject = {
+    const tableFunction: OpenAPIV3_1.SchemaObject = {
         type: "object",
         properties: {
             function: {
@@ -130,7 +130,7 @@ export function createComponents<Tables extends DataSourceSchema>(
     };
 
 
-    const tableExpression: OpenAPIV3.SchemaObject = {
+    const tableExpression: OpenAPIV3_1.SchemaObject = {
         anyOf: [
             { $ref: "#/components/schemas/value" },
             { $ref: "#/components/schemas/tableFunction" },
@@ -138,7 +138,7 @@ export function createComponents<Tables extends DataSourceSchema>(
         ],
     }
 
-    const queryRequest: OpenAPIV3.SchemaObject = {
+    const queryRequest: OpenAPIV3_1.SchemaObject = {
         type: "object",
         properties: {
             where: {
@@ -188,24 +188,24 @@ export function createComponents<Tables extends DataSourceSchema>(
         },
     }
 
-    const tableSchema: OpenAPIV3.SchemaObject = {
+    const tableSchema: OpenAPIV3_1.SchemaObject = {
         anyOf: Object.keys(tables).map(tableName => ({ $ref: `#/components/schemas/${tableName}` })),
     };
 
-    const tableName: OpenAPIV3.SchemaObject = {
+    const tableName: OpenAPIV3_1.SchemaObject = {
         type: "string",
         enum: Object.keys(tables),
     }
 
-    const partial: OpenAPIV3.SchemaObject = {
+    const partial: OpenAPIV3_1.SchemaObject = {
         anyOf: Object.keys(tables).map(tableName => ({ $ref: `#/components/schemas/${tableName}_partial` })),
     }
 
-    const creation: OpenAPIV3.SchemaObject = {
+    const creation: OpenAPIV3_1.SchemaObject = {
         anyOf: Object.keys(tables).map(tableName => ({ $ref: `#/components/schemas/${tableName}_create` })),
     }
 
-    const pk: OpenAPIV3.SchemaObject = {
+    const pk: OpenAPIV3_1.SchemaObject = {
         anyOf: Object.keys(tables).map(tableName => ({ $ref: `#/components/schemas/${tableName}_pk` })),
     }
     return {

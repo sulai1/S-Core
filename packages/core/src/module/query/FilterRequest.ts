@@ -1,6 +1,6 @@
-import { FunctionCall, FunctionsType } from "../function";
-import { SelectAttributes } from "./SelectAttributes";
-import { Condition } from ".";
+import { FunctionCall, FunctionsType } from "../function/index.js";
+import { SelectAttributes } from "./SelectAttributes.js";
+import { Condition } from "./index.js";
 
 
 /**

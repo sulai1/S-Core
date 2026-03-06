@@ -1,8 +1,8 @@
 import $RefParser from "@apidevtools/json-schema-ref-parser";
-import type { OpenAPIV3 } from "express-openapi-validator/dist/framework/types";
+import type { OpenAPIV3_1 } from "openapi-types";
 import type { OperationObject, PathsObject } from "openapi-typescript";
 import { HttpRequest, HttpRequestOptions, OpenApiMethod, OpenApiModule } from "@s-core/core";
-import { Client } from "@s-core/core/src/module/Client";
+import type { Client } from "@s-core/core";
 
 /**
  * Creates an API module with the specified configuration. For each route in the configuration, 
@@ -18,13 +18,13 @@ import { Client } from "@s-core/core/src/module/Client";
  * @returns {T} - The instantiated API module with methods bound to the specified routes.
  */
 export async function createOpenApiClient<
-    Paths = OpenAPIV3.PathsObject | PathsObject,
+    Paths = OpenAPIV3_1.PathsObject | PathsObject,
     Options extends Omit<HttpRequest, "body" | "params" | "query" | "url" | "method"> = Omit<HttpRequest, "body" | "params" | "query" | "url" | "method">
 >(
-    schema: string | OpenAPIV3.DocumentV3 | OpenAPIV3.DocumentV3_1,
+    schema: string | OpenAPIV3_1.Document | OpenAPIV3_1.Document,
     client: Client,
 ): Promise<OpenApiModule<Paths, Options>> {
-    const bundledSchema = await $RefParser.bundle<OpenAPIV3.DocumentV3 | OpenAPIV3.DocumentV3_1>(schema);
+    const bundledSchema = await $RefParser.bundle<OpenAPIV3_1.Document | OpenAPIV3_1.Document>(schema);
     const res = {} as OpenApiModule<Paths, Options>;
     for (const url in bundledSchema.paths) {
         const path = bundledSchema.paths[url];

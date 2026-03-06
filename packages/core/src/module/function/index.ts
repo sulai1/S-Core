@@ -1,8 +1,8 @@
-import { FunctionDefinitions, InferFunctionTypes } from "./FunctionsType";
+import { FunctionDefinitions, InferFunctionTypes } from "./FunctionsType.js";
 
-export * from "./Expression";
-export * from "./FunctionCall";
-export * from "./FunctionsType";
+export * from "./Expression.js";
+export * from "./FunctionCall.js";
+export * from "./FunctionsType.js";
 
 
 export const mathFunctionDefinitions = {

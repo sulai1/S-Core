@@ -1,5 +1,5 @@
-import { FunctionsType, InferCreationSchema, InferPrimaryKey, InferTableSchema, SelectFunctionDefinitions, TableSchema } from "../..";
-import { FilterModule } from "./FilterModule";
+import { FunctionsType, InferCreationSchema, InferPrimaryKey, InferTableSchema, SelectFunctionDefinitions, TableSchema } from "../../index.js";
+import { FilterModule } from "./FilterModule.js";
 /**
  * Defines a module for a CRUD query.
  * This module extends the FilterModuleExtension to include create, update, and delete operations.

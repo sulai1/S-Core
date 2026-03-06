@@ -1,6 +1,6 @@
 import { vi } from "vitest";
 import {  createDatasourceSchema, DataSource, DataSourcePaths, DataSourceSchema, selectFunctionDefinitions, SelectFunctionDefinitions } from "@s-core/core";
-import { createDatasourceClient } from "../src";
+import { createDatasourceClient } from "../src/index.js";
 
 export const Tables = {
     test: {

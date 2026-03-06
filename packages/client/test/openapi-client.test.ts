@@ -1,8 +1,8 @@
 import path from "path";
 import "reflect-metadata";
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { paths } from "./test-api-permanent";
-import { createOpenApiClient } from "../src";
+import { paths } from "./test-api-permanent/index.js";
+import { createOpenApiClient } from "../src/index.js";
 import { ApiError } from "@s-core/core";
 
 export const client = {

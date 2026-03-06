@@ -1,9 +1,9 @@
-import { extendSchema, Schema } from "./Schema";
+import { extendSchema, Schema } from "./Schema.js";
 
-export * from "./BasicObject";
-export * from "./file";
-export * from "./datsource";
-export * from "./Schema";
+export * from "./BasicObject.js";
+export * from "./file/index.js";
+export * from "./datsource/index.js";
+export * from "./Schema.js";
 
 export type SafeResult<T, E extends Error = Error> = {
     success: false;

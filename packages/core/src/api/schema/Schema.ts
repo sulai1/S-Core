@@ -1,5 +1,5 @@
-import { ParseError } from "./ParseError";
-import { SafeResult } from ".";
+import { ParseError } from "./ParseError.js";
+import { SafeResult } from "./index.js";
 
 /**
  * Schema interface for data validation and parsing.

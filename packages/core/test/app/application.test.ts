@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { Application, createApplication } from "../../src";
-import { InferFactoryType } from "../../src/app/Factory";
-import { ApplicationModuleCollection } from "../../src/app/DefaultApplication";
+import { Application, createApplication } from "../../src/index.js";
+import { InferFactoryType } from "../../src/app/Factory.js";
+import { ApplicationModuleCollection } from "../../src/app/DefaultApplication.js";
 
 const t: InferFactoryType<() => { test: string }> = {
     test: "value"

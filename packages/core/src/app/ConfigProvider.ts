@@ -1,5 +1,5 @@
 import { readFile, writeFile } from "fs/promises";
-import { Application } from "./Application";
+import { Application } from "./Application.js";
 
 
 export type ConfigProvider<T extends object> = {

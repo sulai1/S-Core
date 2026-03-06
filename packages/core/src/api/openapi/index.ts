@@ -1,8 +1,8 @@
 
-export * from "./OpenApiBody";
-export * from "./OpenApiMethod";
-export * from "./OpenApiModule";
-export * from "./OpenApiPathParameter";
-export * from "./OpenApiQueryParameter";
-export * from "./OpenApiResult";
+export * from "./OpenApiBody.js";
+export * from "./OpenApiMethod.js";
+export * from "./OpenApiModule.js";
+export * from "./OpenApiPathParameter.js";
+export * from "./OpenApiQueryParameter.js";
+export * from "./OpenApiResult.js";
 

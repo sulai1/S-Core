@@ -1,13 +1,13 @@
+import { existsSync } from 'fs';
+import { Readable } from 'stream';
 import $RefParser from '@apidevtools/json-schema-ref-parser';
 import { ApiError, OpenApiModule } from '@s-core/core';
-import Ajv from 'ajv';
+import {Ajv} from 'ajv';
 import express from 'express';
-import { OpenAPIV3 } from 'express-openapi-validator/dist/framework/types';
-import { existsSync } from 'fs';
+import type { OpenAPIV3, OpenAPIV3_1 } from 'openapi-types';
 import multer from 'multer';
-import { Readable } from 'stream';
-import { Handler } from '.';
-import { OpenapiPaths, Router } from './Router';
+import { OpenapiPaths, Router } from './Router.js';
+import { Handler } from './index.js';
 
 // Type guard for Node.js Readable stream
 function isReadableStream(val: unknown): val is Readable {
@@ -182,7 +182,7 @@ export class ExpressRouter<
      */
     async add<M extends OpenapiPaths<M>>(
         path: string,
-        schema: string | OpenAPIV3.DocumentV3_1 | OpenAPIV3.DocumentV3,
+        schema: string | OpenAPIV3.Document | OpenAPIV3_1.Document,
         module: OpenApiModule<M, Req>,
         options?: {
             validateRequests?: boolean;
@@ -194,12 +194,12 @@ export class ExpressRouter<
             throw new Error(`Schema file not found: ${schema}`);
         }
         const ajv = new Ajv({ allErrors: true, strict: false, coerceTypes: true });
-        let api: OpenAPIV3.DocumentV3_1 | OpenAPIV3.DocumentV3;
+        let api: OpenAPIV3_1.Document | OpenAPIV3.Document;
         if (typeof schema === "string") {
-            api = await $RefParser.bundle<OpenAPIV3.DocumentV3_1 | OpenAPIV3.DocumentV3>(schema);
+            api = await $RefParser.bundle<OpenAPIV3_1.Document | OpenAPIV3.Document>(schema);
             ajv.addSchema(api, "root");
         } else {
-            api = await $RefParser.bundle<OpenAPIV3.DocumentV3_1 | OpenAPIV3.DocumentV3>(schema);
+            api = await $RefParser.bundle<OpenAPIV3_1.Document | OpenAPIV3.Document>(schema);
             ajv.addSchema(api, "root");
         }
 

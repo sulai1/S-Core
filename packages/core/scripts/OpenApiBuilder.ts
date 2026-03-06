@@ -1,13 +1,14 @@
+import RefParser from '@apidevtools/json-schema-ref-parser';
 import { mkdirSync, writeFileSync } from 'fs';
 import { writeFile } from 'fs/promises';
+import { OpenAPIV3_1 } from 'openapi-types';
+import openapiTS, { astToString, OpenAPI3 } from 'openapi-typescript';
 import path from 'path';
-import { fileURLToPath, pathToFileURL } from 'url';
-import  openapiTS, { astToString, OpenAPI3 } from 'openapi-typescript';
-import RefParser from '@apidevtools/json-schema-ref-parser';
-import { ApiBuilder  } from '../src';
-import { BaseError } from '../src/BaseError';
-import { OpenAPIV3 } from '../src/api/schema';
 import { argv } from 'process';
+import { fileURLToPath, pathToFileURL } from 'url';
+import { BaseError } from '../src/BaseError.js';
+import { OpenAPIV3 } from '../src/api/schema/index.js';
+import { ApiBuilder } from '../src/index.js';
 
 
 export class OpenApiBuilder implements ApiBuilder {
@@ -18,7 +19,7 @@ export class OpenApiBuilder implements ApiBuilder {
         await this.createTypesFromSchema(localSchemaFile, apiDir);
     }
 
-    async createTypesFromSchema(schema: string | OpenAPIV3.DocumentV3 | OpenAPIV3.DocumentV3_1,apiDir: string): Promise<void> {
+    async createTypesFromSchema(schema: string | OpenAPIV3.Document| OpenAPIV3_1.Document,apiDir: string): Promise<void> {
         try {
             if (typeof schema === 'string') {
                 const url = schema.startsWith('http') ? schema

@@ -1,8 +1,8 @@
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 import supertest from "supertest";
 import { describe, expect, test, vi } from "vitest";
-import { ExpressServer } from "../../src/server/ExpressServer";
-import { createServer } from "../../src";
+import { ExpressServer } from "../../src/server/ExpressServer.js";
+import { createServer } from "../../src/index.js";
 
 const server = new ExpressServer();
 const app = server.app;

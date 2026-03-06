@@ -1,4 +1,4 @@
-export * from "./DatasourceSchema";
-export * from "./TableSchema";
-export * from "./DataSourcePaths";
-export type { OpenAPIV3 } from "express-openapi-validator/dist/framework/types";
+export * from "./DatasourceSchema.js";
+export * from "./TableSchema.js";
+export * from "./DataSourcePaths.js";
+export type { OpenAPIV3 } from "openapi-types";

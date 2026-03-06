@@ -1,6 +1,6 @@
-import { Condition, FilterRequest, FilterRequestNormalized, FunctionsType, Repository, SelectAttributes, SelectResult } from "..";
-import { DataSourceSchema, InferCreationSchema, InferPrimaryKey, InferTableSchema, TableInstanceTypes } from "../../api/schema/datsource";
-import { Join } from "../../generic";
+import { Condition, FilterRequest, FilterRequestNormalized, FunctionsType, Repository, SelectAttributes, SelectResult } from "../index.js";
+import { DataSourceSchema, InferCreationSchema, InferPrimaryKey, InferTableSchema, TableInstanceTypes } from "../../api/schema/datsource/index.js";
+import { Join } from "../../generic.js";
 
 export type DataSource<
     Tables extends DataSourceSchema = {},

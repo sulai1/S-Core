@@ -1,6 +1,6 @@
 
 import { describe, test } from 'vitest';
-import { FilterModule, SelectFunctionDefinitions } from '../../src';
+import { FilterModule, SelectFunctionDefinitions } from '../../src/index.js';
 
 export type T = { a: string, b: number, c: number[], bool: boolean }
 

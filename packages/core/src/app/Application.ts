@@ -1,5 +1,5 @@
-import { FactoryCollection } from "./Factory";
-import { ModuleProvider } from "./ModuleCollection";
+import { FactoryCollection } from "./Factory.js";
+import { ModuleProvider } from "./ModuleCollection.js";
 ;
 
 export type Application<Collection extends FactoryCollection = any> = ModuleProvider<Collection> & {

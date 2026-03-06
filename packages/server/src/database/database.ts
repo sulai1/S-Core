@@ -1,7 +1,7 @@
 import { DataSource, DefaultNamingStrategy, EntitySchema, QueryBuilder, QueryRunner } from "typeorm";
 import { Condition, DataSource as DS, DataSourceSchema, FilterRequest, FunctionDefinitions, InferCreationSchema, InferFunctionTypes, Join, normalizeFilterRequest, Repository, SelectAttributes, SelectResult, TableCreationTypes, TableInstanceTypes, TablePrimaryKeyTypes, TableSchema } from "@s-core/core";
-import { SQLDialect } from "./SQLDialect";
-import { SQLQueryBuilder } from "./SQLQueryBuilder";
+import { SQLDialect } from "./SQLDialect.js";
+import { SQLQueryBuilder } from "./SQLQueryBuilder.js";
 
 type DatabaseOptions<Tables, Functions extends FunctionDefinitions> = {
     host?: string;

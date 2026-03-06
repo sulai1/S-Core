@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, test } from "vitest";
-import { DefaultConfigProvider } from "../../src/app/ConfigProvider";
+import { DefaultConfigProvider } from "../../src/app/ConfigProvider.js";
 import fs from "fs/promises";
 import path from "path";
 

@@ -3,7 +3,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { describe, expect, test, vi } from "vitest";
-import { extendFilterModule } from "../../src";
+import { extendFilterModule } from "../../src/index.js";
 
 type T = { a: number; b: number; name: string; bool: boolean };
 const find = vi.fn();

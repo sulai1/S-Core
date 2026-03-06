@@ -4,7 +4,7 @@
   "description": "workspace for packages and webapps",
   "license": "ISC",
   "author": "Sascha Wernegger",
-  "type": "commonjs",
+  "type": "module",
   "main": "index.js",
   "scripts": {
     "test": "vitest",

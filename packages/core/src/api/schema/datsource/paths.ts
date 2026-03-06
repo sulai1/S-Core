@@ -1,4 +1,4 @@
-import type { OpenAPIV3 } from "express-openapi-validator/dist/framework/types";
+import type { OpenAPIV3_1 } from "openapi-types";
 
 
 const get = {
@@ -35,7 +35,7 @@ const get = {
             },
         },
     }
-} as const satisfies OpenAPIV3.PathItemObject;
+} as const satisfies OpenAPIV3_1.PathItemObject;
 const insert = {
     post: {
         summary: "Insert records",
@@ -78,7 +78,7 @@ const insert = {
             },
         },
     },
-} as const satisfies OpenAPIV3.PathItemObject;
+} as const satisfies OpenAPIV3_1.PathItemObject;
 const update = {
     post: {
         summary: "Update records",
@@ -129,7 +129,7 @@ const update = {
             },
         },
     },
-} as const satisfies OpenAPIV3.PathItemObject;
+} as const satisfies OpenAPIV3_1.PathItemObject;
 const del = {
     post: {
         summary: "Delete records",
@@ -172,7 +172,7 @@ const del = {
             },
         },
     },
-} as const satisfies OpenAPIV3.PathItemObject;
+} as const satisfies OpenAPIV3_1.PathItemObject;
 const find = {
     post: {
         summary: "Find records",
@@ -212,8 +212,8 @@ const find = {
             },
         },
     },
-} as const satisfies OpenAPIV3.PathItemObject;
-const select: OpenAPIV3.PathItemObject = {
+} as const satisfies OpenAPIV3_1.PathItemObject;
+const select: OpenAPIV3_1.PathItemObject = {
     post: {
         summary: "Select with joins",
         requestBody: {
@@ -255,7 +255,7 @@ const select: OpenAPIV3.PathItemObject = {
             },
         },
     },
-} as const satisfies OpenAPIV3.PathItemObject;
+} as const satisfies OpenAPIV3_1.PathItemObject;
 
 export const paths = {
     "/get": get,
@@ -264,4 +264,4 @@ export const paths = {
     "/delete": del,
     "/find": find,
     "/select": select,
-} as const satisfies Record<string, OpenAPIV3.PathItemObject>;
+} as const satisfies Record<string, OpenAPIV3_1.PathItemObject>;

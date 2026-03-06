@@ -5,8 +5,8 @@ import { AddressInfo } from "net";
 import os from "os";
 import path from "path";
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
-import { ExpressServer } from "../../src/server/ExpressServer";
-import { createFileServerModule } from "../../src/server/createFileServerModule";
+import { ExpressServer } from "../../src/server/ExpressServer.js";
+import { createFileServerModule } from "../../src/server/createFileServerModule.js";
 import { createFileClient } from "@s-core/client";
 
 type Fetch = (input: string, init?: unknown) => Promise<{

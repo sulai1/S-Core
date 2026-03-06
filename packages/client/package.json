@@ -27,6 +27,7 @@
   "dependencies": {
     "@apidevtools/json-schema-ref-parser": "^15.3.1",
     "@s-core/core": "0.0.1",
-    "axios": "^1.13.6"
+    "axios": "^1.13.6",
+    "openapi-types": "^12.1.3"
   }
 }

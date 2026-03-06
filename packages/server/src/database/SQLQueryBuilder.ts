@@ -1,6 +1,6 @@
 import { Condition, Expression, FilterRequest, FilterRequestNormalized, FunctionsType, SelectAttributes } from "@s-core/core";
-import { QueryBuilder } from "./QueryBuilder";
-import { SQLDialect } from "./SQLDialect";
+import { QueryBuilder } from "./QueryBuilder.js";
+import { SQLDialect } from "./SQLDialect.js";
 
 export class SQLQueryBuilder<FuncDefs extends FunctionsType> implements QueryBuilder<FuncDefs> {
 

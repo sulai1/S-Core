@@ -1,6 +1,6 @@
 import { Repository, SelectFunctionDefinitions, selectFunctionDefinitions, TableSchema } from "@s-core/core";
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, test } from "vitest";
-import { Database, PostgreDialect } from "../../../src/database/";
+import { Database, PostgreDialect } from "../../../src/database/index.js";
 
 const CrudModelSchema = {
     name: "CRUDModel",

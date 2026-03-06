@@ -1,11 +1,11 @@
 import axios from "axios";
-import type { OpenAPIV3 } from "express-openapi-validator/dist/framework/types";
+import type { OpenAPIV3 } from "openapi-types";
 import { DataSourceSchema, InferCreationSchema, InferPrimaryKey, InferTableSchema } from "@s-core/core";
 import { Condition, DataSource, FunctionDefinitions, InferFunctionTypes, Repository, selectFunctionDefinitions } from "@s-core/core";
-import { Client } from "@s-core/core/src/module/Client";
+import type { Client } from "@s-core/core";
 
 export * from "@s-core/core";
-export * from "./createFileClient";
+export * from "./createFileClient.js";
 /**
  * Creates a Repository module for performing CRUD operations.
  * @template Tables - The type of the main object.
@@ -26,7 +26,7 @@ export function createDatasourceClient<
     options: {
         schema?: Tables,
         functionDefinitions?: F;
-        schemaPath?: string | OpenAPIV3.DocumentV3 | OpenAPIV3.DocumentV3_1;
+        schemaPath?: string | OpenAPIV3.Document ;
         client?: Client;
     } = {}
 ): DataSource<Tables, InferFunctionTypes<F>> {
@@ -103,5 +103,5 @@ export function createDatasourceClient<
     };
 }
 
-export * from "./OpenApiClient";
+export * from "./OpenApiClient.js";
 

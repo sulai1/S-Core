@@ -1,8 +1,8 @@
-import { Application } from "./Application";
-import { ConfigProvider, DefaultConfigProvider } from "./ConfigProvider";
-import { DefaultEmitter, Listener } from "./Emitter";
-import { Factory, FactoryCollection, InferFactoryCollectionTypes, InferFactoryType } from "./Factory";
-import { AddModule, ModuleCollection, ModuleCollectionEvent, RemoveModule } from "./ModuleCollection";
+import { Application } from "./Application.js";
+import { ConfigProvider, DefaultConfigProvider } from "./ConfigProvider.js";
+import { DefaultEmitter, Listener } from "./Emitter.js";
+import { Factory, FactoryCollection, InferFactoryCollectionTypes, InferFactoryType } from "./Factory.js";
+import { AddModule, ModuleCollection, ModuleCollectionEvent, RemoveModule } from "./ModuleCollection.js";
 
 type AppConfig<T extends Application> = T extends Application<infer M> ? {
     [K in keyof M]: M[K] extends (...args: any[]) => any ? Parameters<M[K]>[1] : never;

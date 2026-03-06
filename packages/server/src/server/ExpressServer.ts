@@ -1,6 +1,6 @@
 import express, { Application, Request, Response } from 'express';
-import { ExpressRouter } from '.';
-import { Server } from '.';
+import { ExpressRouter } from './ExpressRouter.js';
+import { Server } from './index.js';
 
 /**
  * Express server implementation.

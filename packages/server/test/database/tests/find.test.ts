@@ -1,7 +1,7 @@
 import { BaseError, selectFunctionDefinitions } from "@s-core/core";
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
-import { Database, SqliteDialect } from "../../../src";
-import { TestModelSchema, testRows, tests } from "../params/find.params";
+import { Database, SqliteDialect } from "../../../src/index.js";
+import { TestModelSchema, testRows, tests } from "../params/find.params.js";
 
 
 const db = new Database({

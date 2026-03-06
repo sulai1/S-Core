@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { describe, test, vi } from "vitest";
-import { Repository, SelectFunctionDefinitions, TableSchema } from "../../src";
+import { Repository, SelectFunctionDefinitions, TableSchema } from "../../src/index.js";
 
 const T = {
     name: "test",

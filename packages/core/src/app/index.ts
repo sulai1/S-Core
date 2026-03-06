@@ -1,9 +1,9 @@
-import { Application } from "./Application";
-import { ApplicationModuleCollection } from "./DefaultApplication";
+import { Application } from "./Application.js";
+import { ApplicationModuleCollection } from "./DefaultApplication.js";
 
-export * from "./Application";
-export * from "./ConfigProvider";
-export * from "./Version";
+export * from "./Application.js";
+export * from "./ConfigProvider.js";
+export * from "./Version.js";
 
 // Factory function for creating application
 export function createApplication(app?: Partial<Application<{}>>): ApplicationModuleCollection<{}> {

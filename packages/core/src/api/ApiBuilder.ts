@@ -1,4 +1,5 @@
-import { OpenAPIV3 } from "./schema";
+import { OpenAPIV3_1 } from "openapi-types";
+import { OpenAPIV3 } from "./schema/index.js";
 
 /**
  * responsible for generating TypeScript types from a schema.
@@ -22,7 +23,7 @@ export type ApiBuilder = {
      */
     createTypesFromSchema(
         apiDir: string,
-        schemaUrl: string | OpenAPIV3.DocumentV3 | OpenAPIV3.DocumentV3_1
+        schemaUrl: string | OpenAPIV3.Document | OpenAPIV3_1.Document
     ): Promise<void>;
 
 

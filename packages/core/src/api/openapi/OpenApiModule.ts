@@ -1,4 +1,4 @@
-import { OpenApiMethod } from "./OpenApiMethod";
+import { OpenApiMethod } from "./OpenApiMethod.js";
 
 /**
  * A OpenApiModule provides a implementation for every method of every path defined in a OpenAPI schema

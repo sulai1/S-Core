@@ -1,6 +1,6 @@
 import { Condition, FunctionCall, SelectAttributes, SelectFunctionDefinitions} from "@s-core/core";
 import { describe, expect, test } from "vitest";
-import { SqliteDialect, SQLQueryBuilder } from "../../../src";
+import { SqliteDialect, SQLQueryBuilder } from "../../../src/index.js";
 
 const dialect = new SqliteDialect()
 const builder = new SQLQueryBuilder<SelectFunctionDefinitions>(dialect);

@@ -1,5 +1,5 @@
 import { describe, expect, it, test, vi } from "vitest";
-import { observe, reactive, reactiveCompare, unobserve } from "../../src/app/Reactive";
+import { observe, reactive, reactiveCompare, unobserve } from "../../src/app/Reactive.js";
 
 describe("Reactive", () => {
     test("should create a reactive object and observe changes", () => {

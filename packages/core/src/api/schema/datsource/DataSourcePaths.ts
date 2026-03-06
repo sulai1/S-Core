@@ -1,4 +1,4 @@
-import { DataSource } from "../../../module";
+import { DataSource } from "../../../module/index.js";
 
 export type DataSourcePaths<T extends DataSource<any, any>> = {
     "/get": Get<T>;

@@ -1,4 +1,4 @@
-import { ContentType } from "./ContentType";
+import { ContentType } from "./ContentType.js";
 
 /**
  * options for an HTTP request

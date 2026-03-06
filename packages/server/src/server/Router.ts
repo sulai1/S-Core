@@ -1,6 +1,6 @@
 import { HttpRequest, HttpResponseBuilder, OpenApiModule } from '@s-core/core';
-import { OpenAPIV3 } from 'express-openapi-validator/dist/framework/types';
-import { Handler } from '.';
+import type { OpenAPIV3, OpenAPIV3_1 } from 'openapi-types';
+import { Handler } from './index.js';
 
 type HttpMethod = 'get' | 'post' | 'put' | 'patch' | 'delete' | 'head' | 'options';
 
@@ -45,7 +45,7 @@ export interface Router<
         M extends OpenapiPaths<M>,
     >(
         path: string,
-        schema: string | OpenAPIV3.DocumentV3_1 | OpenAPIV3.DocumentV3,
+        schema: string | OpenAPIV3.Document| OpenAPIV3_1.Document,
         module: OpenApiModule<M, Req>,
         options?: {
             validateRequests?: boolean;

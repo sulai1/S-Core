@@ -1,5 +1,5 @@
 import { describe, expect, test, beforeEach } from "vitest";
-import { clientDatasource, datasource, client } from "./common";
+import { clientDatasource, datasource, client } from "./common.js";
 
 
 describe("Datasource Client - Schema Conformance", () => {

@@ -1,9 +1,9 @@
-export * from "./ApiBuilder";
-export * from "./ApiError";
-export * from "./ContentType";
-export * from "./HttpRequest";
-export * from "./HttpResponse";
-export * from "./HttpMethod";
+export * from "./ApiBuilder.js";
+export * from "./ApiError.js";
+export * from "./ContentType.js";
+export * from "./HttpRequest.js";
+export * from "./HttpResponse.js";
+export * from "./HttpMethod.js";
 
-export * from "./openapi";
-export * from "./schema";
+export * from "./openapi/index.js";
+export * from "./schema/index.js";

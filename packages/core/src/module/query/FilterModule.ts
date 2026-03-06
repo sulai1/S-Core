@@ -1,8 +1,8 @@
 
-import { Condition, FunctionsType, SelectFunctionDefinitions } from "..";
-import { FilterRequest } from "./FilterRequest";
-import { SelectAttributes } from "./SelectAttributes";
-import { SelectResult } from "./SelectResult";
+import { Condition, FunctionsType, SelectFunctionDefinitions } from "../index.js";
+import { FilterRequest } from "./FilterRequest.js";
+import { SelectAttributes } from "./SelectAttributes.js";
+import { SelectResult } from "./SelectResult.js";
 
 /**
  * Defines a module for a filtering query. Allows for finding records based on conditions 

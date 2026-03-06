@@ -1,7 +1,7 @@
 import { describe, test } from "vitest";
-import { OpenApiBody, OpenApiMethod, OpenApiPathParameter, OpenApiQueryParameter } from "../../src";
-import { OpenApiModule } from "../../src/api/openapi/OpenApiModule";
-import { paths } from "./test-api-permanent";
+import { OpenApiBody, OpenApiMethod, OpenApiPathParameter, OpenApiQueryParameter } from "../../src/index.js";
+import { OpenApiModule } from "../../src/api/openapi/OpenApiModule.js";
+import { paths } from "./test-api-permanent/index.js";
 
 const module: OpenApiModule<paths, {}> = {
     "/pathWithEverything": {

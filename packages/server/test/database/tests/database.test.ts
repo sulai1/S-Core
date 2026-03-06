@@ -1,8 +1,8 @@
 import 'reflect-metadata';
 import { EntitySchemaOptions } from 'typeorm';
 import { afterAll, beforeAll, describe, expect, test } from 'vitest';
-import { Database } from '../../../src/database';
-import { SqliteDialect } from '../../../src/database/SqliteDialect';
+import { Database } from '../../../src/database/index.js';
+import { SqliteDialect } from '../../../src/database/SqliteDialect.js';
 import { selectFunctionDefinitions } from '@s-core/core';
 
 

@@ -1,7 +1,7 @@
 import fs, { existsSync, mkdirSync } from "fs";
 import * as path from "path";
 import { afterEach, beforeAll, beforeEach, describe, expect, test } from "vitest";
-import { OpenApiBuilder } from "../../scripts";
+import { OpenApiBuilder } from "../../scripts/index.js";
 
 const openApiUrl = "https://raw.githubusercontent.com/NginxProxyManager/nginx-proxy-manager/develop/backend/schema/swagger.json";
 const testDir = path.resolve(__dirname, "test-api");
@@ -52,7 +52,7 @@ describe("OpenAPI Type Builder", () => {
             info: {
                 title: "Test API",
                 version: "1.0.0",
-                summary: "A test API schema",
+                description: "A test API schema",
             },
             paths: {
                 test: {

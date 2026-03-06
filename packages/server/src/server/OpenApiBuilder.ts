@@ -1,10 +1,11 @@
-import RefParser from '@apidevtools/json-schema-ref-parser';
-import { ApiBuilder, BaseError, OpenAPIV3 } from '@s-core/core';
+import path from 'path';
+import { pathToFileURL } from 'url';
 import { mkdirSync, writeFileSync } from 'fs';
 import { writeFile } from 'fs/promises';
 import { astToString, OpenAPI3 } from 'openapi-typescript';
-import path from 'path';
-import { pathToFileURL } from 'url';
+import { OpenAPIV3_1 } from 'openapi-types';
+import { ApiBuilder, BaseError } from '@s-core/core';
+import RefParser from '@apidevtools/json-schema-ref-parser';
 
 let openapiTS: typeof import('openapi-typescript').default;
 async function loadOpenapiTS() {
@@ -32,7 +33,7 @@ class OpenApiBuilder implements ApiBuilder {
         await this.createTypesFromSchema(apiDir, localSchemaFile);
     }
 
-    async createTypesFromSchema(apiDir: string, schema: string | OpenAPIV3.DocumentV3 | OpenAPIV3.DocumentV3_1): Promise<void> {
+    async createTypesFromSchema(apiDir: string, schema: string | OpenAPIV3_1.Document | OpenAPIV3_1.Document): Promise<void> {
         if (!openapiTS) {
             await loadOpenapiTS();
         }

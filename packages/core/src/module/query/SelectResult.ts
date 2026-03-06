@@ -1,5 +1,5 @@
-import { FunctionCall, FunctionReturnType, FunctionsType } from "../function";
-import { SelectAttributes } from "./SelectAttributes";
+import { FunctionCall, FunctionReturnType, FunctionsType } from "../function/index.js";
+import { SelectAttributes } from "./SelectAttributes.js";
 
 /**
  * Infers the result type of a select query based on the selected attributes, renamed attributes, and function definitions.

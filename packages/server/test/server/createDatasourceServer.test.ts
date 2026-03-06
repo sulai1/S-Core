@@ -1,6 +1,6 @@
 import { DataSource, DataSourceSchema, SelectFunctionDefinitions } from "@s-core/core";
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { createDatasourceServer } from "../../src/server/createDatasourceServer";
+import { createDatasourceServer } from "../../src/server/createDatasourceServer.js";
 
 const Tables = {
     test: {

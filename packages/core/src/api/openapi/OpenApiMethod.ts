@@ -1,8 +1,8 @@
 import type { Readable } from "node:stream";
-import { OpenApiBody } from "./OpenApiBody";
-import { OpenApiPathParameter } from "./OpenApiPathParameter";
-import { OpenApiQueryParameter } from "./OpenApiQueryParameter";
-import { OpenApiResult } from "./OpenApiResult";
+import { OpenApiBody } from "./OpenApiBody.js";
+import { OpenApiPathParameter } from "./OpenApiPathParameter.js";
+import { OpenApiQueryParameter } from "./OpenApiQueryParameter.js";
+import { OpenApiResult } from "./OpenApiResult.js";
 
 type OptionalResult<T> = T extends never
     ? Promise<void>

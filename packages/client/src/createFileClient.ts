@@ -1,6 +1,6 @@
 import { FileUploadResult, HttpRequestOptions } from "@s-core/core";
 import axios from "axios";
-import { Client } from "@s-core/core/src/module/Client";
+import type { Client } from "@s-core/core";
 
 export type FileClientOptions = {
     client?: Client;

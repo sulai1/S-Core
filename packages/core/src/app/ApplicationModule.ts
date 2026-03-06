@@ -1,2 +1,2 @@
-import { FactoryCollection, Factory, InferFactoryType } from "./Factory";
+import { FactoryCollection, Factory, InferFactoryType } from "./Factory.js";
 

@@ -1,5 +1,5 @@
-import { BaseError } from "../../BaseError";
-import { Schema } from "./Schema";
+import { BaseError } from "../../BaseError.js";
+import { Schema } from "./Schema.js";
 
 /**
  * Custom error class for schema parsing errors.

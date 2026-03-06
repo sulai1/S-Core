@@ -1,6 +1,6 @@
 import { DataSourceSchema } from "@s-core/core";
-import { SQLDialect } from "./SQLDialect";
-import { isInfixFunction } from "./SqliteDialect";
+import { SQLDialect } from "./SQLDialect.js";
+import { isInfixFunction } from "./SqliteDialect.js";
 
 
 export class PostgreDialect implements SQLDialect {

@@ -1,5 +1,5 @@
 import { describe, expect, test, vi } from "vitest";
-import { DefaultEmitter } from "../../src/app/Emitter";
+import { DefaultEmitter } from "../../src/app/Emitter.js";
 
 describe("Emitter", () => {
     test("should check for event listener existence", async () => {

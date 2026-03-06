@@ -1,5 +1,5 @@
 import { DataSourceSchema } from "@s-core/core";
-import { SQLDialect } from "./SQLDialect";
+import { SQLDialect } from "./SQLDialect.js";
 
 export function isInfixFunction(name: string) {
     return ["+", "-", "*", "/", "||", "=", "<", ">", "<=", ">=", "!=", "~", "like", "and", "or"].includes(name);

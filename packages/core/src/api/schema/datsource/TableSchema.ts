@@ -1,4 +1,4 @@
-import { AnyCallable, ConstructorOrCallable } from "../../../generic";
+import { AnyCallable, ConstructorOrCallable } from "../../../generic.js";
 
 export type TableSchema<T extends object = Record<string, unknown>> = {
     name: string;

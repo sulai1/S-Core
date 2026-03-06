@@ -1,12 +1,12 @@
 import { describe, test } from "vitest";
 import { selectFunctionDefinitions } from "@s-core/core";
-import { Database, PostgreDialect } from "../../../src/database";
+import { Database, PostgreDialect } from "../../../src/database/index.js";
 
 describe('connect', () => {
     test('should connect to the database', async () => {
         const db = new Database({
             host: process.env.DB_HOST || "localhost",
-            database: process.env.DB_NAME || "talktogether",
+            database: "talktogether",
             user: process.env.DB_USER || "postgres",
             password: process.env.DB_PASSWORD || undefined,
             dialect: new PostgreDialect(),

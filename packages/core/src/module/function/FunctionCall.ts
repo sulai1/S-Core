@@ -1,5 +1,5 @@
-import { Expression } from "./Expression";
-import { FunctionParams, FunctionReturnType, FunctionsReturning, FunctionsType } from "./FunctionsType";
+import { Expression } from "./Expression.js";
+import { FunctionParams, FunctionReturnType, FunctionsReturning, FunctionsType } from "./FunctionsType.js";
 
 export type FunctionCall<
     ParamType = unknown,

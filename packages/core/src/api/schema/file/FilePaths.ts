@@ -1,4 +1,4 @@
-import { OpenAPIV3 } from "../..";
+import { OpenAPIV3_1 } from "openapi-types";
 
 export type FileUploadResult = {
     filename?: string;
@@ -120,7 +120,7 @@ export type FilePaths<Path extends string> =
         trace?: never;
     }>;
 
-export function createFileSchema<Path extends string>(path: Path): OpenAPIV3.DocumentV3_1 {
+export function createFileSchema<Path extends string>(path: Path): OpenAPIV3_1.Document {
     return {
         openapi: "3.1.0",
         info: {
@@ -202,5 +202,5 @@ export function createFileSchema<Path extends string>(path: Path): OpenAPIV3.Doc
         },
         components: {},
         webhooks: {}
-    } satisfies OpenAPIV3.DocumentV3_1;
+    } satisfies OpenAPIV3_1.Document;
 } 

@@ -1,6 +1,6 @@
-import { StringKeysOfType } from "../../generic";
-import { FunctionCall } from "./FunctionCall";
-import { FunctionsType } from "./FunctionsType";
+import { StringKeysOfType } from "../../generic.js";
+import { FunctionCall } from "./FunctionCall.js";
+import { FunctionsType } from "./FunctionsType.js";
 
 export type Expression<
     ParamType = unknown,

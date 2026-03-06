@@ -1,7 +1,7 @@
 import { mkdirSync } from "fs";
 import { readdir, readFile } from "fs/promises";
 import path from "path";
-import { Database } from "./database";
+import { Database } from "./database.js";
 
 export class Migration {
     name!: string;

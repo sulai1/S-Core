@@ -1,11 +1,11 @@
 import { Request, Response } from 'express';
 import { ApiError, HttpRequest, HttpResponseBuilder } from '@s-core/core';
-import { ExpressServer } from './ExpressServer';
-import { Router } from './Router';
+import { ExpressServer } from './ExpressServer.js';
+import { Router } from './Router.js';
 
-export * from './createDatasourceServer';
-export * from './createFileServerModule';
-export * from './OpenApiBuilder';
+export * from './createDatasourceServer.js';
+export * from './createFileServerModule.js';
+export * from './OpenApiBuilder.js';
 
 export const contentType = 'Content-Type';
 export const defaultContentType = 'application/json';

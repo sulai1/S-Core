@@ -17,8 +17,7 @@
     "src/**/*.ts",
     "test/**/*.ts",
     "src/api/openapi/**/*.ts",
-    "test/buildTypes.test.ts",
-    "../core/src/module/Client.ts"
+    "test/buildTypes.test.ts"
   ],
   "exclude": [
     "node_modules",

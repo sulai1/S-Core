@@ -5,7 +5,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { describe, test } from "vitest";
-import { FilterModule, SelectFunctionDefinitions } from "../../src";
+import { FilterModule, SelectFunctionDefinitions } from "../../src/index.js";
 
 type T = { a: number; b: number; name: string; bool: boolean };
 

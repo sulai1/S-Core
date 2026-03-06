@@ -1,4 +1,4 @@
-import { ContentType, Schema } from "..";
+import { ContentType, Schema } from "../index.js";
 
 /**
  * Represents the allowed HTTP methods.

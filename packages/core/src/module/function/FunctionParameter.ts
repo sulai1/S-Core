@@ -1,5 +1,5 @@
-import { StringKeysOfType } from "../../generic";
-import { FunctionDefinitionParams } from "./FunctionDefinition";
+import { StringKeysOfType } from "../../generic.js";
+import { FunctionDefinitionParams } from "./FunctionDefinition.js";
 
 type Last<T> = T extends [...infer _, infer L] ? L : never;
 

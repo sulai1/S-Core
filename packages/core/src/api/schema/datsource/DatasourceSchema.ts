@@ -1,7 +1,7 @@
-import type { OpenAPIV3 } from "express-openapi-validator/dist/framework/types";
-import { InferCreationSchema, InferPrimaryKey, InferTableSchema, TableSchema } from "./TableSchema";
-import { createComponents } from "./components";
-import { paths } from "./paths";
+import type { OpenAPIV3, OpenAPIV3_1 } from "openapi-types";
+import { InferCreationSchema, InferPrimaryKey, InferTableSchema, TableSchema } from "./TableSchema.js";
+import { createComponents } from "./components.js";
+import { paths } from "./paths.js";
 
 
 export type DataSourceSchema = {
@@ -61,7 +61,7 @@ export function schemaReduce<Tables extends DataSourceSchema>(
     return tables;
 }
 
-export function createDatasourceSchema<Tables extends DataSourceSchema>(url: string, t: Tables): OpenAPIV3.DocumentV3_1 {
+export function createDatasourceSchema<Tables extends DataSourceSchema>(url: string, t: Tables): OpenAPIV3_1.Document {
     const tables = schemaReduce(t);
     const partials = schemaReduce(t, {
         transform: (_, __, schema) => {
@@ -116,12 +116,12 @@ export function createDatasourceSchema<Tables extends DataSourceSchema>(url: str
         enum: Object.entries(t).flatMap(([tableName, table]) => Object.keys(table.columns).map(columnName => `${tableName}.${columnName}`)),
     };
 
-    const schema: OpenAPIV3.DocumentV3_1 = {
+    const schema: OpenAPIV3_1.Document = {
         openapi: "3.1.0",
         info: {
             title: "Datasource API",
             version: "1.0.0",
-            summary: "API for interacting with a datasource",
+            description: "API for interacting with a datasource",
         },
         servers: [
             {

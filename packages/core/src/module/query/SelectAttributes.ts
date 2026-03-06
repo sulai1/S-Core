@@ -1,5 +1,5 @@
-import { FunctionCall } from "../function";
-import { FunctionsType } from "../function/FunctionsType";
+import { FunctionCall } from "../function/index.js";
+import { FunctionsType } from "../function/FunctionsType.js";
 
 /**
  * SelectAttributes is a utility type that defines the structure for selecting and renaming attributes 
