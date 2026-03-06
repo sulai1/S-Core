@@ -1,0 +1,18 @@
+{
+  "name": "@s-core/workspace",
+  "version": "0.0.1",
+  "description": "workspace for packages and webapps",
+  "license": "ISC",
+  "author": "Sascha Wernegger",
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": {},
+  "workspaces": [
+    "packages/core",
+    "packages/client",
+    "packages/server"
+  ],
+  "dependencies": {
+    "openapi-typescript": "^7.13.0"
+  }
+}

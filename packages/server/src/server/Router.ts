@@ -1,0 +1,65 @@
+import { HttpRequest, HttpResponseBuilder, OpenApiModule } from '@s-core/core';
+import { OpenAPIV3 } from 'express-openapi-validator/dist/framework/types';
+import { Handler } from '.';
+
+type HttpMethod = 'get' | 'post' | 'put' | 'patch' | 'delete' | 'head' | 'options';
+
+export type OpenapiPaths<Paths> = {
+    [P in keyof Paths]: {
+        [M in HttpMethod]?: unknown;
+    };
+};
+
+
+export interface Router<
+    Req extends HttpRequest = HttpRequest,
+    Res extends HttpResponseBuilder = HttpResponseBuilder
+> {
+    /**
+     * Uses a handler for all requests .
+     * @param handler a middleware handler function
+     */
+    use<
+        TReq extends Req = Req,
+        TRes extends Res = Res
+    >(handler: Handler<TReq, TRes>): this;
+    /**
+     * 
+     * Uses a handler for requests to a specific path.
+     * @param path a path string
+     * @param handler a middleware handler function
+     */
+    use<
+        TReq extends Req = Req,
+        TRes extends Res = Res
+    >(path: string, handler: Handler<TReq, TRes>): this;
+    /**
+     * add a module to a specific path, and validate requests and responses from a json schema.
+     * @param path the path to add the module to
+     * @param schema the path to the schema file
+     * @param module the implementation to add
+     * @param options options for request and response validation
+     * @returns the router instance
+     */
+    add<
+        M extends OpenapiPaths<M>,
+    >(
+        path: string,
+        schema: string | OpenAPIV3.DocumentV3_1 | OpenAPIV3.DocumentV3,
+        module: OpenApiModule<M, Req>,
+        options?: {
+            validateRequests?: boolean;
+            validateResponses?: boolean;
+        }
+    ): Promise<this>;
+    /**
+     * Extends the request types with additional properties for a specific path.
+     * @param path the path to extend
+     * @param api a function that returns additional properties to add to the request
+     * @returns a new Router with the extended request type, allowing handlers to access the new properties
+     */
+    extend<Extension extends object>(
+        path: string,
+        api: (req: Req, res: Res) => Promise<Extension>
+    ): Router<Req & Extension, Res>;
+}

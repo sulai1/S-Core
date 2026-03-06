@@ -1,0 +1,29 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "CommonJS",
+    "moduleResolution": "node",
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "forceConsistentCasingInFileNames": true,
+    "outDir": "./dist/cjs",
+    "rootDir": ".",
+    "sourceMap": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "typeRoots": [
+      "./node_modules/openapi-typescript-fetch"
+    ],
+  },
+  "include": [
+    "src/**/*.ts",
+    "test/**/*.ts",
+    "src/api/openapi/**/*.ts"
+, "test/buildTypes.test.ts"  ],
+  "exclude": [
+    "node_modules",
+    "coverage",
+    "dist"
+  ]
+}
