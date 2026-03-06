@@ -56,7 +56,7 @@ import TableComponent from 'src/components/TableComponent.vue';
 import { onMounted, ref, watch } from 'vue';
 import { type ColumnDesc, type PropOrGetter } from 'src/components/table';
 import {useQuasar } from 'quasar';
-import type { Item } from '../../../api';
+import type { Item } from '@s-core/talktogether';
 
 const $q = useQuasar();
 

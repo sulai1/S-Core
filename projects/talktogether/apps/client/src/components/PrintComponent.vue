@@ -28,7 +28,7 @@
 
 <script lang="ts" setup>
 import { api  } from 'src/boot/di';
-import type { Salesman } from 'src/models';
+import type { Salesman } from '@s-core/talktogether';
 import { watch } from 'vue';
 const salesmen = defineModel<Salesman[]>();
 

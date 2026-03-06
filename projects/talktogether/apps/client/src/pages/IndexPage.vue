@@ -39,7 +39,7 @@ import SalesmanComponent from 'src/components/SalesmanComponent.vue';
 import type { ColumnDesc, PropOrGetter } from 'src/components/table';
 import TableComponent from 'src/components/TableComponent.vue';
 import { onMounted, ref } from 'vue';
-import type { Salesman } from 'api';
+import type { Salesman } from '@s-core/talktogether';
 
 const columns:ColumnDesc<Salesman,PropOrGetter<Salesman>>[] = [
   {headerName:'Id', property:'id', sortable:true, sortFunction:(a,b)=> (a.id ?? 0) - (b.id ?? 0)},

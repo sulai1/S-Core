@@ -35,8 +35,8 @@
 
 <script setup lang="ts">
 import { useDialogPluginComponent, useQuasar } from 'quasar';
-import type { InferCreationSchema } from 's-core-client';
-import type { salesman as sm } from 'src/models';
+import type { InferCreationSchema } from '@s-core/client';
+import type { salesman as sm } from '@s-core/talktogether';
 import { ref } from 'vue';
 import ImageCropper from './ImageCropper.vue';
 import { uploadImage } from './upload';

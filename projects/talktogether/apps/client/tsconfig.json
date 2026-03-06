@@ -2,11 +2,11 @@
   "extends": "./.quasar/tsconfig.json",
   "compilerOptions": {
     "target": "ES2022",
-    "module": "CommonJS",
+    "module": "ESNext",
     "declaration": true,
     "declarationMap": true,
     "skipLibCheck": true,
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "strict": true,
     "forceConsistentCasingInFileNames": true,
     "experimentalDecorators": true,

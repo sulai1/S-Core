@@ -1,6 +1,6 @@
 import { Application } from "./Application.js";
 import { ConfigProvider, DefaultConfigProvider } from "./ConfigProvider.js";
-import { DefaultEmitter, Listener } from "./Emitter.js";
+import { DefaultEmitter } from "./Emitter.js";
 import { Factory, FactoryCollection, InferFactoryCollectionTypes, InferFactoryType } from "./Factory.js";
 import { AddModule, ModuleCollection, ModuleCollectionEvent, RemoveModule } from "./ModuleCollection.js";
 

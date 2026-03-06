@@ -1,4 +1,4 @@
-import { InferTableSchema, TableSchema } from "s-core-client";
+import { InferTableSchema, TableSchema } from "@s-core/client";
 
 export const identification = {
     name: "Identifications",

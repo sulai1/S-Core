@@ -255,6 +255,23 @@ export class Database<
         return await this.source.query(sql.query, sql.bind);
     }
 
+    private buildDefaultJoinAttributes<T extends { [key: string]: keyof Tables & string }>(
+        tables: T,
+    ): SelectAttributes<Join<TableInstanceTypes<Tables>, T>, InferFunctionTypes<Functions>> {
+        const attributes = {} as SelectAttributes<Join<TableInstanceTypes<Tables>, T>, InferFunctionTypes<Functions>>;
+
+        for (const alias in tables) {
+            const tableKey = tables[alias];
+            const schema = this.options.tables[tableKey];
+            for (const column of Object.keys(schema.columns)) {
+                const key = `${alias}.${column}`;
+                (attributes as Record<string, string>)[key] = key;
+            }
+        }
+
+        return attributes;
+    }
+
     async select<T extends {
         [key: string]: keyof Tables & string;
     }, S extends SelectAttributes<Join<TableInstanceTypes<Tables>, T>, InferFunctionTypes<Functions>> | (keyof Join<TableInstanceTypes<Tables>, T>)[] | undefined = undefined>(
@@ -269,7 +286,12 @@ export class Database<
             }
             tableNames[alias] = this.tableLookup[table];
         }
-        const query = this.queryBuilder.buildSelect(normalizeFilterRequest(req), tableNames);
+        const normalizedReq = normalizeFilterRequest(req);
+        if (Object.keys(normalizedReq.attributes).length === 0) {
+            normalizedReq.attributes = this.buildDefaultJoinAttributes(tables);
+        }
+
+        const query = this.queryBuilder.buildSelect(normalizedReq, tableNames);
         const res = await this.source.query<SelectResult<Join<TableInstanceTypes<Tables>, T>, InferFunctionTypes<Functions>, S>>(query.query, query.bind);
         return res;
     }

@@ -5,12 +5,13 @@
   "license": "ISC",
   "author": "",
   "type": "module",
-  "main": "index.js",
-  "types": "./indext.ts",
+  "main": "./dist/cjs/indext.js",
+  "types": "./dist/cjs/indext.d.ts",
   "exports": {
     ".": {
-      "types": "./indext.ts",
-      "default": "./indext.ts"
+      "types": "./dist/cjs/indext.d.ts",
+      "import": "./dist/cjs/indext.js",
+      "default": "./dist/cjs/indext.js"
     }
   },
   "scripts": {
@@ -27,6 +28,7 @@
   "dependencies": {
     "@apidevtools/json-schema-ref-parser": "^15.3.1",
     "@s-core/client": "^0.0.1",
+    "@s-core/core": "^0.0.1",
     "@types/express": "^5.0.6",
     "ajv": "^8.18.0",
     "express": "^5.2.1",
@@ -34,6 +36,7 @@
     "openapi-types": "^12.1.3",
     "openapi-typescript": "^7.13.0",
     "openapi-typescript-fetch": "^2.2.1",
+    "reflect-metadata": "^0.2.2",
     "supertest": "^7.2.2",
     "typeorm": "^0.3.28"
   },

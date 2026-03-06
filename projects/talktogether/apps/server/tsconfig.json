@@ -12,16 +12,14 @@
     "emitDecoratorMetadata": true,
     "types": [
       "node"
-    ],
-    "typeRoots": [
-      "./node_modules/@types",
     ]
   },
   "include": [
     "app.ts",
     "debug.ts",
     "src/**/*.ts",
-    "scripts/**/*.ts"
+    "scripts/**/*.ts",
+    "migrations/**/*.ts"
   ],
   "exclude": [
     "node_modules",

@@ -1,14 +1,45 @@
-import { apiSchema, paths, tables } from "api";
+import { PassThrough } from "node:stream";
+import { apiSchema, paths, tables } from "@s-core/talktogether";
 import cors from 'cors';
 import express from 'express';
-import session, { SessionData } from 'express-session';
+import session, { Session, SessionData } from 'express-session';
 import bcrypt from 'bcrypt';
-import { PassThrough } from "node:stream";
-import { Application, createDatasourceSchema, createDatasourceServer, createFileSchema, createFileServerModule, createServer, DataSource, FilePaths, SelectFunctionDefinitions } from "s-core";
+import { Application, createDatasourceSchema, createFileSchema, DataSource, FilePaths, SelectFunctionDefinitions } from "@s-core/core";
+import { createDatasourceServer, createFileServerModule, createServer } from "@s-core/server";
 import { imgPath } from "../app";
 import { createIdentification } from "./pdf";
 
 const env = process.env.NODE_ENV || 'development';
+type SessionContext = Session & SessionData & { userId?: number; userEmail?: string };
+
+const writeLog = (level: "INFO" | "ERROR", ...parts: unknown[]) => {
+    const message = parts.map((part) => {
+        if (typeof part === "string") {
+            return part;
+        }
+        try {
+            return JSON.stringify(part);
+        } catch {
+            return String(part);
+        }
+    }).join(" ");
+    const line = `[${level}] ${message}\n`;
+    if (level === "ERROR") {
+        process.stderr.write(line);
+        return;
+    }
+    process.stdout.write(line);
+};
+
+const getUploadOriginalName = (file: unknown) => {
+    if (typeof file === "object" && file !== null && "originalname" in file) {
+        const maybeName = (file as { originalname?: unknown }).originalname;
+        if (typeof maybeName === "string" && maybeName.length > 0) {
+            return maybeName;
+        }
+    }
+    return "upload";
+};
 
 
 export async function serverFactory(
@@ -43,17 +74,20 @@ export async function serverFactory(
     // Parse JSON request bodies
     server.use(express.json());
 
-    // Log requests
+    // Log requests in development without relying on console.
     if (env !== 'production') {
-        server.use((req: any, res: any, next: any) => { console.log("Request: ", req.url, req.method, req.headers, req.body); next(); });
+        server.use((req, _res, next) => {
+            writeLog("INFO", "Request:", req.method, req.url);
+            next();
+        });
     }
-    const db = await provider.getModule("db");
-    server.extend("/", async (req, res) => {
+    const db = provider.getModule("db");
+    await server.extend("/", async (req, res) => {
         sessionMiddleware(req, res, () => { })
-        return { session: req.session as SessionData & { userId?: number; userEmail?: string } };
+        return { session: req.session as SessionContext };
     }).add<paths>("/", apiSchema, {
         "/auth/login": {
-            post: async (req: { email: string; password: string }, options: express.Request) => {
+            post: async (req, options) => {
                 try {
                     const { email, password } = req;
                     if (!email || !password) {
@@ -83,8 +117,12 @@ export async function serverFactory(
                         throw new Error('Invalid credentials');
                     }
 
-                    (options.session as SessionData & { userId?: number; userEmail?: string }).userId = user.id;
-                    (options.session as SessionData & { userId?: number; userEmail?: string }).userEmail = user.email;
+                    if (!options?.session) {
+                        throw new Error('Session is not available');
+                    }
+
+                    options.session.userId = user.id;
+                    options.session.userEmail = user.email;
 
 
                     return {
@@ -102,69 +140,81 @@ export async function serverFactory(
             },
         },
         "/auth/logout": {
-            post: async (req: any, res: any) => {
-                req.session.destroy((err: any) => {
-                    if (err) {
-                        res.status(500).json({ error: 'Logout failed' });
-                        return;
-                    }
-                    res.json({ success: true });
+            post: async (_req, options) => {
+                if (!options?.session) {
+                    return { success: false };
+                }
+
+                await new Promise<void>((resolve, reject) => {
+                    options.session.destroy((err?: Error | null) => {
+                        if (err) {
+                            reject(err);
+                            return;
+                        }
+                        resolve();
+                    });
                 });
+
+                return { success: true };
             },
         },
         "/auth/session": {
-            get: async (req: any, res: any) => {
-                if (req.session.userId) {
-                    res.json({
+            get: async (options) => {
+                if (options?.session?.userId) {
+                    return {
                         authenticated: true,
                         user: {
-                            id: req.session.userId,
-                            email: req.session.userEmail
+                            id: options.session.userId,
+                            email: options.session.userEmail
                         }
-                    });
-                } else {
-                    res.json({ authenticated: false });
+                    };
                 }
+
+                return { authenticated: false };
             },
         },
         "/createIdentification": {
-            post: async (req: { id: number }[]) => {
+            post: async (req) => {
                 const s = new PassThrough();
+                const userIds = req.map(v => Number(v.userId));
                 const salesman = await db.find("Salesman", {
-                    where: [{ function: "in", params: ["id", { value: req.map(v => v.id) }] }]
+                    where: [{ function: "in", params: ["id", { value: userIds }] }]
                 })
                 createIdentification(salesman, s, db).catch(err => {
-                    console.error("Error creating identification:", err);
+                    writeLog("ERROR", "Error creating identification:", err);
                     s.destroy(err);
                 });
                 return s as unknown as string;
             },
         },
     })
-    server.add<FilePaths<"/images">>("/", createFileSchema("/images"), createFileServerModule("/images", imgPath, {
-        fileName: (file) => `${Date.now()}-${file.originalname}`
+    await server.add<FilePaths<"/images">>("/", createFileSchema("/images"), createFileServerModule("/images", imgPath, {
+        fileName: (file) => `${Date.now()}-${getUploadOriginalName(file)}`
     }), { validateRequests: false, validateResponses: false });
 
-    server.add("/data",
+    await server.add("/data",
         createDatasourceSchema("/data", tables),
         createDatasourceServer(db)
     )
     // Error handling middleware (using explicit error handler method)
-    server.useErrorHandler((err: any, req: any, res: any, next: any) => {
-        const status = err.status || 500;
+    server.useErrorHandler((err, req, res) => {
+        const error = typeof err === 'object' && err !== null
+            ? err as { status?: number; error?: string; name?: string; details?: string; message?: string; stack?: string }
+            : {};
+        const status = typeof error.status === 'number' ? error.status : 500;
         const errorResponse = {
             status,
-            error: err.error || err.name || "Internal Server Error",
-            details: err.details || err.message,
-            ...(env !== 'production' && { stack: err.stack })
+            error: error.error || error.name || "Internal Server Error",
+            details: error.details || error.message || 'Unexpected error',
+            ...(env !== 'production' && { stack: error.stack })
         };
-        console.error(`[${status}] Error:`, errorResponse);
+        writeLog("ERROR", `[${status}] Error:`, errorResponse);
         res.status(status).json(errorResponse);
     });
 
     provider.on("afterStart", async () => {
         const port = options?.port || 3000;
         await server.listen(port);
-        console.log(`Server started on port ${port}`);
+        writeLog("INFO", `Server started on port ${port}`);
     });
 }

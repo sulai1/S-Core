@@ -80,8 +80,8 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
-import type { Item } from '../../../api';
-import { type Transaction } from '../../../api';
+import type { Item } from '@s-core/talktogether';
+import type { Transaction } from '@s-core/talktogether';
 
 const emits = defineEmits<{
     (e: 'commit', transaction: Transaction): void;

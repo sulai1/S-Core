@@ -1,4 +1,4 @@
-import type { DataSourceSchema, TableInstanceTypes } from 's-core-client';
+import type { DataSourceSchema, TableInstanceTypes } from '@s-core/client';
 import { identification } from './identification';
 import { item } from './item';
 import { salesman } from './salesman';

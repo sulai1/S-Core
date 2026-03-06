@@ -48,16 +48,15 @@
 
 <script setup lang="ts">
 
+import type { Item, Transaction } from '@s-core/talktogether';
 import { useQuasar } from 'quasar';
 import { datasource } from 'src/boot/di';
-import FindSalesman from 'src/components/FindSalesman.vue';
 import type { SalesmanView } from 'src/components/FindSalesman.vue';
+import FindSalesman from 'src/components/FindSalesman.vue';
 import { type ColumnDesc, type PropOrGetter } from 'src/components/table';
 import TableComponent from 'src/components/TableComponent.vue';
 import TransactionComponent from 'src/components/TransactionComponent.vue';
 import { computed, onMounted, ref } from 'vue';
-import type { Item } from '../../../api';
-import { type Transaction } from '../../../api';
 
 const $q = useQuasar();
 

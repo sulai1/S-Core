@@ -1,4 +1,4 @@
-import { HttpRequest, HttpResponse } from "@s-core/core";
+import { HttpRequest, HttpResponse } from "../index.js";
 
 type ParamType = Record<string, string | number | undefined>;
 type LReq<Req extends HttpRequest> = Omit<Req, 'url' | 'method' | 'body'>;

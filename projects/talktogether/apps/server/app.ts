@@ -1,9 +1,8 @@
 import path from 'path';
-
-import { tables } from "api";
 import { argv } from 'process';
-import { createApplication, Database, DataSource, PostgreDialect, SelectFunctionDefinitions, selectFunctionDefinitions } from 's-core';
-
+import { createApplication, DataSource, SelectFunctionDefinitions, selectFunctionDefinitions } from '@s-core/core';
+import { Database, PostgreDialect } from '@s-core/server';
+import { tables } from "@s-core/talktogether";
 import { serverFactory } from './src/serverFactory';
 
 const env = process.env.NODE_ENV || 'development';
@@ -17,7 +16,7 @@ process.env.DB_PORT = process.env.DB_PORT || argv[6];
 process.env.DB_HOST = process.env.DB_HOST || argv[7];
 
 const appCollection = createApplication()
-    .addModule("db", async (app) => {
+    .addModule("db", async () => {
         const db = new Database({
             tables: tables,
             host: process.env.DB_HOST || "localhost",

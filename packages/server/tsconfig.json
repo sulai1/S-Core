@@ -10,6 +10,8 @@
     "outDir": "./dist/cjs",
     "rootDir": ".",
     "sourceMap": true,
+    "declaration": true,
+    "declarationMap": true,
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
     "typeRoots": [
@@ -17,6 +19,7 @@
     ],
   },
   "include": [
+    "indext.ts",
     "src/**/*.ts",
     "test/**/*.ts",
     "src/api/openapi/**/*.ts",

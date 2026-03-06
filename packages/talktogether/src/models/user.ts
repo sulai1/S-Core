@@ -1,4 +1,4 @@
-import type { TableSchema, InferTableSchema } from 's-core-client';
+import type { TableSchema, InferTableSchema } from '@s-core/client';
 
 export const user = {
     name: 'users',

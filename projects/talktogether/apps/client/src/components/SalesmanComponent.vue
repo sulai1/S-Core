@@ -68,7 +68,7 @@
 
 <script setup lang="ts">
 import { baseUrl, datasource } from 'src/boot/di';
-import type { Identification, Salesman } from 'src/models';
+import type { Identification, Salesman } from '@s-core/talktogether';
 import {ref, watch } from 'vue';
 import { uploadImage } from './upload';
 import ImageCropper from './ImageCropper.vue';

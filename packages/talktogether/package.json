@@ -1,5 +1,5 @@
 {
-  "name": "api",
+  "name": "@s-core/talktogether",
   "version": "0.0.1",
   "description": "api contracts for talktogether",
   "main": "dist/index.js",

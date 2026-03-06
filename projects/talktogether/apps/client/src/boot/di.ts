@@ -1,6 +1,6 @@
 import { defineBoot } from '#q-app/wrappers';
-import { createDatasourceClient, selectFunctionDefinitions, type Client, type DataSource, type SelectFunctionDefinitions } from "s-core-client";
-import type { tables } from '../../../api/src/models';
+import { createDatasourceClient, selectFunctionDefinitions, type Client, type DataSource, type SelectFunctionDefinitions } from "@s-core/client";
+import type { tables } from '@s-core/talktogether';
 import axios from 'axios';
 
 export let datasource: DataSource<typeof tables, SelectFunctionDefinitions>;

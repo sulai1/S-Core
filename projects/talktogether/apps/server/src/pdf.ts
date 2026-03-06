@@ -1,7 +1,7 @@
 import path from "path";
 import PdfDoc from "pdfkit";
-import { DataSource, SelectFunctionDefinitions } from "s-core";
-import { Identification, Salesman, tables } from "../../api/src/models";
+import { DataSource, SelectFunctionDefinitions } from "@s-core/core";
+import { Identification, Salesman, tables } from "@s-core/talktogether";
 import { imgPath } from "../app";
 
 async function getNewID(salesmanId: number, db: DataSource<typeof tables, SelectFunctionDefinitions>): Promise<Identification> {
@@ -133,7 +133,7 @@ export async function createIdentification(
             console.error(e)
         }
 
-        if (index % 6 == 0) {
+        if (index % 6 === 0) {
             doc.addPage();
         }
     }

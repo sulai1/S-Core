@@ -26,7 +26,9 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
-    "api": "file:../api",
+    "@s-core/core": "^0.0.1",
+    "@s-core/server": "^1.0.0",
+    "@s-core/talktogether": "^0.0.1",
     "bcrypt": "^5.1.1",
     "cors": "^2.8.5",
     "express": "^4.21.2",
@@ -34,7 +36,7 @@
     "multer": "^1.4.5-lts.1",
     "pdfkit": "^0.16.0",
     "reflect-metadata": "^0.2.2",
-    "@s-core/core": "^0.0.1"
+    "typeorm": "^0.3.28"
   },
   "devDependencies": {
     "@types/bcrypt": "^5.0.2",
