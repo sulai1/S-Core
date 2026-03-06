@@ -1,0 +1,23 @@
+# TalkTogether Host Variables Example
+# Copy this file to server.yml and encrypt with: ansible-vault encrypt server.yml
+
+# Database Configuration
+db_name: talktogether
+db_user: postgres
+db_password: your_db_password
+db_host: 192.168.0.220  # Your database server IP
+db_port: 5432
+
+# Application Configuration
+node_port: 3000
+api_base_url: ""  # Leave empty to use same-origin (recommended)
+
+# Build Configuration
+talktogether_build_context: /path/to/Talktogether
+talktogether_image: talktogether:latest
+target_platform: linux/arm64  # or linux/amd64 for Intel/AMD
+
+# Optional: Override default directories
+# talktogether_data_dir: /opt/talktogether/data
+# talktogether_images_dir: /opt/talktogether/images
+# container_name: talktogether

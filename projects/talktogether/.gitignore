@@ -1,0 +1,23 @@
+# Dependencies and build artifacts
+node_modules/
+dist/
+*.log
+
+# Package locks (managed per subproject)
+package-lock.json
+
+# OS and editor files
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# IDE files
+.vscode/settings.json
+.idea/
+
+# Temporary files
+*.tmp
+*.temp
+*.backup

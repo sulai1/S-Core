@@ -1,0 +1,21 @@
+{
+  "name": "api",
+  "version": "0.0.1",
+  "description": "api contracts for talktogether",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "create-types": "ts-node src/createTypes.ts",
+    "test": "jest"
+  },
+  "author": "Sascha Wernegger",
+  "license": "ISC",
+  "dependencies": {
+    "@s-core/client": "^0.0.1"
+  },
+  "devDependencies": {
+    "@s-core/core": "^0.0.1",
+    "typescript": "^5.8.2"
+  }
+}

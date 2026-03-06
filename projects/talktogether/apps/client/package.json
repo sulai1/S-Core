@@ -1,0 +1,63 @@
+{
+    "name": "quasar-project",
+    "version": "0.0.1",
+    "description": "Create identification for paper sellers",
+    "productName": "Talktogether",
+    "author": "sulai1 <sulai@gmx.at>",
+    "type": "module",
+    "private": true,
+    "scripts": {
+        "lint": "eslint -c ./eslint.config.js \"./src*/**/*.{ts,js,cjs,mjs,vue}\"",
+        "format": "prettier --write \"**/*.{js,ts,vue,scss,html,md,json}\" --ignore-path .gitignore",
+        "test": "echo \"See package.json => scripts for available tests.\" && exit 0",
+        "dev": "quasar dev",
+        "build": "quasar build",
+        "postinstall": "quasar prepare",
+        "test:unit:ui": "vitest --ui",
+        "test:unit": "vitest",
+        "test:unit:ci": "vitest run",
+        "build:android": "quasar build -T android",
+        "postbuild:android": "npm run zipalign && npm run sign",
+        "zipalign": "zipalign -v 4  ../dist/app/android/apk/release/app-release-unsigned.apk ../dist/app/android/apk/release/app-release-signed.apk",
+        "sign": "apksigner sign --ks ../files/quasar-release-key2.jks --ks-key-alias quasar-release ../dist/app/android/apk/release/app-release-signed.apk",
+        "icons": "icongenie generate -m capacitor -i src/assets/icon.png -b src/assets/background.png",
+        "icons:verify": "icongenie verify -m capacitor"
+    },
+    "dependencies": {
+        "@quasar/extras": "^1.16.4",
+        "@types/axios": "^0.14.4",
+        "api": "file:../api",
+        "axios": "^1.8.2",
+        "cropperjs": "^1.5.13",
+        "quasar": "^2.16.0",
+        "@s-core/client": "^0.0.1",
+        "vue": "^3.4.18",
+        "vue-router": "^4.0.12"
+    },
+    "devDependencies": {
+        "@eslint/js": "^9.14.0",
+        "@quasar/app-vite": "^2.1.0",
+        "@quasar/quasar-app-extension-testing-unit-vitest": "^1.2.3",
+        "@types/estree": "^1.0.7",
+        "@types/lodash": "^4.17.16",
+        "@types/node": "^20.5.9",
+        "@vitest/ui": "^3.1.2",
+        "@vue/eslint-config-prettier": "^10.1.0",
+        "@vue/eslint-config-typescript": "^14.4.0",
+        "@vue/test-utils": "^2.4.6",
+        "autoprefixer": "^10.4.2",
+        "eslint": "^9.14.0",
+        "eslint-plugin-vue": "^9.30.0",
+        "globals": "^15.12.0",
+        "prettier": "^3.3.3",
+        "typescript": "~5.5.3",
+        "vite-plugin-checker": "^0.9.0",
+        "vitest": "^3.1.2",
+        "vue-tsc": "^2.0.29"
+    },
+    "engines": {
+        "node": "^28 || ^26 || ^24 || ^22 || ^20 || ^18",
+        "npm": ">= 6.13.4",
+        "yarn": ">= 1.21.1"
+    }
+}

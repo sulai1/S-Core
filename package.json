@@ -23,9 +23,8 @@
     "clean:node-modules": "rimraf node_modules"
   },
   "workspaces": [
-    "packages/core",
-    "packages/client",
-    "packages/server"
+    "packages/*",
+    "projects/*/apps/*"
   ],
   "dependencies": {
     "openapi-typescript": "^7.13.0"

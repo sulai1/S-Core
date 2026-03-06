@@ -1,0 +1,167 @@
+- name: Deploy TalkTogether
+  hosts: all
+  gather_facts: true
+  tasks:
+    - name: Set TalkTogether defaults
+      ansible.builtin.set_fact:
+        talktogether_platform_resolved: "{{ target_platform | default('linux/arm64') }}"
+        talktogether_image_resolved: "{{ talktogether_image | default('talktogether:latest') }}"
+        talktogether_build_context_resolved: "{{ talktogether_build_context | default('..') }}"
+        talktogether_image_archive_resolved: "{{ talktogether_image_archive | default('/tmp/talktogether-image.tar.gz') }}"
+        talktogether_source_archive_resolved: "{{ talktogether_source_archive | default('/tmp/talktogether-source.tar.gz') }}"
+        talktogether_build_dir_resolved: "{{ talktogether_build_dir | default('/tmp/talktogether-build') }}"
+        talktogether_data_dir_resolved: "{{ talktogether_data_dir | default('/opt/talktogether/data') }}"
+        talktogether_images_dir_resolved: "{{ talktogether_images_dir | default('/opt/talktogether/images') }}"
+        container_name_resolved: "{{ container_name | default('talktogether') }}"
+        db_name_resolved: "{{ db_name | default('talktogether') }}"
+        db_user_resolved: "{{ db_user | default('postgres') }}"
+        db_password_resolved: "{{ db_password | default('') }}"
+        db_host_resolved: "{{ db_host | default('localhost') }}"
+        db_port_resolved: "{{ db_port | default('5432') }}"
+        node_port_resolved: "{{ node_port | default('3000') }}"
+        api_base_url_resolved: "{{ api_base_url | default('') }}"
+
+    - name: Ensure Docker service is running
+      become: true
+      ansible.builtin.systemd:
+        name: docker
+        state: started
+        enabled: true
+
+    - name: Ensure TalkTogether directories exist on target
+      become: true
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        owner: root
+        group: root
+        mode: "0755"
+      loop:
+        - "{{ talktogether_data_dir_resolved }}"
+        - "{{ talktogether_images_dir_resolved }}"
+
+    #--- Build SPA client locally ---
+    - name: Build SPA client locally
+      delegate_to: localhost
+      run_once: true
+      become: false
+      ansible.builtin.shell:
+        cmd: npm install && npm run build
+        chdir: "{{ talktogether_build_context_resolved }}/client"
+      args:
+        executable: /bin/bash
+
+    #--- Transfer built SPA client and source ---
+    - name: Archive TalkTogether source locally (with built client/dist)
+      delegate_to: localhost
+      run_once: true
+      become: false
+      ansible.builtin.shell:
+        cmd: >-
+          tar -czf {{ talktogether_source_archive_resolved }}
+          --exclude=.git
+          --exclude=node_modules
+          --exclude=client/node_modules
+          --exclude=server/node_modules
+          --exclude=api/node_modules
+          --exclude=server/dist
+          -C {{ talktogether_build_context_resolved }}
+          .
+      args:
+        executable: /bin/bash
+
+    - name: Copy source archive to target
+      become: true
+      ansible.builtin.copy:
+        src: "{{ talktogether_source_archive_resolved }}"
+        dest: "{{ talktogether_source_archive_resolved }}"
+        mode: "0644"
+
+    - name: Ensure clean build directory on target
+      become: true
+      ansible.builtin.file:
+        path: "{{ talktogether_build_dir_resolved }}"
+        state: absent
+
+    - name: Recreate build directory on target
+      become: true
+      ansible.builtin.file:
+        path: "{{ talktogether_build_dir_resolved }}"
+        state: directory
+        mode: "0755"
+
+    - name: Extract source archive on target
+      become: true
+      ansible.builtin.unarchive:
+        src: "{{ talktogether_source_archive_resolved }}"
+        dest: "{{ talktogether_build_dir_resolved }}"
+        remote_src: true
+
+    - name: Copy built SPA client dist to target
+      become: true
+      ansible.builtin.copy:
+        src: "{{ talktogether_build_context_resolved }}/client/dist"
+        dest: "{{ talktogether_build_dir_resolved }}/client/dist"
+        mode: "0755"
+        owner: root
+        group: root
+        remote_src: false
+
+    - name: Pre-pull runtime base image with retries
+      become: true
+      ansible.builtin.shell:
+        cmd: timeout 240 docker pull node:20-bookworm-slim
+      register: pull_runtime_result
+      retries: 5
+      delay: 20
+      until: pull_runtime_result.rc == 0
+      args:
+        executable: /bin/bash
+
+    - name: Build TalkTogether image natively on target
+      become: true
+      ansible.builtin.shell:
+        cmd: >-
+          docker build
+          --build-arg TARGETARCH=arm64
+          -t {{ talktogether_image_resolved }}
+          -f {{ talktogether_dockerfile | default('Dockerfile') }}
+          .
+        chdir: "{{ talktogether_build_dir_resolved }}"
+      register: native_build_result
+      retries: 2
+      delay: 25
+      until: native_build_result.rc == 0
+      args:
+        executable: /bin/bash
+
+    - name: Stop any existing TalkTogether container
+      become: true
+      community.docker.docker_container:
+        name: "{{ container_name_resolved }}"
+        state: absent
+      ignore_errors: true
+
+    - name: Ensure TalkTogether container is running
+      become: true
+      community.docker.docker_container:
+        name: "{{ container_name_resolved }}"
+        image: "{{ talktogether_image_resolved }}"
+        state: started
+        restart_policy: unless-stopped
+        ports:
+          - "80:80"
+        env:
+          DB_NAME: "{{ db_name_resolved }}"
+          DB_USER: "{{ db_user_resolved }}"
+          DB_PASSWORD: "{{ db_password_resolved }}"
+          DB_HOST: "{{ db_host_resolved }}"
+          DB_PORT: "{{ db_port_resolved }}"
+          NODE_PORT: "{{ node_port_resolved }}"
+          NODE_ENV: production
+          API_BASE_URL: "{{ api_base_url_resolved }}"
+        volumes:
+          - "{{ talktogether_data_dir_resolved }}:/app/data"
+          - "{{ talktogether_images_dir_resolved }}:/app/server/dist/cjs/server/images"
+        networks:
+          - name: mynetwork

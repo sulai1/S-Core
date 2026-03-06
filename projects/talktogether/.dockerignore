@@ -1,0 +1,9 @@
+**/node_modules
+**/dist
+**/.git
+**/.quasar
+**/.vscode
+**/coverage
+**/out
+**/*.log
+**/.DS_Store
