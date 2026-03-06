@@ -26,6 +26,8 @@
   },
   "dependencies": {
     "@s-core/client": "^0.0.1",
+    "@types/express": "^5.0.6",
+    "express": "^5.2.1",
     "openapi-typescript": "^7.13.0",
     "openapi-typescript-fetch": "^2.2.1",
     "supertest": "^7.2.2",

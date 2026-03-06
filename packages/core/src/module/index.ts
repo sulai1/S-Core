@@ -1,3 +1,3 @@
-export * from "./function";
-export * from "./query";
-export * from "./Client";
+export * from "./function/index.js";
+export * from "./query/index.js";
+export * from "./Client.js";

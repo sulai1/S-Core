@@ -1,9 +1,10 @@
 import { afterEach, describe, expect, test } from "vitest";
 import { DefaultConfigProvider } from "../../src/app/ConfigProvider";
 import fs from "fs/promises";
+import path from "path";
 
-const configPath = __dirname + "/config.json";
-const configProvider = new DefaultConfigProvider("test/test-config.json");
+const configPath = path.join(__dirname, "test-config.json");
+const configProvider = new DefaultConfigProvider(configPath);
 
 describe("AppConfigProvider", () => {
     afterEach(async () => {
@@ -27,7 +28,7 @@ describe("AppConfigProvider", () => {
     test("save and load config from file", async () => {
         configProvider.setConfig("test", { conf: "fileValue" });
         await configProvider.save();
-        const newConfigProvider = new DefaultConfigProvider("test/test-config.json");
+        const newConfigProvider = new DefaultConfigProvider(configPath);
         await newConfigProvider.load();
         const loadedConfig = newConfigProvider.getConfig("test");
         expect(loadedConfig).toEqual({ conf: "fileValue" });

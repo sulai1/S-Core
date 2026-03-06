@@ -1,5 +1,5 @@
 import express, { Application, Request, Response } from 'express';
-import { ExpressRouter } from './ExpressRouter';
+import { ExpressRouter } from '.';
 import { Server } from '.';
 
 /**

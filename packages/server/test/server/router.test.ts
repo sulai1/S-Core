@@ -3,9 +3,15 @@ import express from "express";
 import supertest from "supertest";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { OpenApiModule } from "@s-core/core";
-import { ExpressServer } from "../../src/server/ExpressServer";
-import * as api from "../api/test-api-permanent";
+import { ExpressServer } from "../../src/server/ExpressServer.js";
+import * as api from "../api/test-api-permanent/index.js";
 import { OpenApiMethod, OpenApiResult } from "@s-core/core";
+import { fileURLToPath } from "url";
+import path from "path";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const schemaPath = path.join(__dirname, "../api/test-api-permanent/schema.yaml");
 
 
 let server: ExpressServer;
@@ -66,7 +72,7 @@ describe("Server API routes", () => {
             (t as any)[testCase.path][testCase.method].mockResolvedValue(testCase.response);
             await server.add<api.paths>(
                 "/test",
-                "./test/api/test-api-permanent/schema.yaml",
+                schemaPath,
                 t,
                 { validateRequests: true, validateResponses: false });
             const mock = supertest(server.app);
@@ -123,7 +129,7 @@ describe("Server API routes", () => {
         t["/pathWithMultipleStatusCodes"].get.mockResolvedValue({ id: "123", name: "Test" });
         await server.add<api.paths>(
             "/test",
-            "./test/api/test-api-permanent/schema.yaml",
+            schemaPath,
             t,
             { validateRequests: true, validateResponses: true });
         const mock = supertest(server.app)

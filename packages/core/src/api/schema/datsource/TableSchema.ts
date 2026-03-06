@@ -7,7 +7,8 @@ export type TableSchema<T extends object = Record<string, unknown>> = {
         [P in keyof T]: {
             type: ConstructorOrCallable<T[P]>;
             primary?: boolean;
-            generated?: boolean | "createdAt" | "updatedAt" | "uuid" | "increment";
+            generated?: 
+            boolean | "createdAt" | "updatedAt" | "uuid" | "increment";
             nullable?: boolean;
             default?: boolean;
             description?: string;

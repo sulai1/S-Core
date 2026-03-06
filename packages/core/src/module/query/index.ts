@@ -1,11 +1,11 @@
-import { FunctionCall, FunctionsType } from "../..";
+import { FunctionCall, FunctionsType } from "../index.js";
 
-export * from "./Datasource";
-export * from "./FilterModule";
-export * from "./FilterRequest";
-export * from "./Repository";
-export * from "./SelectAttributes";
-export * from "./SelectResult";
+export * from "./Datasource.js";
+export * from "./FilterModule.js";
+export * from "./FilterRequest.js";
+export * from "./Repository.js";
+export * from "./SelectAttributes.js";
+export * from "./SelectResult.js";
 
 /**
  * Condition type utility to define conditions for filtering data. 
