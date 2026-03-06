@@ -21,7 +21,8 @@
     "typecheck": "tsc --noEmit",
     "create-api": "ts-node -r tsconfig-paths/register src/script/ .ts",
     "docs": "typedoc --out docs src",
-    "build": "rimraf dist && tsc -p tsconfig.json"
+    "build": "rimraf dist && tsc -p tsconfig.json",
+    "clean:node-modules": "rimraf node_modules"
   },
   "dependencies": {
     "@apidevtools/json-schema-ref-parser": "^15.2.1",

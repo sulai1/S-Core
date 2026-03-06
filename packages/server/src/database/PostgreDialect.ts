@@ -68,22 +68,6 @@ export class PostgreDialect implements SQLDialect {
         return `$${bind.length}`;
     }
     supportedFeatures(schema: DataSourceSchema) {
-        const newSchema: DataSourceSchema = {};
-        for (const tableName in schema) {
-            const table = schema[tableName];
-            const newTable = { ...table, attributes: {} };
-            for (const attrName of Object.keys(table.columns)) {
-                const attr = table.columns[attrName];
-                if (attr.generated === "createdAt") {
-                    (newTable.columns[attrName] as any) = { ...attr, type: Date, createdAt: true, } ;
-                }  else if (attr.generated === "updatedAt") {
-                    (newTable.columns[attrName] as any) = { ...attr, type: Date, updatedAt: true, };
-                } else {
-                    newTable.columns[attrName] = attr;
-                }
-            }
-            newSchema[tableName] = newTable;    
-        }
-        return newSchema;
+        return schema;
     }
 }

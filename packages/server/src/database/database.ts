@@ -36,7 +36,8 @@ export class Database<
 
     constructor(options: DatabaseOptions<Tables, Functions>) {
         this.options = options;
-        const supportedSchema = this.normalizeSchemaForTypeOrm(options.dialect.supportedFeatures(options.tables));
+        const supported = options.dialect.supportedFeatures(options.tables);
+        const supportedSchema = this.normalizeSchemaForTypeOrm(supported);
         this.source = new DataSource({
             type: options.dialect.type,
             database: options.database,
@@ -62,9 +63,10 @@ export class Database<
     }
 
     private normalizeSchemaForTypeOrm(schema: DataSourceSchema): DataSourceSchema {
-        const normalized = structuredClone(schema);
-        for (const tableName of Object.keys(normalized)) {
-            const table = normalized[tableName];
+        const normalized: DataSourceSchema = {};
+        for (const tableName of Object.keys(schema)) {
+            const table = schema[tableName];
+            normalized[tableName] = table;
             for (const columnName of Object.keys(table.columns)) {
                 const column = table.columns[columnName] as {
                     generated?: boolean | string;
@@ -75,13 +77,28 @@ export class Database<
                 if (column.generated === "createdAt") {
                     delete column.generated;
                     column.createDate = true;
-                    column.type = Date;
+                    column.type = "timestamp without time zone";
                     continue;
-                }
-                if (column.generated === "updatedAt") {
+                } else if (column.generated === "updatedAt") {
                     delete column.generated;
                     column.updateDate = true;
-                    column.type = Date;
+                    column.type = "timestamp without time zone";
+                } else if (column.generated === "uuid") {
+                    column.generated = "uuid";
+                    column.type = "uuid";
+                    continue;
+                } else if (column.generated === "increment" || column.generated === true) {
+                    column.generated = "increment";
+                    column.type = "int";
+                    continue;
+                } else if (column.type === Date) {
+                    column.type = "varchar";
+                } else if (column.type === String) {
+                    column.type = "varchar";
+                } else if (column.type === Number) {
+                    column.type = "float";
+                } else if (column.type === Boolean) {
+                    column.type = "boolean";
                 }
             }
         }

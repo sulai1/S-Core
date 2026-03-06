@@ -29,7 +29,7 @@ const CrudModelSchema = {
 
 const db = new Database({
     database: "test",
-    host:  process.env.DB_HOST,
+    host: process.env.DB_HOST,
     user: "postgres",
     password: process.env.DB_PASSWORD,
     synchronize: true,
@@ -79,13 +79,25 @@ describe("CRUD Tests", () => {
     });
 
     test("it should update a row", async () => {
+
+        const original = await db.find("CRUDModel", {
+            attributes: {
+                id: "id",
+                date: "date",
+                name: "name",
+                createdAt: "createdAt",
+                updatedAt: "updatedAt"
+            },
+        });
+        const id = original[0].id;
+
         await db.update("CRUDModel",
             {
-                id: 1,
+                id: id,
                 date: "2024-01-05",
                 name: "test5"
             },
-            [{ function: "=", params: ["id", { value: 1 }] }]
+            [{ function: "=", params: ["id", { value: id }] }]
         );
         const retrieved = await db.find("CRUDModel", {
             attributes: {
@@ -95,7 +107,7 @@ describe("CRUD Tests", () => {
                 createdAt: "createdAt",
                 updatedAt: "updatedAt"
             },
-            where: [{ function: "=", params: ["id", { value: 1 }] }]
+            where: [{ function: "=", params: ["id", { value: id }] }]
         });
         const model = retrieved[0];
         expect(model.name).toBe("test5");

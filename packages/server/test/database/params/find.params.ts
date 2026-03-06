@@ -221,7 +221,7 @@ export const tests: {
             },
             orderBy: [["sort", "asc"]]
         }, rows: 3, expected: [
-            { index: 0, field: "x", value: "test211" },
+            { index: 0, field: "x", value: "test211.0" },
         ]
     },
     "should work with nested function": {

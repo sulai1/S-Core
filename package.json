@@ -6,7 +6,22 @@
   "author": "Sascha Wernegger",
   "type": "commonjs",
   "main": "index.js",
-  "scripts": {},
+  "scripts": {
+    "test": "vitest",
+    "test:watch": "vitest --watch",
+    "test:coverage": "vitest --coverage",
+    "lint": "eslint",
+    "typecheck": "tsc --noEmit",
+    "docs": "typedoc --out docs src",
+    "build": "rimraf dist && tsc -p tsconfig.json",
+    "deps:install": "npm install --workspaces",
+    "deps:clean": "npm run clean:node-modules --workspaces --if-present && rimraf node_modules",
+    "deps:update": "npm update --workspaces",
+    "deps:outdated": "npm outdated --workspaces",
+    "deps:audit": "npm audit --workspaces",
+    "deps:add": "npm install --workspaces",
+    "clean:node-modules": "rimraf node_modules"
+  },
   "workspaces": [
     "packages/core",
     "packages/client",
