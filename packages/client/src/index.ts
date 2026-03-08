@@ -3,7 +3,7 @@ import type { OpenAPIV3 } from "openapi-types";
 import type { DataSourceSchema, InferCreationSchema, InferPrimaryKey, InferTableSchema } from "@s-core/core";
 import type { Condition, DataSource, FunctionDefinitions, InferFunctionTypes, Repository, selectFunctionDefinitions, Client } from "@s-core/core";
 
-export type * from "@s-core/core";
+export * from "@s-core/core";
 export * from "./createFileClient.js";
 /**
  * Creates a Repository module for performing CRUD operations.

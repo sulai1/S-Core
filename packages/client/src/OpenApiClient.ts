@@ -1,7 +1,8 @@
 import $RefParser from "@apidevtools/json-schema-ref-parser";
+import type { Client, HttpRequest, HttpRequestOptions, OpenApiMethod, OpenApiModule } from "@s-core/core";
+import axios from "axios";
 import type { OpenAPIV3_1 } from "openapi-types";
 import type { OperationObject, PathsObject } from "openapi-typescript";
-import type { HttpRequest, HttpRequestOptions, OpenApiMethod, OpenApiModule, Client } from "@s-core/core";
 
 /**
  * Creates an API module with the specified configuration. For each route in the configuration, 
@@ -16,14 +17,38 @@ import type { HttpRequest, HttpRequestOptions, OpenApiMethod, OpenApiModule, Cli
  * @param {any[]} [args] - Optional arguments to pass to the API module constructor.
  * @returns {T} - The instantiated API module with methods bound to the specified routes.
  */
+
 export async function createOpenApiClient<
     Paths = OpenAPIV3_1.PathsObject | PathsObject,
     Options extends Omit<HttpRequest, "body" | "params" | "query" | "url" | "method"> = Omit<HttpRequest, "body" | "params" | "query" | "url" | "method">
 >(
-    schema: string | OpenAPIV3_1.Document | OpenAPIV3_1.Document,
-    client: Client,
+    pathOrSchema: string | OpenAPIV3_1.Document,
+    schemaOrClient?: string | OpenAPIV3_1.Document | Client,
+    options?: { client?: Client }
 ): Promise<OpenApiModule<Paths, Options>> {
-    const bundledSchema = await $RefParser.bundle<OpenAPIV3_1.Document | OpenAPIV3_1.Document>(schema);
+    let baseURL = "";
+    let schema: string | OpenAPIV3_1.Document;
+    let client: Client | undefined;
+
+    if (typeof schemaOrClient === "string" || (typeof schemaOrClient === "object" && schemaOrClient !== null && "openapi" in schemaOrClient)) {
+        // New signature: createOpenApiClient(baseURL, schema, options?)
+        baseURL = typeof pathOrSchema === "string" ? pathOrSchema : "";
+        schema = schemaOrClient;
+        client = options?.client;
+    } else {
+        // Backward-compatible signature: createOpenApiClient(schema, client?)
+        schema = pathOrSchema;
+        client = schemaOrClient as Client | undefined;
+    }
+
+    const resolvedClient = client || (axios.create({
+        baseURL,
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        withCredentials: true, // Enable sending cookies with cross-origin requests
+    })) as Client;
+    const bundledSchema = await $RefParser.bundle<OpenAPIV3_1.Document>(schema);
     const res = {} as OpenApiModule<Paths, Options>;
     for (const url in bundledSchema.paths) {
         const path = bundledSchema.paths[url];
@@ -40,37 +65,37 @@ export async function createOpenApiClient<
             switch (method) {
                 case 'get':
                     ep[method] = (async (options?: object) => {
-                        const res = await client.get(url, options);
+                        const res = await resolvedClient.get(url, options);
                         return res.data;
                     }) as OpenApiMethod<Paths>;
                     break;
                 case 'post':
                     ep[method] = (async (req: unknown, options?: object) => {
-                        const res = await client.post(url, req, options);
+                        const res = await resolvedClient.post(url, req, options);
                         return res.data;
                     }) as OpenApiMethod<Paths>;
                     break;
                 case 'put':
                     ep[method] = (async (req: unknown, options?: object) => {
-                        const res = await client.put(url, req, options);
+                        const res = await resolvedClient.put(url, req, options);
                         return res.data;
                     }) as OpenApiMethod<Paths>;
                     break;
                 case 'delete':
                     ep[method] = (async (options?: HttpRequestOptions) => {
-                        const res = await client.delete(url, options);
+                        const res = await resolvedClient.delete(url, options);
                         return res.data;
                     }) as OpenApiMethod<Paths>;
                     break;
                 case 'patch':
                     ep[method] = (async (body?: object, options?: HttpRequestOptions) => {
-                        const res = await client.patch(url, body, options);
+                        const res = await resolvedClient.patch(url, body, options);
                         return res.data;
                     }) as OpenApiMethod<Paths>;
                     break;
                 case 'head':
                     ep[method] = (async (options?: HttpRequestOptions) => {
-                        const res = await client.head(url, options);
+                        const res = await resolvedClient.head(url, options);
                         return res.data;
                     }) as OpenApiMethod<Paths>;
                     break;

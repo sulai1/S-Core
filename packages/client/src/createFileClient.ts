@@ -8,7 +8,8 @@ export type FileClientOptions = {
 };
 
 export type FormDataLike = {
-    append: (name: string, value: unknown, fileName?: string) => void;
+    // Use broad arg types so native browser FormData and Node form-data are both assignable.
+    append: (name: string, value: any, fileName?: string) => void;
     getHeaders?: () => Record<string, string>;
 };
 

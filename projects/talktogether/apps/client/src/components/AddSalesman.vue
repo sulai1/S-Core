@@ -39,8 +39,7 @@ import type { InferCreationSchema } from '@s-core/client';
 import type { salesman as sm } from '@s-core/talktogether';
 import { ref } from 'vue';
 import ImageCropper from './ImageCropper.vue';
-import { uploadImage } from './upload';
-import { datasource } from 'src/boot/di';
+import { datasource, uploads } from 'src/boot/di';
 
 const salesman = ref<InferCreationSchema<typeof  sm>>({
   first: '',
@@ -67,11 +66,14 @@ async function createSalesman () {
         throw new Error("Please select an image")
     }
     salesman.value.image = image.value.name;
-    const imgName = await uploadImage(image.value)
-    if(!imgName){
+    
+    const formData = new FormData();
+    formData.append('file', image.value);
+    const uploadInfo = await uploads.upload(formData)
+    if(!uploadInfo){
         throw new Error("Error uploading image")
     }
-    salesman.value.image = imgName;
+    salesman.value.image = uploadInfo[0]?.filename ?? '';
     const res = await datasource.insert("Salesman",[salesman.value])
     if(!res){
         throw new Error("Creating salesman failed: " + JSON.stringify(res))

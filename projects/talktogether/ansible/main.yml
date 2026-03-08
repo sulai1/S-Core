@@ -47,7 +47,7 @@
       become: false
       ansible.builtin.shell:
         cmd: npm install && npm run build
-        chdir: "{{ talktogether_build_context_resolved }}/client"
+        chdir: "{{ talktogether_build_context_resolved }}/apps/client"
       args:
         executable: /bin/bash
 
@@ -61,10 +61,9 @@
           tar -czf {{ talktogether_source_archive_resolved }}
           --exclude=.git
           --exclude=node_modules
-          --exclude=client/node_modules
-          --exclude=server/node_modules
-          --exclude=api/node_modules
-          --exclude=server/dist
+          --exclude=apps/client/node_modules
+          --exclude=apps/server/node_modules
+          --exclude=apps/server/dist
           -C {{ talktogether_build_context_resolved }}
           .
       args:
@@ -100,8 +99,8 @@
     - name: Copy built SPA client dist to target
       become: true
       ansible.builtin.copy:
-        src: "{{ talktogether_build_context_resolved }}/client/dist"
-        dest: "{{ talktogether_build_dir_resolved }}/client/dist"
+        src: "{{ talktogether_build_context_resolved }}/apps/client/dist"
+        dest: "{{ talktogether_build_dir_resolved }}/apps/client/dist"
         mode: "0755"
         owner: root
         group: root

@@ -1,7 +1,7 @@
-import { FilePaths, FileUploadResult, OpenApiModule } from "@s-core/core";
-import { Request } from "express";
 import { promises as fs } from "fs";
 import path from "path";
+import { FilePaths, FileUploadResult, OpenApiModule } from "@s-core/core";
+import { Request } from "express";
 
 export type FileServerModuleOptions = {
     fileName?: (file: Express.Multer.File) => string;

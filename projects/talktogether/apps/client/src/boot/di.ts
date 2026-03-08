@@ -1,9 +1,9 @@
 import { defineBoot } from '#q-app/wrappers';
 import type { OpenApiModule } from "@s-core/client";
-import { createDatasourceClient, createOpenApiClient, type Client } from "@s-core/client";
+import { createDatasourceClient, createFileClient, createOpenApiClient } from "@s-core/client";
 import type { paths } from '@s-core/talktogether/src';
-import { apiSchema } from '@s-core/talktogether/src/schema';
 import { type tables } from '@s-core/talktogether/src/models';
+import { apiSchema } from '@s-core/talktogether/src/schema';
 import axios from 'axios';
 import { Buffer } from 'buffer';
 
@@ -14,6 +14,7 @@ if (typeof window !== 'undefined') {
 
 export let datasource: ReturnType<typeof createDatasourceClient<typeof tables>>;
 export let routes: OpenApiModule<paths>;
+export let uploads: ReturnType<typeof createFileClient>;
 
 // Read API base URL from window config (injected by Docker/nginx) or fallback to default
 const getBaseUrl = (): string => {
@@ -29,19 +30,18 @@ const getBaseUrl = (): string => {
 
 export const baseUrl = getBaseUrl();
 
-export const api: Client = axios.create({
+export const api = axios.create({
   baseURL: baseUrl,
   headers: {
     'Content-Type': 'application/json',
   },
-  withCredentials: true, // Enable sending cookies with cross-origin requests
+  withCredentials: true,
 });
 
 export default defineBoot(async ({ app }) => {
-  // Lazy-load s-core only after boot to avoid server-side code in browser
-
-  routes = await createOpenApiClient<paths>(apiSchema, api)
-
+  routes = await createOpenApiClient<paths>(baseUrl, apiSchema, { client: api });
   datasource = createDatasourceClient(baseUrl + "/data");
+  uploads = createFileClient(baseUrl, { basePath: "/images", client: api });
+
   app.provide('datasource', datasource);
 });

@@ -67,10 +67,9 @@
 </template>
 
 <script setup lang="ts">
-import { baseUrl, datasource } from 'src/boot/di';
+import { baseUrl, datasource, uploads } from 'src/boot/di';
 import type { Identification, Salesman } from '@s-core/talktogether';
 import {ref, watch } from 'vue';
-import { uploadImage } from './upload';
 import ImageCropper from './ImageCropper.vue';
 
 const imgFile = ref<File  | null>(null);
@@ -98,13 +97,13 @@ watch(salesman, async ()=>{
 },{ immediate:true})
 
 watch(imgFile, async (newFile) => {
-    if (!newFile) {
-      return;
-    }
-    const imageUrl = await uploadImage(newFile);
+    if (!newFile) return;
+    const formData = new FormData();
+    formData.append('file', newFile);
+    const imageUrl = await uploads.upload(formData);
     if (imageUrl && salesman.value) {
-      salesman.value.image = imageUrl;
-      selectedSalesmanImage.value = `${baseUrl}/images/${imageUrl}`;
+      salesman.value.image = imageUrl[0]?.filename??'';
+      selectedSalesmanImage.value = `${baseUrl}/images/${imageUrl[0]?.filename}`;
     }
 });
 

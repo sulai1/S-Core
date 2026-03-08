@@ -6,67 +6,68 @@ export type FileUploadResult = {
     path?: string;
 };
 
-export type FilePaths<Path extends string> =
-    & Record<Path, {
+export type FileUploadBody<FileValue = unknown> = {
+    /** @description Files to upload */
+    files: FileValue[];
+};
+
+export type FilePaths<Path extends string, FileValue = unknown> = Record<Path, {
+    parameters: {
+        query?: never;
+        header?: never;
+        path?: never;
+        cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Upload files
+     * @description Upload files using multipart/form-data
+     */
+    post: {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get?: never;
-        put?: never;
-        /**
-         * Upload files
-         * @description Upload files using multipart/form-data
-         */
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody: {
-                content: {
-                    "multipart/form-data": {
-                        /** @description Files to upload */
-                        files: string[];
-                    };
-                };
-            };
-            responses: {
-                /** @description Files uploaded successfully */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": FileUploadResult[];
-                    };
-                };
-                /** @description Invalid file or missing file */
-                400: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-                /** @description Server error during upload */
-                500: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
+        requestBody: {
+            content: {
+                "multipart/form-data": FileUploadBody<FileValue>;
             };
         };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    }>
+        responses: {
+            /** @description Files uploaded successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": FileUploadResult[];
+                };
+            };
+            /** @description Invalid file or missing file */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Server error during upload */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+}>
     & Record<`${Path}/{filename}`, {
         parameters: {
             query?: never;
