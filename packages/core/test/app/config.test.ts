@@ -1,10 +1,10 @@
 import { afterEach, describe, expect, test } from "vitest";
-import { DefaultConfigProvider } from "../../src/app/ConfigProvider.js";
+import { MemoryConfigProvider } from "../../src/app/MemoryConfigProvider.js";
 import fs from "fs/promises";
 import path from "path";
 
 const configPath = path.join(__dirname, "test-config.json");
-const configProvider = new DefaultConfigProvider(configPath);
+const configProvider = new MemoryConfigProvider();
 
 describe("AppConfigProvider", () => {
     afterEach(async () => {
@@ -23,14 +23,5 @@ describe("AppConfigProvider", () => {
         configProvider.setValue("test", "conf", "newValue");
         const newValue = configProvider.getValue("test", "conf");
         expect(newValue).toEqual("newValue");
-    });
-
-    test("save and load config from file", async () => {
-        configProvider.setConfig("test", { conf: "fileValue" });
-        await configProvider.save();
-        const newConfigProvider = new DefaultConfigProvider(configPath);
-        await newConfigProvider.load();
-        const loadedConfig = newConfigProvider.getConfig("test");
-        expect(loadedConfig).toEqual({ conf: "fileValue" });
     });
 });

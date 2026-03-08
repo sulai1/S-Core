@@ -1,8 +1,7 @@
 import $RefParser from "@apidevtools/json-schema-ref-parser";
 import type { OpenAPIV3_1 } from "openapi-types";
 import type { OperationObject, PathsObject } from "openapi-typescript";
-import { HttpRequest, HttpRequestOptions, OpenApiMethod, OpenApiModule } from "@s-core/core";
-import type { Client } from "@s-core/core";
+import type { HttpRequest, HttpRequestOptions, OpenApiMethod, OpenApiModule, Client } from "@s-core/core";
 
 /**
  * Creates an API module with the specified configuration. For each route in the configuration, 

@@ -12,11 +12,14 @@
     "test:coverage": "vitest --coverage",
     "lint:workspaces": "npm run lint --workspaces --if-present",
     "typecheck:workspaces": "npm run typecheck --workspaces --if-present",
-    "lint": "sh -c 'npm run lint --workspaces --if-present -- \"$@\"' --",
-    "typecheck": "sh -c 'npm run typecheck --workspaces --if-present -- \"$@\"' --",
     "check": "npm run lint && npm run typecheck",
     "docs": "typedoc --out docs src",
-    "build": "rimraf dist && tsc -p tsconfig.json",
+    "build": "npm run build --workspaces --if-present",
+    "watch:packages:client": "npm run watch --workspace @s-core/client",
+    "watch:packages:core": "npm run watch --workspace @s-core/core",
+    "watch:packages:server": "npm run watch --workspace @s-core/server",
+    "watch:packages:talktogether": "npm run watch --workspace @s-core/talktogether",
+    "watch:packages": "concurrently -n client,core,server,talktogether -c blue,green,magenta,cyan \"npm run watch:packages:client\" \"npm run watch:packages:core\" \"npm run watch:packages:server\" \"npm run watch:packages:talktogether\"",
     "deps:install": "npm install --workspaces",
     "deps:clean": "npm run clean:node-modules --workspaces --if-present && rimraf node_modules",
     "deps:update": "npm update --workspaces",
@@ -31,5 +34,8 @@
   ],
   "dependencies": {
     "openapi-typescript": "^7.13.0"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1"
   }
 }

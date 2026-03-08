@@ -1,4 +1,4 @@
-import { Request, Response } from 'express';
+import { NextFunction, Request, Response } from 'express';
 import { ApiError, HttpRequest, HttpResponseBuilder } from '@s-core/core';
 import { ExpressServer } from './ExpressServer.js';
 import { Router } from './Router.js';
@@ -18,8 +18,8 @@ export type Handler<
 > = (
     req: Req,
     res: Res,
-    next: (error?: ApiError | null) => void
-) => void
+    next: NextFunction
+) => Promise<void>
 
 export type Server<
     Req extends HttpRequest = HttpRequest,

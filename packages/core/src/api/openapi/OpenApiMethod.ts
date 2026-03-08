@@ -1,4 +1,3 @@
-import type { Readable } from "node:stream";
 import { OpenApiBody } from "./OpenApiBody.js";
 import { OpenApiPathParameter } from "./OpenApiPathParameter.js";
 import { OpenApiQueryParameter } from "./OpenApiQueryParameter.js";
@@ -6,7 +5,7 @@ import { OpenApiResult } from "./OpenApiResult.js";
 
 type OptionalResult<T> = T extends never
     ? Promise<void>
-    : Promise<T | Readable>
+    : Promise<T>
 
 type MethodOptions<
     T,

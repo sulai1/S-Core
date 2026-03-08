@@ -2,11 +2,21 @@ import type { RouteRecordRaw } from 'vue-router';
 
 const routes: RouteRecordRaw[] = [
   {
+    path: '/login',
+    name: 'login',
+    component: () => import('pages/LoginPage.vue').catch((error) => {
+      console.error('Failed to load LoginPage.vue:', error);
+      return import('pages/ErrorNotFound.vue');
+    }),
+    meta: { requiresAuth: false },
+  },
+  {
     path: '/',
     component: () => import('layouts/MainLayout.vue').catch((error) => {
       console.error('Failed to load MainLayout.vue:', error);
       return import('pages/ErrorNotFound.vue');
     }),
+    meta: { requiresAuth: true },
     children: [{
       path: '', name: "salesmen", component: () => import('pages/IndexPage.vue').catch((error) => {
         console.error('Failed to load IndexPage.vue:', error);

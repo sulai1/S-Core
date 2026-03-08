@@ -47,6 +47,15 @@ export default defineConfig((/* ctx */) => {
           '@sequelize/db2-ibmi',
           '@sequelize/db2'
         ];
+
+        // Add Buffer polyfill for browser compatibility
+        viteConf.define = viteConf.define || {};
+        viteConf.define.global = 'globalThis';
+        viteConf.resolve = viteConf.resolve || {};
+        viteConf.resolve.alias = {
+          ...(Array.isArray(viteConf.resolve.alias) ? {} : viteConf.resolve.alias),
+          buffer: 'buffer'
+        };
       },
       target: {
         browser: ['es2022', 'firefox115', 'chrome115', 'safari14'],

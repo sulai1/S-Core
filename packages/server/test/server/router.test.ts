@@ -1,13 +1,15 @@
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 import express from "express";
 import supertest from "supertest";
-import { beforeEach, describe, expect, test, vi } from "vitest";
+import { beforeAll, beforeEach, describe, expect, test, vi } from "vitest";
 import { OpenApiModule } from "@s-core/core";
 import { ExpressServer } from "../../src/server/ExpressServer.js";
 import * as api from "../api/test-api-permanent/index.js";
 import { OpenApiMethod, OpenApiResult } from "@s-core/core";
 import { fileURLToPath } from "url";
 import path from "path";
+import $RefParser from "@apidevtools/json-schema-ref-parser";
+import type { OpenAPIV3, OpenAPIV3_1 } from "openapi-types";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -15,6 +17,12 @@ const schemaPath = path.join(__dirname, "../api/test-api-permanent/schema.yaml")
 
 
 let server: ExpressServer;
+let bundledSchema: OpenAPIV3.Document | OpenAPIV3_1.Document;
+
+beforeAll(async () => {
+    bundledSchema = await $RefParser.bundle<OpenAPIV3.Document | OpenAPIV3_1.Document>(schemaPath);
+});
+
 beforeEach(() => {
     server = new ExpressServer();
 });
@@ -72,7 +80,7 @@ describe("Server API routes", () => {
             (t as any)[testCase.path][testCase.method].mockResolvedValue(testCase.response);
             await server.add<api.paths>(
                 "/test",
-                schemaPath,
+                bundledSchema,
                 t,
                 { validateRequests: true, validateResponses: false });
             const mock = supertest(server.app);
@@ -109,8 +117,9 @@ describe("Server API routes", () => {
     });
 
     test("test attribute should be available in extension", async () => {
-        const newServer = server.extend<{ test: string }>("/test", async (req, res) => {
-            return { test: "test" };
+        const newServer = server.extend<{ test: string }>("/test", (req, res, next) => {
+            Object.assign(req, { test: "test" });
+            next();
         });
         const f = vi.fn((req, res) => {
             expect(req.test).toBe("test");
@@ -129,7 +138,7 @@ describe("Server API routes", () => {
         t["/pathWithMultipleStatusCodes"].get.mockResolvedValue({ id: "123", name: "Test" });
         await server.add<api.paths>(
             "/test",
-            schemaPath,
+            bundledSchema,
             t,
             { validateRequests: true, validateResponses: true });
         const mock = supertest(server.app)

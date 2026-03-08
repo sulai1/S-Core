@@ -1,6 +1,6 @@
-import { createDatasourceSchema, OpenAPIV3 } from "@s-core/client";
-import { identification, item, salesman, transaction } from "./models";
+import { createDatasourceSchema } from "@s-core/client";
 import { OpenAPIV3_1 } from "openapi-types";
+import { identification, item, salesman, transaction } from "./models";
 
 export const apiSchema = {
     openapi: "3.1.0",
@@ -235,10 +235,3 @@ export const apiSchema = {
     "webhooks": {
     }
 } as const satisfies OpenAPIV3_1.Document;
-
-export const datasourceSchema = createDatasourceSchema("test", {
-    salesman,
-    identification,
-    item,
-    transaction
-});

@@ -35,6 +35,8 @@ export class ExpressServer<
             });
         });
 
+        await this.waitForPendingRouteRegistrations();
+
         const promis = new Promise<Server<Req, Res>>((resolve) => {
             this.app.listen(port, () => {
                 console.info(`Server is listening on http://localhost:${port}`);

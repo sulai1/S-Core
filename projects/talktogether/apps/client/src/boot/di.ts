@@ -1,9 +1,19 @@
 import { defineBoot } from '#q-app/wrappers';
-import { createDatasourceClient, selectFunctionDefinitions, type Client, type DataSource, type SelectFunctionDefinitions } from "@s-core/client";
-import type { tables } from '@s-core/talktogether';
+import type { OpenApiModule } from "@s-core/client";
+import { createDatasourceClient, createOpenApiClient, type Client } from "@s-core/client";
+import type { paths } from '@s-core/talktogether/src';
+import { apiSchema } from '@s-core/talktogether/src/schema';
+import { type tables } from '@s-core/talktogether/src/models';
 import axios from 'axios';
+import { Buffer } from 'buffer';
 
-export let datasource: DataSource<typeof tables, SelectFunctionDefinitions>;
+// Polyfill Buffer for browser
+if (typeof window !== 'undefined') {
+  window.Buffer = window.Buffer || Buffer;
+}
+
+export let datasource: ReturnType<typeof createDatasourceClient<typeof tables>>;
+export let routes: OpenApiModule<paths>;
 
 // Read API base URL from window config (injected by Docker/nginx) or fallback to default
 const getBaseUrl = (): string => {
@@ -24,13 +34,14 @@ export const api: Client = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  withCredentials: true, // Enable sending cookies with cross-origin requests
 });
 
-export default defineBoot(({ app }) => {
+export default defineBoot(async ({ app }) => {
   // Lazy-load s-core only after boot to avoid server-side code in browser
 
-  datasource = createDatasourceClient(baseUrl + "/data", {
-    functionDefinitions: selectFunctionDefinitions
-  });
+  routes = await createOpenApiClient<paths>(apiSchema, api)
+
+  datasource = createDatasourceClient(baseUrl + "/data");
   app.provide('datasource', datasource);
 });

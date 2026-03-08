@@ -33,7 +33,7 @@ const appCollection = createApplication()
 
 appCollection.configProvider.setValue("server", "port", process.env.NODE_PORT);
 
-console.log(`Environment: DB_NAME: ${env}, DB_USER: ${process.env.DB_USER}, DB_HOST: ${process.env.DB_HOST}, DB_PORT: ${process.env.DB_PORT}`);
+console.log(`Environment: DB_NAME: ${process.env.DB_NAME}, DB_USER: ${process.env.DB_USER}, DB_HOST: ${process.env.DB_HOST}, DB_PORT: ${process.env.DB_PORT}`);
 export const app = appCollection.build().then(async app => {
     await app.start();
 }).catch(e => {

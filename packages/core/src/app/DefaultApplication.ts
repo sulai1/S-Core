@@ -1,5 +1,6 @@
 import { Application } from "./Application.js";
-import { ConfigProvider, DefaultConfigProvider } from "./ConfigProvider.js";
+import { ConfigProvider } from "./ConfigProvider.js";
+import { MemoryConfigProvider } from "./MemoryConfigProvider.js";
 import { DefaultEmitter } from "./Emitter.js";
 import { Factory, FactoryCollection, InferFactoryCollectionTypes, InferFactoryType } from "./Factory.js";
 import { AddModule, ModuleCollection, ModuleCollectionEvent, RemoveModule } from "./ModuleCollection.js";
@@ -35,9 +36,7 @@ export class ApplicationModuleCollection<Collection extends FactoryCollection = 
     readonly configProvider: ConfigProvider<AppConfig<Application<Collection>>>;
 
     constructor(options?: ApplicationConfig<Collection>) {
-        this.configProvider = options?.configProvider ?? new DefaultConfigProvider<AppConfig<Application<Collection>>>(
-            options?.configPath ?? "appConfig.json"
-        );
+        this.configProvider = options?.configProvider ?? new MemoryConfigProvider();
     }
     addModule<K extends string, T>(name: K, module: Factory<Application<Collection>, T>)
         : ApplicationModuleCollection<AddModule<Collection, K, Factory<Application<Collection>, T>>> {

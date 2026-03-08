@@ -2,8 +2,8 @@ import { existsSync } from 'fs';
 import { Readable } from 'stream';
 import $RefParser from '@apidevtools/json-schema-ref-parser';
 import { ApiError, OpenApiModule } from '@s-core/core';
-import {Ajv} from 'ajv';
-import express from 'express';
+import { Ajv } from 'ajv';
+import express, { RequestHandler } from 'express';
 import type { OpenAPIV3, OpenAPIV3_1 } from 'openapi-types';
 import multer from 'multer';
 import { OpenapiPaths, Router } from './Router.js';
@@ -76,10 +76,18 @@ export class ExpressRouter<
 > implements Router<Req, Res> {
     readonly router: express.Router;
     readonly options: ExpressRouterOptions;
+    private readonly pendingRouteRegistrations = new Set<Promise<void>>();
 
     constructor(router: express.Router, options?: Partial<ExpressRouterOptions>) {
         this.router = router;
         this.options = { logger: console, ...options };
+    }
+
+    protected async waitForPendingRouteRegistrations(): Promise<void> {
+        if (this.pendingRouteRegistrations.size === 0) {
+            return;
+        }
+        await Promise.all(Array.from(this.pendingRouteRegistrations));
     }
 
     /**
@@ -90,24 +98,17 @@ export class ExpressRouter<
      * @returns the router instance
      */
     use<TReq extends Req = Req, TRes extends Res = Res>(
-        path: string | Handler<TReq, TRes>,
-        handler?: Handler<TReq, TRes>
+        path: string | RequestHandler,
+        handler?: RequestHandler
     ): this {
         if (typeof path === 'string') {
             if (!handler) {
                 throw new Error("Handler must be provided when path is a string");
             }
-            const ref = { handler: handler as Handler<TReq, TRes> };
             // mount delegator so Express calls the current handler stored in ref
-            this.router.use(path, (req, res, next) => {
-                return ref.handler(req as TReq, res as TRes, next);
-            });
+            this.router.use(path, handler);
         } else {
-            const h = path;
-            const ref = { handler: h as Handler<TReq, TRes> };
-            this.router.use((req, res, next) => {
-                return ref.handler(req as TReq, res as TRes, next);
-            });
+            this.router.use(path);
         }
         return this;
     };
@@ -168,61 +169,38 @@ export class ExpressRouter<
         return middlewares;
     }
 
-    /**
-     * Add a module to a specific path, and validate requests and responses from a json schema. 
-     * It registers routes on the Express router based on the OpenAPI schema and the provided module implementation.
-     * The appropriate body parsers and validation middlewares are added based on the schema and supported content types. 
-     * @param path the path to add the module to
-     * @param schema the path to the schema file
-     * @param module the implementation to add
-     * @param options options for request and response validation
-     * @returns the router instance
-     * 
-     * @template M - The type of the OpenAPI paths is used to infere the module type.
-     */
-    async add<M extends OpenapiPaths<M>>(
-        path: string,
-        schema: string | OpenAPIV3.Document | OpenAPIV3_1.Document,
+    private registerApiRoutes<M extends OpenapiPaths<M>>(
+        router: express.Router,
+        basePath: string,
+        api: OpenAPIV3_1.Document | OpenAPIV3.Document,
         module: OpenApiModule<M, Req>,
+        ajv: Ajv,
         options?: {
             validateRequests?: boolean;
             validateResponses?: boolean;
         }
-    ): Promise<this> {
-        const router = express.Router();
-        if (typeof schema === "string" && !existsSync(schema)) {
-            throw new Error(`Schema file not found: ${schema}`);
-        }
-        const ajv = new Ajv({ allErrors: true, strict: false, coerceTypes: true });
-        let api: OpenAPIV3_1.Document | OpenAPIV3.Document;
-        if (typeof schema === "string") {
-            api = await $RefParser.bundle<OpenAPIV3_1.Document | OpenAPIV3.Document>(schema);
-            ajv.addSchema(api, "root");
-        } else {
-            api = await $RefParser.bundle<OpenAPIV3_1.Document | OpenAPIV3.Document>(schema);
-            ajv.addSchema(api, "root");
-        }
+    ): void {
+        this.options.logger.info(`Registering router ${basePath} ${api.info.title}`);
 
-        this.options.logger.info(`Registering router ${path} ${api.info.title}`);
-
-        // register routes on the current router
         for (const url in api.paths) {
-            const path = api.paths[url];
-            if (typeof path !== 'object' || path === null) {
+            const pathItem = api.paths[url];
+            if (typeof pathItem !== 'object' || pathItem === null) {
                 continue;
             }
-            // Convert OpenAPI path params {param} to Express :param
-            const expressUrl = url.replace(/\{([^}]+)\}/g, ':$1');
-            for (const methodName of Object.keys(path) as (keyof typeof path)[]) {
-                const impl = module[url as keyof typeof module]?.[methodName as keyof typeof module[keyof typeof module]];
-                // we know it's an operation object and not a reference since we bundled it
-                const op = path[methodName] as OpenAPIV3.OperationObject;
 
-                // Statically determine if body parser or urlencoded is needed
-                let middlewares = this.createMiddlewares(url, methodName, op, ajv, options || {});
+            const expressUrl = url.replace(/\{([^}]+)\}/g, ':$1');
+            for (const methodName of Object.keys(pathItem) as (keyof typeof pathItem)[]) {
+                const impl = module[url as keyof typeof module]?.[methodName as keyof typeof module[keyof typeof module]];
+                const op = pathItem[methodName] as OpenAPIV3.OperationObject;
+
+                if (!impl) {
+                    this.options.logger.warn(`No implementation found for ${methodName.toUpperCase()} ${url}`);
+                    continue;
+                }
+
+                const middlewares = this.createMiddlewares(url, methodName, op, ajv, options || {});
                 this.options.logger.info(`Registering route ${methodName.toUpperCase()} ${expressUrl} for OpenAPI module ${api.info.title}`);
 
-                // Use method-specific routing instead of .use() to prevent method conflicts
                 const method = methodName as 'get' | 'post' | 'put' | 'delete' | 'patch' | 'head' | 'options';
                 router[method](expressUrl, ...middlewares, async (req, res, next) => {
                     try {
@@ -238,20 +216,69 @@ export class ExpressRouter<
                                 ...req.params,
                                 ...req.query
                             });
-                        handleContentType(op.responses, value, req, res);
+                        await handleContentType(op.responses, value, req, res);
                     } catch (error) {
                         next(error);
                     }
                 });
             }
         }
+
         router.get('/', async (req, res) => {
             const result = Object.keys(module);
             res.status(200).json(result);
         });
+    }
 
-        // Mount the router AFTER routes are registered
+    /**
+     * Add a module to a specific path, and validate requests and responses from a json schema. 
+     * It registers routes on the Express router based on the OpenAPI schema and the provided module implementation.
+     * The appropriate body parsers and validation middlewares are added based on the schema and supported content types. 
+     * @param path the path to add the module to
+     * @param schema the path to the schema file
+     * @param module the implementation to add
+     * @param options options for request and response validation
+     * @returns the router instance
+     * 
+     * @template M - The type of the OpenAPI paths is used to infere the module type.
+     */
+    add<M extends OpenapiPaths<M>>(
+        path: string,
+        schema: string | OpenAPIV3.Document | OpenAPIV3_1.Document,
+        module: OpenApiModule<M, Req>,
+        options?: {
+            validateRequests?: boolean;
+            validateResponses?: boolean;
+        }
+    ): this {
+        const router = express.Router();
+        // Mount the router immediately so it's available when requests come in
         this.router.use(path, router);
+
+        const ajv = new Ajv({ allErrors: true, strict: false, coerceTypes: true });
+        if (typeof schema !== "string") {
+            ajv.addSchema(schema, "root");
+            this.registerApiRoutes(router, path, schema, module, ajv, options);
+            return this;
+        }
+
+        if (!existsSync(schema)) {
+            throw new Error(`Schema file not found: ${schema}`);
+        }
+
+        const registrationPromise = $RefParser.bundle<OpenAPIV3_1.Document | OpenAPIV3.Document>(schema)
+            .then((bundled) => {
+                ajv.addSchema(bundled, "root");
+                this.registerApiRoutes(router, path, bundled, module, ajv, options);
+            })
+            .catch((err) => {
+                throw new Error(`Failed to bundle schema: ${(err as Error).message}`);
+            });
+
+        this.pendingRouteRegistrations.add(registrationPromise);
+        void registrationPromise.finally(() => {
+            this.pendingRouteRegistrations.delete(registrationPromise);
+        });
 
         return this;
     }
@@ -262,38 +289,30 @@ export class ExpressRouter<
      * @param middleware a function that returns additional properties to add to the request and allways calls next
      * @returns a new Router with the extended request type, allowing handlers to access the new properties
      */
-    extend<Extension extends object>(
+    extend<Extension extends object = {}>(
         path: string,
-        middleware: (req: Req, res: Res) => Promise<Extension>
+        middleware: RequestHandler,
     ): Router<Req & Extension, Res> {
         const router = express.Router();
-        router.use(async (req, res, next) => {
-            try {
-                const result = await middleware(req as Req, res as Res);
-                Object.assign(req, result);
-                next();
-            } catch (error) {
-                next(error as ApiError);
-            }
-        });
+        router.use(middleware);
         this.router.use(path, router);
-        return new ExpressRouter(router) as Router<Req & Extension, Res>;
+        return new ExpressRouter(router);
     }
 }
-function dereference<T>(obj: T | OpenAPIV3.ReferenceObject): T {
+async function dereference<T>(obj: T | OpenAPIV3.ReferenceObject): Promise<T> {
     if (typeof obj === "object" && obj !== null && "$ref" in obj) {
-        return $RefParser.dereference(obj) as T;
+        return await $RefParser.dereference(obj) as T;
     }
     return obj as T;
 }
 
-function handleContentType(responses: OpenAPIV3.ResponsesObject | undefined, value: unknown, req: express.Request, res: express.Response): void {
+async function handleContentType(responses: OpenAPIV3.ResponsesObject | undefined, value: unknown, req: express.Request, res: express.Response): Promise<void> {
     if (!responses) {
         return;
     }
     // get first content type
     const ok = Object.keys(responses)[0]
-    const response = dereference(responses[ok]);
+    const response = await dereference(responses[ok]);
     const contentTypes = Object.keys(response.content || {});
 
     for (const type of contentTypes) {

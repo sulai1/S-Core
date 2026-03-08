@@ -1,10 +1,9 @@
 import axios from "axios";
 import type { OpenAPIV3 } from "openapi-types";
-import { DataSourceSchema, InferCreationSchema, InferPrimaryKey, InferTableSchema } from "@s-core/core";
-import { Condition, DataSource, FunctionDefinitions, InferFunctionTypes, Repository, selectFunctionDefinitions } from "@s-core/core";
-import type { Client } from "@s-core/core";
+import type { DataSourceSchema, InferCreationSchema, InferPrimaryKey, InferTableSchema } from "@s-core/core";
+import type { Condition, DataSource, FunctionDefinitions, InferFunctionTypes, Repository, selectFunctionDefinitions, Client } from "@s-core/core";
 
-export * from "@s-core/core";
+export type * from "@s-core/core";
 export * from "./createFileClient.js";
 /**
  * Creates a Repository module for performing CRUD operations.
@@ -26,7 +25,7 @@ export function createDatasourceClient<
     options: {
         schema?: Tables,
         functionDefinitions?: F;
-        schemaPath?: string | OpenAPIV3.Document ;
+        schemaPath?: string | OpenAPIV3.Document;
         client?: Client;
     } = {}
 ): DataSource<Tables, InferFunctionTypes<F>> {

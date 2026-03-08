@@ -1,5 +1,6 @@
 import { HttpRequest, HttpResponseBuilder, OpenApiModule } from '@s-core/core';
 import type { OpenAPIV3, OpenAPIV3_1 } from 'openapi-types';
+import { RequestHandler } from 'express';
 import { Handler } from './index.js';
 
 type HttpMethod = 'get' | 'post' | 'put' | 'patch' | 'delete' | 'head' | 'options';
@@ -19,10 +20,7 @@ export interface Router<
      * Uses a handler for all requests .
      * @param handler a middleware handler function
      */
-    use<
-        TReq extends Req = Req,
-        TRes extends Res = Res
-    >(handler: Handler<TReq, TRes>): this;
+    use(handler: RequestHandler): this;
     /**
      * 
      * Uses a handler for requests to a specific path.
@@ -32,7 +30,10 @@ export interface Router<
     use<
         TReq extends Req = Req,
         TRes extends Res = Res
-    >(path: string, handler: Handler<TReq, TRes>): this;
+    >(path: string, handler: RequestHandler): this;
+    useErrorHandler<TReq extends Req = Req, TRes extends Res = Res>(
+        handler: (err: any, req: TReq, res: TRes, next: () => void) => void
+    ): this;
     /**
      * add a module to a specific path, and validate requests and responses from a json schema.
      * @param path the path to add the module to
@@ -45,13 +46,13 @@ export interface Router<
         M extends OpenapiPaths<M>,
     >(
         path: string,
-        schema: string | OpenAPIV3.Document| OpenAPIV3_1.Document,
+        schema: string | OpenAPIV3.Document | OpenAPIV3_1.Document,
         module: OpenApiModule<M, Req>,
         options?: {
             validateRequests?: boolean;
             validateResponses?: boolean;
         }
-    ): Promise<this>;
+    ): this;
     /**
      * Extends the request types with additional properties for a specific path.
      * @param path the path to extend
@@ -60,6 +61,7 @@ export interface Router<
      */
     extend<Extension extends object>(
         path: string,
-        api: (req: Req, res: Res) => Promise<Extension>
+        api: RequestHandler,
+        get: (req: Req) => Extension
     ): Router<Req & Extension, Res>;
 }
