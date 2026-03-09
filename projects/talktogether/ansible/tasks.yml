@@ -55,13 +55,6 @@
   args:
     executable: /bin/bash
 
-- name: Verify TalkTogether SPA output exists on controller
-  become: false
-  delegate_to: localhost
-  ansible.builtin.stat:
-    path: "{{ talktogether_build_context_resolved }}/projects/talktogether/apps/client/dist/spa"
-  register: talktogether_spa_dist
-
 - name: Fail when SPA output is missing
   ansible.builtin.fail:
     msg: "Expected SPA output at projects/talktogether/apps/client/dist/spa after local build, but it was not found."
