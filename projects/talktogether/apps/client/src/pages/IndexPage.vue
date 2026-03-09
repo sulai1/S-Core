@@ -15,6 +15,7 @@
         id="salesmen"
         :columns="columns"
         v-model:selected="selectedSalesman"
+        :row-class="rowColor"
         searchable
       >
         <template v-slot:toolbar>
@@ -102,7 +103,7 @@ const deleteSalesman =  (salesman?: Salesman) => {
   }).onOk(() => {
     if(!salesman?.id) return;
     datasource.delete("Salesman", [{ function:"=",params:["id",{value:salesman.id}]}] ).catch((e: unknown)=> console.error(e));
-    salesmen.value = salesmen.value.filter(s => s.id !== salesman.id);
+    salesmen.value = salesmen.value.filter((s:Salesman) => s.id !== salesman.id);
   });
 };
 
@@ -138,11 +139,15 @@ function addSalesman () {
 function addToPrintList(salesman?: Salesman){
   console.log("addToPrintList", salesman);
   if(!salesman) return;
-  if(!printList.value.find(s => s.id === salesman.id)){
+  if(!printList.value.find((s:Salesman) => s.id === salesman.id)){
     printList.value = [salesman,...printList.value];
   }
   // ensure unique entries
   printList.value = [...new Set(printList.value)];
+}
+
+function rowColor(row: Salesman) {
+  return row.message?.toLowerCase().includes("sperr") ? 'bg-red-3' : '';
 }
 
 </script>
@@ -180,5 +185,8 @@ function addToPrintList(salesman?: Salesman){
   z-index:1;
 }
 
+.bg-red-3 {
+  background-color: rgba(203, 5, 5, 0.93) !important;
+}
 
 </style>

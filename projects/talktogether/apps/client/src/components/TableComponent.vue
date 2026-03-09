@@ -46,7 +46,7 @@
         </thead>
       </template>
       <template v-slot="{ item: row }">
-          <tr :class="{ selected: selected === row}"
+          <tr :class="getRowClass(row)"
             @click="() => selected=row"
           >
               <td v-for="({cellClass, property, }, index) in columns"
@@ -166,6 +166,19 @@ const handleKeydown = (event: KeyboardEvent) => {
     }
   }
 };
+
+function getRowClass(row:T):string{
+  let classes = "";
+  if(selected.value === row){
+    classes += "selected ";
+  }
+  if(typeof props.rowClass === 'function'){
+    classes += props.rowClass(row);
+  }else if(typeof props.rowClass === 'string'){
+    classes += props.rowClass;
+  }
+  return classes.trim();
+}
 </script>
 
 <style>
