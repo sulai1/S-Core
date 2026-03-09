@@ -17,10 +17,6 @@
   },
   "include": [
     "index.ts",
-    "src/**/*.ts",
-    "test/**/*.ts",
-    "src/api/openapi/**/*.ts",
-    "test/buildTypes.test.ts"
   ],
   "exclude": [
     "node_modules",

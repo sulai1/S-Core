@@ -1,11 +1,12 @@
 import { createApplication } from "@s-core/core";
 import { createServer } from "@s-core/server";
 import { json } from "express";
-import { createCors } from "./services/Cors";
 import { LokiService } from "./services/LokiService";
 import { NginxProxyManagerService } from "./services/NginxProxyManagerService";
 import { createProxyFactory } from "./services/proxy";
 import { InMemoryTokenStore } from "./store/TokenStore";
+import cors from "cors";
+
 
 export const npmUser = process.env.ADMIN_USER ?? 'admin';
 export const npmPassword = process.env.ADMIN_PASSWORD ?? 'admin';
@@ -35,7 +36,7 @@ export const appCollection = createApplication()
     .addModule("server",
         (app) => {
             const server = createServer()
-                .use(createCors()())
+                .use(cors())
                 .use(json())
                 .use((req, res, next) => {
                     console.log(`[${req.method}] ${req.baseUrl}${req.url}`);

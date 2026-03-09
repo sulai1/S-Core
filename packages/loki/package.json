@@ -1,0 +1,20 @@
+{
+  "name": "@s-core/loki",
+  "version": "0.0.1",
+  "description": "Loki API definition",
+  "main": "dist/index.js",
+  "scripts": {
+    "test": "vitest",
+    "test:watch": "vitest --watch",
+    "test:coverage": "vitest --coverage",
+    "lint": "eslint",
+    "typecheck": "tsc --noEmit",
+    "create-api": "ts-node -r tsconfig-paths/register src/script/ .ts",
+    "docs": "typedoc --out docs src",
+    "build": "rimraf dist && tsc -p tsconfig.json",
+    "watch": "tsc -p tsconfig.json --watch",
+    "clean:node-modules": "rimraf node_modules"
+  },
+  "author": "",
+  "license": "ISC"
+}

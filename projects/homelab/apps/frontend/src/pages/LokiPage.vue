@@ -33,7 +33,7 @@
 <script setup lang="ts">
   import { onMounted, ref } from 'vue';
   import useLokiApi, { type paths } from '../composables/useLoki';
-  import { type OpenApiResult } from '@s-tek/api';
+  import { type OpenApiResult } from '@s-core/core';
   import ObjectComponent from 'src/components/widgets/ObjectComponent.vue';
   import TableComponent from 'src/components/widgets/TableComponent.vue';
 import PieChart from 'src/components/charts/PieChart.vue';

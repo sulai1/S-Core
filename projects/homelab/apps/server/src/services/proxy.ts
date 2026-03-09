@@ -1,4 +1,4 @@
-import type { Handler } from "@s-tek/api";
+import { RequestHandler } from "express";
 import { createProxyMiddleware } from "http-proxy-middleware";
 
 export let cachedToken: { token: string; expiresAt: number };
@@ -15,11 +15,11 @@ export type ProxyOptions = {
 };
 
 export type ProxyFactory = {
-    create: (target: string, options?: ProxyOptions) => Handler;
+    create: (target: string, options?: ProxyOptions) => RequestHandler;
 }
 
 class HttpProxyFactory implements ProxyFactory {
-    create(target: string, options?: ProxyOptions): Handler {
+    create(target: string, options?: ProxyOptions): RequestHandler {
         return createProxyMiddleware({
             target: target,
             changeOrigin: true,

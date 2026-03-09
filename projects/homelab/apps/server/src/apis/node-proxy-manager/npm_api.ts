@@ -1,10 +1,13 @@
-import type { DnsProvider, HealthStatus } from '../../api/node-proxy-manager';
-import type { CreateProxyHostPayload } from "../../api/node-proxy-manager/CreateProxyHostPayload";
-import type { ProxyHost } from "../../api/node-proxy-manager/ProxyHost";
+import type { components} from '@s-core/nginx-proxy-manager';
 import type { Certificate } from 'crypto';
 import { NpmAuthService } from './node-proxy-manager';
 import type { TokenResponse } from '..';
 import axios from 'axios';
+
+type ProxyHost = components['schemas']['proxy-host-object'];
+type CreateProxyHostPayload = components['schemas']['proxy-host-object'];
+type DnsProvider = components['schemas']['dns-providers-list'];
+type HealthStatus = components['schemas']['health-object'];
 
 export async function npmLogin(identity: string, secret: string): Promise<TokenResponse> {
     const data = await request<TokenResponse>('POST', '/tokens', { data: { identity, secret } });

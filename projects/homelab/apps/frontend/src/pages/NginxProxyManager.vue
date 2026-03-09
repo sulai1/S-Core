@@ -12,7 +12,7 @@
   </q-page>
 </template>
 <script setup lang="ts">
-import { type OpenApiResult } from '@s-tek/api';
+import { type OpenApiResult } from '@s-core/core';
 import { onMounted, ref } from 'vue';
 import useNpmApi, { type paths } from "../../src/composables/useNpmApi";
 import ProxyList from '../components/NginxProxyManager/ProxyList.vue';

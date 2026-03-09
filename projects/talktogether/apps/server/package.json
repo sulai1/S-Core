@@ -28,7 +28,7 @@
   "description": "",
   "dependencies": {
     "@s-core/core": "^0.0.1",
-    "@s-core/server": "^1.0.0",
+    "@s-core/server": "^0.0.1",
     "@s-core/talktogether": "^0.0.1",
     "bcrypt": "^5.1.1",
     "cors": "^2.8.5",

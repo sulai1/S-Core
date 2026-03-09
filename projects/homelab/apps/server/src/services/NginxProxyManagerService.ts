@@ -1,6 +1,6 @@
 import { type Middleware, Fetcher } from "openapi-typescript-fetch";
 import type { Token, TokenStore } from "../store/TokenStore";
-import type { paths } from "../api/nginx-proxy-manager";
+import type { paths } from "@s-core/nginx-proxy-manager";
 
 export class NginxProxyManagerService {
     private fetcher = Fetcher.for<paths>();

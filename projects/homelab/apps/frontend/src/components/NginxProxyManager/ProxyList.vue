@@ -24,7 +24,7 @@
 </template>
 
 <script setup lang="ts">
-import { type OpenApiResult } from '@s-tek/api';
+import { type OpenApiResult } from '@s-core/core';
 import { type paths } from '../../composables/useNpmApi';
 import LEDComponent from '../widgets/LEDComponent.vue';
 import TableComponent from '../widgets/TableComponent.vue';

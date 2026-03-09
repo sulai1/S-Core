@@ -1,4 +1,4 @@
-import { ApiError } from "@s-tek/api";
+import { ApiError } from "@s-core/core";
 
 export type Token = {
     token: string;

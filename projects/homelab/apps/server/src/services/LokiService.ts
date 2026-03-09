@@ -1,5 +1,5 @@
 import { type Middleware, Fetcher } from "openapi-typescript-fetch";
-import type {  } from "@s-core/homelab";
+import type { paths } from "@s-core/loki";
 
 export class LokiService {
     private fetcher = Fetcher.for<paths>();

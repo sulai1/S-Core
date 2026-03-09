@@ -9,7 +9,7 @@
   </TableComponent>
 </template>
 <script setup lang="ts">
-import { type OpenApiResult } from '@s-tek/api';
+import { type OpenApiResult } from '@s-core/core';
 import { type paths } from 'src/composables/useNpmApi';
 import TableComponent from '../widgets/TableComponent.vue';
 defineProps<{
