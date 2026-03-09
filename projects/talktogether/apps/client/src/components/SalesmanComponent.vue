@@ -55,7 +55,7 @@
               filled
             />
           </div>
-          <q-btn icon="crop" @click="showCropper = true" />
+          <q-btn icon="crop" @click="showCropper = true" :disable="!selectedSalesmanImage" />
         </div>
         <q-separator class="q-my-md" />
         <slot>
@@ -98,9 +98,10 @@ watch(salesman, async ()=>{
 
 watch(imgFile, async (newFile) => {
     if (!newFile) return;
-    const formData = new FormData();
-    formData.append('file', newFile);
-    const imageUrl = await uploads.upload(formData);
+    const imageUrl = await uploads.upload({
+      data: newFile,
+      filename: newFile.name,
+    });
     if (imageUrl && salesman.value) {
       salesman.value.image = imageUrl[0]?.filename??'';
       selectedSalesmanImage.value = `${baseUrl}/images/${imageUrl[0]?.filename}`;

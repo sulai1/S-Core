@@ -66,10 +66,11 @@ async function createSalesman () {
         throw new Error("Please select an image")
     }
     salesman.value.image = image.value.name;
-    
-    const formData = new FormData();
-    formData.append('file', image.value);
-    const uploadInfo = await uploads.upload(formData)
+
+    const uploadInfo = await uploads.upload({
+      data: image.value,
+      filename: image.value.name,
+    })
     if(!uploadInfo){
         throw new Error("Error uploading image")
     }

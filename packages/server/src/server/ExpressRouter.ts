@@ -42,7 +42,8 @@ function dynamicBodyParser(contentTypes: string[]): express.RequestHandler {
     if (contentTypes.includes('multipart/form-data')) {
         // Use multer with memory storage for file uploads
         const upload = multer({ storage: multer.memoryStorage() });
-        parsers['multipart/form-data'] = upload.any();
+        // Use .array('files') to match the schema which expects a field named 'files'
+        parsers['multipart/form-data'] = upload.array('files');
     }
     return (req, res, next) => {
         const type = (req.headers['content-type'] || '').split(';')[0].trim();

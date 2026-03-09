@@ -5,7 +5,6 @@ import { Database, PostgreDialect } from '@s-core/server';
 import { tables } from "@s-core/talktogether";
 import { serverFactory } from './src/serverFactory';
 
-const env = process.env.NODE_ENV || 'development';
 
 export const imgPath = path.join(__dirname, 'images'); // Ensure this path is correct
 

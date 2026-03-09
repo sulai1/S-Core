@@ -24,8 +24,13 @@ const getBaseUrl = (): string => {
       return windowConfig.API_BASE_URL;
     }
   }
-  // Default to same origin (no CORS issues)
-  return typeof window !== 'undefined' ? window.location.origin : "http://localhost:3000";
+  const viteApiBaseUrl = import.meta.env.VITE_API_BASE_URL as string | undefined;
+  if (viteApiBaseUrl && viteApiBaseUrl.length > 0) {
+    return viteApiBaseUrl;
+  }
+
+  // Last-resort fallback for local development only.
+  return "http://localhost:3000";
 };
 
 export const baseUrl = getBaseUrl();

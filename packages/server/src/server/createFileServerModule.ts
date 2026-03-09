@@ -23,18 +23,29 @@ export function createFileServerModule<Path extends string>(
 ): OpenApiModule<FilePaths<Path>, Request> {
     return {
         [basePath]: {
-            post: async (req: { files: { type: string; format: any } }, request?: Request) => {
-                const files = (request as unknown as { files?: Express.Multer.File[] })?.files || [];
+            post: async (req: { files: { type: string; format: any }; filenames?: string[] }, request?: Request) => {
+                const incomingFiles = (request as unknown as { files?: Express.Multer.File[] })?.files;
+                const incomingBody = (request as unknown as { body?: { filenames?: unknown } })?.body;
 
-                if (!files || files.length === 0) {
+                if (!Array.isArray(incomingFiles) || incomingFiles.length === 0) {
                     throw new Error("No files uploaded");
                 }
+
+                const files = incomingFiles;
+                const filenameOverridesRaw = incomingBody?.filenames;
+                const filenameOverrides = Array.isArray(filenameOverridesRaw)
+                    ? filenameOverridesRaw
+                    : typeof filenameOverridesRaw === "string"
+                        ? [filenameOverridesRaw]
+                        : [];
 
                 await fs.mkdir(uploadDir, { recursive: true });
 
                 const results: FileUploadResult[] = [];
-                for (const file of files) {
-                    const desiredName = options.fileName ? options.fileName(file) : file.originalname;
+                for (const [index, file] of files.entries()) {
+                    const override = filenameOverrides[index] as string;
+                    const overrideName = typeof override === "string" && override.length > 0 ? override : undefined;
+                    const desiredName = overrideName ?? (options.fileName ? options.fileName(file) : file.originalname);
                     const filename = normalizeFilename(desiredName);
                     const filePath = path.join(uploadDir, filename);
 

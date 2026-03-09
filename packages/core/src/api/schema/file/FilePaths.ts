@@ -9,6 +9,8 @@ export type FileUploadResult = {
 export type FileUploadBody<FileValue = unknown> = {
     /** @description Files to upload */
     files: FileValue[];
+    /** @description Optional filename overrides for uploaded files (same order as files) */
+    filenames?: string[];
 };
 
 export type FilePaths<Path extends string, FileValue = unknown> = Record<Path, {
@@ -139,12 +141,21 @@ export function createFileSchema<Path extends string>(path: Path): OpenAPIV3_1.D
                             "multipart/form-data": {
                                 schema: {
                                     type: "object",
+                                    required: ["files"],
+                                    additionalProperties: false,
                                     properties: {
                                         files: {
                                             type: "array",
+                                            minItems: 1,
                                             items: {
                                                 type: "string",
                                                 format: "binary"
+                                            }
+                                        },
+                                        filenames: {
+                                            type: "array",
+                                            items: {
+                                                type: "string"
                                             }
                                         }
                                     }

@@ -37,13 +37,20 @@ export class ExpressServer<
 
         await this.waitForPendingRouteRegistrations();
 
-        const promis = new Promise<Server<Req, Res>>((resolve) => {
-            this.app.listen(port, () => {
+        return new Promise<Server<Req, Res>>((resolve, reject) => {
+            const server = this.app.listen(port, () => {
                 console.info(`Server is listening on http://localhost:${port}`);
                 resolve(this);
             });
+            
+            server.on('error', (err: Error & { code?: string }) => {
+                if (err.code === 'EADDRINUSE') {
+                    reject(new Error(`Port ${port} is already in use. Please stop the existing server or use a different port.`));
+                } else {
+                    reject(err);
+                }
+            });
         });
-        return await promis;
     }
 
 }

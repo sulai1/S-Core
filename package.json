@@ -36,6 +36,7 @@
     "openapi-typescript": "^7.13.0"
   },
   "devDependencies": {
-    "concurrently": "^9.2.1"
+    "concurrently": "^9.2.1",
+    "rimraf": "^5.0.5"
   }
 }

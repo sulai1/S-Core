@@ -13,7 +13,7 @@ node_port: 3000
 api_base_url: ""  # Leave empty to use same-origin (recommended)
 
 # Build Configuration
-talktogether_build_context: /path/to/Talktogether
+talktogether_build_context: /path/to/S-Core/projects/talktogether
 talktogether_image: talktogether:latest
 target_platform: linux/arm64  # or linux/amd64 for Intel/AMD
 

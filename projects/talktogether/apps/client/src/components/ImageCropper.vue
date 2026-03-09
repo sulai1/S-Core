@@ -62,14 +62,14 @@ const rotate = ref<number>(0)
 onMounted(()=>{
   watch(()=>props.src, ()=>{
     // re-init cropper when src changes
-    void nextTick(() => initCropper())
+    if(show.value) void nextTick(() => initCropper())
   }, {immediate:true})
 
   // re-init when dialog is shown (props.show mapped to local `show`)
   watch(show, (v) => {
     if(v) void nextTick(() => initCropper())
     else destroyCropper()
-  })
+  }, { immediate: true })
 
   // apply initial rotation if provided
   watch(() => props.initRotate, (v) => {

@@ -12,6 +12,13 @@ import { createIdentification } from "./pdf";
 const env = process.env.NODE_ENV || 'development';
 type SessionContext = Session & SessionData & { session: { userId?: number; userEmail?: string } };
 
+const configuredCorsOrigins = (process.env.CORS_ORIGINS || '')
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter((origin) => origin.length > 0);
+
+const isCookieSecure = (process.env.COOKIE_SECURE || '').toLowerCase() === 'true';
+
 const writeLog = (level: "INFO" | "ERROR", ...parts: unknown[]) => {
     const message = parts.map((part) => {
         if (typeof part === "string") {
@@ -48,12 +55,15 @@ export async function serverFactory(
 ) {
     const db = provider.getModule("db");
     const server = createServer()
+        .use((req, res, next) => {
+            console.log(req.url);
+            next()
+        })
         .use(cors({
             origin: [
                 /^http:\/\/localhost(:\d+)?$/,
                 /^http:\/\/127\.0\.0\.1(:\d+)?$/,
-                'http://localhost',
-                'http://127.0.0.1'
+                ...configuredCorsOrigins
             ],
             credentials: true
         }))
@@ -63,7 +73,7 @@ export async function serverFactory(
         resave: false,
         saveUninitialized: false,
         cookie: {
-            secure: env === 'production',
+            secure: isCookieSecure,
             httpOnly: true,
             maxAge: 1000 * 60 * 60 * 24 // 24 hours
         }
@@ -210,7 +220,6 @@ export async function serverFactory(
         writeLog("ERROR", `[${status}] Error:`, errorResponse);
         res.status(status).json(errorResponse);
     });
-    // Log requests in development without relying on console.
     if (env !== 'production') {
         server.use((req, _res, next) => {
             writeLog("INFO", "Request:", req.method, req.url);

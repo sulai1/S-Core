@@ -68,7 +68,7 @@ describe("Server API routes", () => {
         {
             name: "multer file", path: "/pathWithMultipart", method: "post", status: 200, contentType: "multipart/form-data",
             request: {
-                fieldname: "file", originalname: "test.txt", encoding: "7-bit", mimetype: "text/plain", buffer: Buffer.from("file content"), size: 12
+                fieldname: "files", originalname: "test.txt", encoding: "7-bit", mimetype: "text/plain", buffer: Buffer.from("file content"), size: 12
             },
             response: { message: "Multipart received fileField: undefined, textField: undefined " },
         }
@@ -197,7 +197,7 @@ describe("Server API routes", () => {
         res = await mock
             .post("/test/pathWithMultipart")
             .field('description', 'desc')
-            .attach('file', Buffer.from('filecontent'), 'test.txt');
+            .attach('files', Buffer.from('filecontent'), 'test.txt');
         expect(res.status).toBe(200);
         expect(t["/pathWithMultipart"].post).toHaveBeenCalled();
 

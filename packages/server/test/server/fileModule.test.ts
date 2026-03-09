@@ -1,7 +1,7 @@
 import type { Client, FilePaths } from "@s-core/core";
 import { createFileSchema, HttpResponse } from "@s-core/core";
 import { promises as fs } from "fs";
-import { AddressInfo } from "net";
+import type { AddressInfo } from "net";
 import os from "os";
 import path from "path";
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
@@ -40,6 +40,10 @@ function createFetchClient(baseURL: string): Client {
 
         const isFormData = body && typeof body === "object" && "append" in (body as object);
         const finalBody = isFormData ? body : body !== undefined ? JSON.stringify(body) : undefined;
+        if (isFormData) {
+            delete headers["Content-Type"];
+            delete headers["content-type"];
+        }
         if (!isFormData && finalBody) {
             headers["Content-Type"] = headers["Content-Type"] ?? "application/json";
         }
@@ -90,31 +94,38 @@ describe("file module - server and client", () => {
             res.status(500).json({ message: err?.message ?? "Internal Server Error" });
         });
 
-        httpServer = server.app.listen(0);
-        const address = httpServer.address() as AddressInfo;
-        baseURL = `http://127.0.0.1:${address.port}`;
+        httpServer = await new Promise<import("http").Server>((resolve) => {
+            const s = server.app.listen(0, () => resolve(s));
+        });
+
+        const address = httpServer.address();
+        if (!address || typeof address === "string") {
+            throw new Error("Failed to bind test server to a TCP port");
+        }
+
+        baseURL = `http://127.0.0.1:${(address as AddressInfo).port}`;
     });
 
     afterAll(async () => {
         if (httpServer) {
-            await new Promise<void>((resolve) => httpServer.close(() => resolve()));
+            await new Promise<void>((resolve, reject) =>
+                httpServer.close((err) => (err ? reject(err) : resolve()))
+            );
         }
-        try {
-            const files = await fs.readdir(uploadDir);
-            await Promise.all(files.map((file) => fs.unlink(path.join(uploadDir, file))));
-            await fs.rmdir(uploadDir);
-        } catch {
-            // ignore cleanup errors
+
+        if (uploadDir) {
+            await fs.rm(uploadDir, { recursive: true, force: true });
         }
     });
 
     test("client can upload and download files", async () => {
-        const form = new (globalThis as unknown as { FormData: new () => { append: (name: string, value: unknown, fileName?: string) => void } }).FormData();
-        const blob = new (globalThis as unknown as { Blob: new (parts: unknown[]) => unknown }).Blob(["hello world"]);
-        form.append("files", blob, "hello.txt");
+        const blob = new Blob(["hello world"]);
 
         const fileClient = createFileClient(baseURL, { client: createFetchClient(baseURL), basePath: "/files" });
-        const uploadRes = await fileClient.upload(form);
+        const uploadRes = await fileClient.upload({
+            data: blob as Blob,
+            filename: "hello.txt",
+        });
 
         expect(uploadRes.length).toBe(1);
         expect(uploadRes[0].filename).toBe("hello.txt");
