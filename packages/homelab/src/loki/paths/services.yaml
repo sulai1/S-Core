@@ -1,0 +1,48 @@
+get:
+  tags: [services]
+  summary: List running services
+  description: |
+    /services returns a list of all running services and their current states.
+    Possible states are: New, Starting, Running, Stopping, Terminated, Failed.
+  responses:
+    "200":
+      description: successful response
+      content:
+        application/json:
+          schema:
+            $ref: "../loki.yaml#/components/schemas/ServicesResponse"
+          examples:
+            services-structured-example:
+              value:
+                status: success
+                data:
+                  - name: "auth-service"
+                    state: "Running"
+                  - name: "db-migrator"
+                    state: "Starting"
+                    description: "Running DB migrations"
+                  - name: "cache-warmup"
+                    state: "Terminated"
+                  - name: "worker-1"
+                    state: "Failed"
+            services-text-example:
+              value:
+                status: success
+                data: |
+                  analytics => Running
+                  query-scheduler => Running
+                  store => Running
+                  rule-evaluator => Running
+                  ruler => Running
+                  server => Running
+                  ingester-querier => Running
+                  distributor => Running
+                  compactor => Running
+                  querier => Running
+                  query-scheduler-ring => Running
+                  query-frontend-tripperware => Running
+                  query-frontend => Running
+                  ingester => Running
+                  cache-generation-loader => Running
+                  memberlist-kv => Running
+                  ring => Running

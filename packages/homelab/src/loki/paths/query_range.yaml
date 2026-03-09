@@ -1,0 +1,118 @@
+get:
+  tags: [query]
+  summary: Query log range
+  description: |
+    /loki/api/v1/query_range is used to perform a LogQL query over a range of time. It
+    supports both metric (matrix) and log (streams) query types. Parquet responses can
+    be requested with the `Accept: application/vnd.apache.parquet` header.
+
+    Step versus interval:
+    - Use `step` for metric (matrix) queries. It behaves like Prometheus `step`.
+    - Use `interval` for log (stream) queries to return entries at or after each interval.
+  parameters:
+    - name: query
+      in: query
+      required: true
+      description: The LogQL query to perform.
+      schema:
+        type: string
+    - name: limit
+      in: query
+      description: Max number of entries to return (applies to stream responses). Defaults to 100.
+      schema:
+        type: integer
+        default: 100
+    - name: start
+      in: query
+      description: The start time for the query as a nanosecond Unix epoch or other supported format. Defaults to one hour ago.
+      schema:
+        oneOf:
+          - type: integer
+          - type: string
+    - name: end
+      in: query
+      description: The end time for the query as a nanosecond Unix epoch or other supported format. Defaults to now.
+      schema:
+        oneOf:
+          - type: integer
+          - type: string
+    - name: since
+      in: query
+      description: A duration used to calculate `start` relative to `end`. Ignored if `start` is provided.
+      schema:
+        type: string
+    - name: step
+      in: query
+      description: Query resolution step width for matrix queries. Duration format (e.g. 5m) or float seconds.
+      schema:
+        type: string
+    - name: interval
+      in: query
+      description: Interval for stream queries. Duration format or float seconds.
+      schema:
+        type: string
+    - name: direction
+      in: query
+      description: "Sort order for logs: `forward` (oldest first) or `backward` (newest first). Defaults to `backward`."
+      schema:
+        type: string
+        enum: [forward, backward]
+    - name: Accept
+      in: header
+      description: Use `application/vnd.apache.parquet` to request Parquet-encoded responses.
+      schema:
+        type: string
+  responses:
+    "200":
+      description: successful response (JSON or Parquet when requested)
+      content:
+        application/json:
+          schema:
+            $ref: "../loki.yaml#/components/schemas/QueryRangeResponse"
+          examples:
+            matrix-example:
+              summary: Example matrix (metric) response
+              value:
+                status: success
+                data:
+                  resultType: matrix
+                  result:
+                    - metric:
+                        level: info
+                      values:
+                        - [1588889221, "137.95"]
+                        - [1588889221, "467.115"]
+                        - [1588889221, "658.8516666666667"]
+                    - metric:
+                        level: warn
+                      values:
+                        - [1588889221, "137.27833333333334"]
+                        - [1588889221, "467.69"]
+                        - [1588889221, "660.6933333333334"]
+                  stats: {}
+            streams-example:
+              summary: Example streams (log lines) response
+              value:
+                status: success
+                data:
+                  resultType: streams
+                  result:
+                    - stream:
+                        filename: "/var/log/myproject.log"
+                        job: varlogs
+                        level: info
+                      values:
+                        - ["1569266497240578000", "foo"]
+                        - ["1569266492548155000", "bar"]
+                  stats: {}
+        application/vnd.apache.parquet:
+          schema:
+            type: string
+            format: binary
+          description: Parquet-encoded result (columns depend on resultType).
+    "400":
+      description: bad request
+      content:
+        application/json:
+          schema:
+            $ref: "../loki.yaml#/components/schemas/LokiError"

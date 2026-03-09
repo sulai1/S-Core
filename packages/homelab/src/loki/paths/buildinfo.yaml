@@ -1,0 +1,20 @@
+get:
+  tags: [query]
+  summary: Show build information
+  description: Exposes build information for the Loki binary.
+  responses:
+    "200":
+      description: Build information
+      content:
+        application/json:
+          schema:
+            $ref: "../loki.yaml#/components/schemas/BuildInfo"
+          examples:
+            buildinfo-example:
+              value:
+                version: "2.8.0"
+                revision: "a1b2c3d"
+                branch: "main"
+                buildDate: "2024-11-20T12:34:56Z"
+                buildUser: "builder@ci"
+                goVersion: "go1.20.4"

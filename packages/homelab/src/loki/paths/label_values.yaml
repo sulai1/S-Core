@@ -1,0 +1,45 @@
+get:
+  tags: [labels]
+  summary: List label values
+  description: |
+    /loki/api/v1/label/{name}/values retrieves the list of known values for a given label within a given time span.
+    Loki may use a larger time span than the one specified.
+  parameters:
+    - name: name
+      in: path
+      required: true
+      schema:
+        type: string
+      description: The label name to query values for
+    - name: start
+      in: query
+      description: start time as nanosecond Unix epoch. Defaults to 6 hours ago.
+      schema:
+        type: integer
+    - name: end
+      in: query
+      description: end time as nanosecond Unix epoch. Defaults to now.
+      schema:
+        type: integer
+    - name: since
+      in: query
+      description: duration used to calculate start relative to end (ignored if start is provided)
+      schema:
+        type: string
+    - name: query
+      in: query
+      description: Log stream selector to filter streams when determining label values, e.g. {app="myapp"}
+      schema:
+        type: string
+  responses:
+    "200":
+      description: successful response
+      content:
+        application/json:
+          schema:
+            $ref: "../loki.yaml#/components/schemas/LabelValuesResponse"
+          examples:
+            label-values-example:
+              value:
+                status: success
+                data: ["cat", "dog", "axolotl"]

@@ -1,0 +1,19 @@
+get:
+  tags: [labels]
+  summary: Return series matching label matchers
+  parameters:
+    - name: match
+      in: query
+      required: true
+      description: Label matcher, e.g. {job="varlogs"}
+      schema:
+        type: string
+  responses:
+    "200":
+      description: successful response
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: "../loki.yaml#/components/schemas/LabelSet"

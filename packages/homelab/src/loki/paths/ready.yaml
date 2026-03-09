@@ -1,0 +1,10 @@
+get:
+  tags: [status]
+  summary: Readiness probe
+  description: |
+    /ready returns HTTP 200 when the instance is ready to accept traffic.
+    In Kubernetes, this endpoint can be used as a readiness probe. In microservices
+    mode the endpoint is exposed by all components.
+  responses:
+    "200":
+      description: OK - ready to accept traffic

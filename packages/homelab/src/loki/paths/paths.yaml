@@ -1,0 +1,24 @@
+# paths split into individual files
+/loki/api/v1/query_range:
+  $ref: "./query_range.yaml"
+
+/loki/api/v1/query:
+  $ref: "./query.yaml"
+
+/loki/api/v1/labels:
+  $ref: "./labels.yaml"
+
+/loki/api/v1/label/{name}/values:
+  $ref: "./label_values.yaml"
+
+/loki/api/v1/status/buildinfo:
+  $ref: "./buildinfo.yaml"
+
+/ready:
+  $ref: "./ready.yaml"
+
+/loki/api/v1/series:
+  $ref: "./series.yaml"
+
+/services:
+  $ref: "./services.yaml"

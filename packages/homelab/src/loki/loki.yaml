@@ -1,0 +1,166 @@
+openapi: 3.0.3
+info:
+  title: Loki API (scaffold)
+  description: |
+    OpenAPI scaffold for Grafana Loki-compatible HTTP API. Paths are placed in a separate
+    file under `paths/` to keep this file smaller. Provide request/response shapes and
+    examples and I will integrate them further.
+  version: 0.1.0
+servers:
+  - url: https://loki.example.com
+    description: Loki server (replace with your endpoint)
+tags:
+  - name: query
+    description: Query endpoints (instant/range)
+  - name: labels
+    description: Label and series endpoints
+  - name: services
+    description: Service management and status endpoints
+  - name: status
+    description: Health and readiness endpoints
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    LokiError:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Error message
+    LabelSet:
+      type: object
+      additionalProperties:
+        type: string
+      description: Map of labels to values
+    Sample:
+      type: array
+      items:
+        oneOf:
+          - type: integer
+          - type: string
+      description: '[<timestamp_nanoseconds>, "<line>"]'
+    LogStream:
+      type: object
+      properties:
+        stream:
+          $ref: "#/components/schemas/LabelSet"
+        values:
+          type: array
+          items:
+            $ref: "#/components/schemas/Sample"
+    QueryRangeRequest:
+      type: object
+      properties:
+        query:
+          type: string
+        start:
+          type: integer
+          description: epoch nanoseconds
+        end:
+          type: integer
+          description: epoch nanoseconds
+        step:
+          type: string
+          description: step (e.g. 1s)
+    QueryRangeResponse:
+      type: object
+      properties:
+        status:
+          type: string
+        data:
+          type: object
+          properties:
+            resultType:
+              type: string
+            result:
+              type: array
+              items:
+                $ref: "#/components/schemas/LogStream"
+    InstantQueryRequest:
+      type: object
+      properties:
+        query:
+          type: string
+        time:
+          type: integer
+    InstantQueryResponse:
+      type: object
+      properties:
+        status:
+          type: string
+        data:
+          type: object
+          properties:
+            resultType:
+              type: string
+            result:
+              type: array
+              items:
+                $ref: "#/components/schemas/LogStream"
+    LabelListResponse:
+      type: object
+      properties:
+        status:
+          type: string
+        data:
+          type: array
+          items:
+            type: string
+      description: Response wrapper for list of label names
+    LabelValuesResponse:
+      type: object
+      properties:
+        status:
+          type: string
+        data:
+          type: array
+          items:
+            type: string
+      description: Response wrapper for list of label values for a given label
+    BuildInfo:
+      type: object
+      properties:
+        version:
+          type: string
+        revision:
+          type: string
+        branch:
+          type: string
+        buildDate:
+          type: string
+        buildUser:
+          type: string
+        goVersion:
+          type: string
+      description: Build information exposed by Loki (version, revision, branch, etc.)
+    Service:
+      type: object
+      properties:
+        name:
+          type: string
+        state:
+          type: string
+          enum: [New, Starting, Running, Stopping, Terminated, Failed]
+        description:
+          type: string
+      required: [name, state]
+      description: Service status object
+    ServicesResponse:
+      type: object
+      properties:
+        status:
+          type: string
+        data:
+          oneOf:
+            - type: array
+              items:
+                $ref: "#/components/schemas/Service"
+            - type: string
+      description: Response wrapper for list of services and their states. `data` may be an array of `Service` objects or a newline-separated string (legacy format).
+
+paths:
+  $ref: "./paths/paths.yaml"

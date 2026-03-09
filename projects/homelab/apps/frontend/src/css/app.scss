@@ -1,0 +1,45 @@
+// app global css in SCSS form
+
+/* Major Mono Display: use for all titles and the header */
+.atkinson-hyperlegible-mono {
+  font-family: "Atkinson Hyperlegible Mono", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 400;
+  font-style: normal;
+}
+/* Apply to headings and the main header */
+h1, h2, h3, h4, h5, h6,
+.q-header,
+.brand-text {
+	@extend .share-tech-mono-regular;
+}
+
+/* Slight size adjustments for titles */
+h1 { font-size: 2.0rem; }
+h2 { font-size: 1.5rem; }
+h3 { font-size: 1.25rem; }
+
+/* Share Tech Mono: default UI/body font */
+.share-tech-mono-regular {
+	font-family: "Share Tech Mono", monospace;
+	font-weight: 400;
+	font-style: normal;
+}
+
+/* Apply Share Tech Mono to general UI text */
+body,
+.main-layout,
+button,
+input,
+select,
+textarea,
+p,
+span,
+a,
+li,
+label,
+.q-btn,
+.q-item__label,
+.q-item__section {
+	@extend .atkinson-hyperlegible-mono;
+}

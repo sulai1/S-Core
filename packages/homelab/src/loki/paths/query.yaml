@@ -1,0 +1,100 @@
+get:
+  tags: [query]
+  summary: Instant query (single point in time)
+  description: |
+    /loki/api/v1/query performs an instant (point-in-time) LogQL query. This endpoint
+    is intended for metric type LogQL queries (returns `vector`) or for streams of log
+    lines (returns `streams`). Log type queries that are not metric queries return 400.
+    In microservices mode this endpoint is exposed by the querier and the query frontend.
+  parameters:
+    - name: query
+      in: query
+      required: true
+      description: The LogQL query to perform.
+      schema:
+        type: string
+    - name: limit
+      in: query
+      description: Max number of entries to return (applies to stream responses). Defaults to 100.
+      schema:
+        type: integer
+        default: 100
+    - name: time
+      in: query
+      description: Evaluation time as a nanosecond Unix epoch or another supported time format. Defaults to now.
+      schema:
+        oneOf:
+          - type: integer
+          - type: string
+    - name: direction
+      in: query
+      description: Sort order of logs. `backward` (newest first) or `forward` (oldest first). Defaults to `backward`.
+      schema:
+        type: string
+        enum: [backward, forward]
+    - name: X-Scope-OrgID
+      in: header
+      description: (optional) Tenant id(s) to query when multi-tenancy is enabled. Multiple tenants may be separated by `|`.
+      schema:
+        type: string
+    - name: Accept
+      in: header
+      description: Use `application/vnd.apache.parquet` to request Parquet-encoded responses.
+      schema:
+        type: string
+  responses:
+    "200":
+      description: successful response (JSON or Parquet when Accept header requests it)
+      content:
+        application/json:
+          schema:
+            $ref: "../loki.yaml#/components/schemas/InstantQueryResponse"
+          examples:
+            vector-example:
+              summary: Example vector (metric) response
+              value:
+                status: success
+                data:
+                  resultType: vector
+                  result:
+                    - metric: {}
+                      value:
+                        - 1588889221
+                        - "1267.1266666666666"
+                    - metric:
+                        level: warn
+                      value:
+                        - 1588889221
+                        - "37.77166666666667"
+                    - metric:
+                        level: info
+                      value:
+                        - 1588889221
+                        - "37.69"
+                stats: {}
+            streams-example:
+              summary: Example streams (log lines) response
+              value:
+                status: success
+                data:
+                  resultType: streams
+                  result:
+                    - stream:
+                        job: varlogs
+                      values:
+                        - - "1588889221000000000"
+                          - "this is a log line"
+                        - - "1588889220000000000"
+                          - "older log line"
+                stats: {}
+        application/vnd.apache.parquet:
+          schema:
+            type: string
+            format: binary
+          description: Parquet-encoded result (columns depend on resultType). See schema notes in component descriptions.
+    "400":
+      description: bad request (e.g., invalid LogQL or log-type query provided to instant endpoint)
+      content:
+        application/json:
+          schema:
+            $ref: "../loki.yaml#/components/schemas/LokiError"
