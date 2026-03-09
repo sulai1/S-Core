@@ -1,7 +1,6 @@
 import { HttpRequest, HttpResponseBuilder, OpenApiModule } from '@s-core/core';
-import type { OpenAPIV3, OpenAPIV3_1 } from 'openapi-types';
 import { RequestHandler } from 'express';
-import { Handler } from './index.js';
+import type { OpenAPIV3, OpenAPIV3_1 } from 'openapi-types';
 
 type HttpMethod = 'get' | 'post' | 'put' | 'patch' | 'delete' | 'head' | 'options';
 

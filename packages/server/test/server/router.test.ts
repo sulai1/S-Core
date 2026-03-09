@@ -78,7 +78,7 @@ describe("Server API routes", () => {
         async (testCase) => {
 
             (t as any)[testCase.path][testCase.method].mockResolvedValue(testCase.response);
-            await server.add<api.paths>(
+            server.add<api.paths>(
                 "/test",
                 bundledSchema,
                 t,
