@@ -1,5 +1,5 @@
 import { Fetcher } from 'openapi-typescript-fetch';
-import type { paths } from '../../../backend/src/api/loki';
+import type { paths } from '@s-core/loki';
 
 const npm = Fetcher.for<paths>();
 npm.configure({

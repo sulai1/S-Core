@@ -1,5 +1,5 @@
 import { Fetcher } from 'openapi-typescript-fetch';
-import type { paths } from '../../../backend/src/api/nginx-proxy-manager';
+import type { paths } from '@s-core/nginx-proxy-manager';
 
 
 const npm = Fetcher.for<paths>();

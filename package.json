@@ -22,22 +22,22 @@
     "watch:packages:loki": "npm run watch --workspace @s-core/loki",
     "watch:packages:nginx-proxy-manager": "npm run watch --workspace @s-core/nginx-proxy-manager",
     "watch:packages": "concurrently -n client,core,server,talktogether,loki,nginx-proxy-manager -c blue,green,magenta,cyan,yellow,red \"npm run watch:packages:client\" \"npm run watch:packages:core\" \"npm run watch:packages:server\" \"npm run watch:packages:talktogether\" \"npm run watch:packages:loki\" \"npm run watch:packages:nginx-proxy-manager\"",
-    "deps:install": "npm install --workspaces",
-    "deps:clean": "npm run clean:node-modules --workspaces --if-present && rimraf node_modules",
+    "deps:install": "npm install --workspaces --include=optional",
     "deps:update": "npm update --workspaces",
     "deps:outdated": "npm outdated --workspaces",
     "deps:audit": "npm audit --workspaces",
     "deps:add": "npm install --workspaces",
-    "clean:node-modules": "rimraf node_modules"
+    "clean:node-modules": "node -e \"require('node:fs').rmSync('node_modules',{recursive:true,force:true,maxRetries:10,retryDelay:200})\"",
+    "clean:all-node-modules": "node -e \"const fs=require('node:fs'); const path=require('node:path'); const dirs=[]; const walk=(p)=>{let st; try{st=fs.statSync(p)}catch{return;} if(!st.isDirectory())return; if(path.basename(p)==='node_modules'){dirs.push(p); return;} for(const n of fs.readdirSync(p)) walk(path.join(p,n));}; for(const root of ['packages','projects']) walk(root); dirs.sort((a,b)=>b.length-a.length); for(const d of dirs) fs.rmSync(d,{recursive:true,force:true,maxRetries:10,retryDelay:200}); fs.rmSync('node_modules',{recursive:true,force:true,maxRetries:10,retryDelay:200});\""
   },
   "workspaces": [
     "packages/*",
     "projects/*/apps/*"
   ],
-  "dependencies": {
-  },
   "devDependencies": {
-    "concurrently": "^9.2.1",
-    "rimraf": "^5.0.5"
+    "concurrently": "^9.2.1"
+  },
+  "optionalDependencies": {
+    "@rollup/rollup-linux-x64-gnu": "^4.59.0"
   }
 }
