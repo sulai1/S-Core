@@ -1,5 +1,5 @@
 import { defineBoot } from '#q-app/wrappers';
-import type { OpenApiModule } from "@s-core/client";
+import type { Client, OpenApiModule } from "@s-core/client";
 import { createDatasourceClient, createFileClient, createOpenApiClient } from "@s-core/client";
 import type { paths } from '@s-core/talktogether/src';
 import { type tables } from '@s-core/talktogether/src/models';
@@ -44,9 +44,9 @@ export const api = axios.create({
 });
 
 export default defineBoot(async ({ app }) => {
-  routes = await createOpenApiClient<paths>(baseUrl, apiSchema, { client: api });
+  routes = await createOpenApiClient<paths>(baseUrl, apiSchema, { client: api as unknown as Client });
   datasource = createDatasourceClient(baseUrl + "/data");
-  uploads = createFileClient(baseUrl, { basePath: "/images", client: api });
+  uploads = createFileClient(baseUrl, { basePath: "/images", client: api as unknown as Client });
 
   app.provide('datasource', datasource);
 });

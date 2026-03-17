@@ -1,0 +1,8 @@
+{
+  "origins": [
+    "http://localhost:80",
+    "http://127.0.0.1:80",
+    "https://talktogether.sascha-wernegger.me"
+  ],
+  "_comment": "Add origins to this array to allow CORS requests from those domains. Format: http://domain:port or https://domain:port"
+}

@@ -1,10 +1,12 @@
 - name: Set TalkTogether defaults
+  tags: [always, setup]
   ansible.builtin.set_fact:
     talktogether_image_resolved: "{{ talktogether_image | default('talktogether:latest') }}"
     talktogether_build_context_resolved: "{{ talktogether_build_context | default(playbook_dir + '/../../..') }}"
     talktogether_build_dir_resolved: "{{ talktogether_build_dir | default('/tmp/talktogether-build') }}"
     talktogether_data_dir_resolved: "{{ talktogether_data_dir | default('/opt/talktogether/data') }}"
     talktogether_images_dir_resolved: "{{ talktogether_images_dir | default('/opt/talktogether/images') }}"
+    talktogether_logs_dir_resolved: "{{ talktogether_logs_dir | default('/opt/talktogether/logs') }}"
     container_name_resolved: "{{ container_name | default('talktogether') }}"
     db_name_resolved: "{{ db_name | default('talktogether') }}"
     db_user_resolved: "{{ db_user | default('postgres') }}"
@@ -16,11 +18,13 @@
     node_port_resolved: "{{ node_port | default('3000') }}"
 
 - name: Set frontend origin with conditional port
+  tags: [always, setup]
   ansible.builtin.set_fact:
     frontend_origin_resolved: "{{ frontend_origin | default('http://' + (ansible_host | default(inventory_hostname)) + ('' if frontend_port_resolved == '80' else ':' + frontend_port_resolved)) }}"
     api_base_url_resolved: "{{ api_base_url | default('http://' + (ansible_host | default(inventory_hostname)) + ':' + backend_port_resolved) }}"
 
 - name: Ensure Docker service is running
+  tags: [setup, docker]
   become: true
   ansible.builtin.systemd:
     name: docker
@@ -28,6 +32,7 @@
     enabled: true
 
 - name: Ensure TalkTogether directories exist on target
+  tags: [setup, filesystem]
   become: true
   ansible.builtin.file:
     path: "{{ item }}"
@@ -38,8 +43,11 @@
   loop:
     - "{{ talktogether_data_dir_resolved }}"
     - "{{ talktogether_images_dir_resolved }}"
+    - "{{ talktogether_logs_dir_resolved }}"
+
 
 - name: Build TalkTogether SPA on controller
+  tags: [build, client]
   become: false
   delegate_to: localhost
   ansible.builtin.shell:
@@ -55,40 +63,62 @@
   args:
     executable: /bin/bash
 
-- name: Fail when SPA output is missing
-  ansible.builtin.fail:
-    msg: "Expected SPA output at projects/talktogether/apps/client/dist/spa after local build, but it was not found."
-  when: not talktogether_spa_dist.stat.exists
+- name: Sync
+  tags: [sync]
+  block:
+    - name: Ensure TalkTogether directories exist on target
+      become: true
+      ansible.builtin.file:
+        path: "{{ talktogether_build_dir_resolved }}"
+        state: directory
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+        mode: "0755"
+          
+    - name: Sync source code to target using rsync
+      tags: [sync]
+      delegate_to: localhost
+      ansible.posix.synchronize:
+        src: "{{ talktogether_build_context_resolved }}/"
+        dest: "{{ talktogether_build_dir_resolved }}/"
+        delete: true
+        rsync_opts:
+          - "--exclude=node_modules/"
+          - "--exclude=.git/"
+          - "--include=projects/talktogether/apps/client/dist/***"
+          - "--exclude=dist/"
+          - "--include=package.json"
+          - "--include=packages/"
+          - "--include=packages/***"
+          - "--include=projects/"
+          - "--include=projects/talktogether/"
+          - "--include=projects/talktogether/corsAllowedOrigins.json"
+          - "--include=projects/talktogether/Dockerfile"
+          - "--include=projects/talktogether/.dockerignore"
+          - "--include=projects/talktogether/nginx.conf"
+          - "--include=projects/talktogether/supervisord.conf"
+          - "--include=projects/talktogether/generate-config.sh"
+          - "--include=projects/talktogether/corsAllowedOrigins.json"
+          - "--include=projects/talktogether/apps/"
+          - "--include=projects/talktogether/apps/client/"
+          - "--include=projects/talktogether/apps/client/dist/"
+          - "--include=projects/talktogether/apps/server/"
+          - "--include=projects/talktogether/apps/server/***"
+          - "--exclude=projects/talktogether/apps/server/images/"
+          - "--exclude=*"
 
-- name: Sync source code to target using rsync
-  become: true
-  ansible.posix.synchronize:
-    src: "{{ talktogether_build_context_resolved }}/"
-    dest: "{{ talktogether_build_dir_resolved }}/"
-    delete: true
-    rsync_opts:
-      - "--filter=': -.gitignore'"
-      - "--exclude=.git"
-      - "--include=projects/"
-      - "--include=projects/talktogether/"
-      - "--include=projects/talktogether/apps/"
-      - "--include=projects/talktogether/apps/client/"
-      - "--include=projects/talktogether/apps/client/dist/"
-      - "--include=projects/talktogether/apps/client/dist/***"
-      - "--exclude=projects/talktogether/apps/client/***"
-      - "--include=projects/talktogether/***"
-      - "--exclude=projects/*"
-      - "--exclude=ansible"
-      - "--exclude=node_modules"
-      - "--exclude=dist"
-      - "--exclude=.next"
-      - "--exclude=.cache"
-      - "--exclude=.turbo"
-      - "--exclude=coverage"
-      - "--exclude=.nyc_output"
-      - "--exclude=projects/talktogether/apps/server/images"
+    - name: Deploy CORS config to persistent data directory
+      tags: [setup, deploy, runtime]
+      become: true
+      ansible.builtin.copy:
+        src: "{{ talktogether_build_dir_resolved }}/projects/talktogether/corsAllowedOrigins.json"
+        dest: "{{ talktogether_data_dir_resolved }}/corsAllowedOrigins.json"
+        mode: "0644"
+        remote_src: true
+      ignore_errors: true
 
 - name: Build Docker image on target
+  tags: [build, docker]
   become: true
   ansible.builtin.shell:
     cmd: docker build -t {{ talktogether_image_resolved }} -f projects/talktogether/Dockerfile .
@@ -97,6 +127,7 @@
     executable: /bin/bash
 
 - name: Stop any existing TalkTogether container
+  tags: [deploy, runtime]
   become: true
   community.docker.docker_container:
     name: "{{ container_name_resolved }}"
@@ -104,6 +135,7 @@
   ignore_errors: true
 
 - name: Ensure TalkTogether container is running
+  tags: [deploy, runtime]
   become: true
   community.docker.docker_container:
     name: "{{ container_name_resolved }}"
@@ -114,18 +146,19 @@
       - "{{ frontend_port_resolved }}:80"
       - "{{ backend_port_resolved }}:{{ node_port_resolved }}"
     env:
-      DB_NAME: "{{ db_name_resolved }}"
-      DB_USER: "{{ db_user_resolved }}"
-      DB_PASSWORD: "{{ db_password_resolved }}"
-      DB_HOST: "{{ db_host_resolved }}"
-      DB_PORT: "{{ db_port_resolved }}"
-      NODE_PORT: "{{ node_port_resolved }}"
+      DB_NAME: "{{ db_name_resolved | string }}"
+      DB_USER: "{{ db_user_resolved | string }}"
+      DB_PASSWORD: "{{ db_password_resolved | string }}"
+      DB_HOST: "{{ db_host_resolved | string }}"
+      DB_PORT: "{{ db_port_resolved | string }}"
+      NODE_PORT: "{{ node_port_resolved | string }}"
       NODE_ENV: production
-      API_BASE_URL: "{{ api_base_url_resolved }}"
-      CORS_ORIGINS: "{{ frontend_origin_resolved }}"
+      API_BASE_URL: "{{ api_base_url_resolved | string }}"
+      CORS_ORIGINS: "{{ frontend_origin_resolved | string }}"
       COOKIE_SECURE: "false"
     volumes:
       - "{{ talktogether_data_dir_resolved }}:/app/data"
       - "{{ talktogether_images_dir_resolved }}:/app/server/images"
+      - "{{ talktogether_logs_dir_resolved }}:/var/logs/supervisor"
     networks:
       - name: mynetwork

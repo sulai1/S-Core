@@ -11,7 +11,6 @@ COPY . .
 # Install only backend-related workspaces for server build.
 RUN rm -f package-lock.json
 RUN NODE_ENV=development npm install --package-lock=false --include-workspace-root \
-  --workspace packages/client \
   --workspace packages/core \
   --workspace packages/server \
   --workspace packages/talktogether \
@@ -27,10 +26,14 @@ WORKDIR /app/server
 RUN mkdir -p images && \
   cp -r /app/projects/talktogether/apps/server/dist/* . && \
   cp /app/projects/talktogether/apps/server/vorlage.png . 2>/dev/null || true && \
+  cp /app/projects/talktogether/apps/server/dist/server/vorlage.png . 2>/dev/null || true && \
   cp -r /app/projects/talktogether/apps/server/images/* images/ 2>/dev/null || true && \
   cp -r /app/projects/talktogether/apps/client/dist/spa public && \
-  cp -r /app/node_modules . && \
+  cp -rL /app/node_modules ./node_modules && \
   printf '{\n  "type": "commonjs"\n}\n' > /app/server/package.json
+
+# Remove source/workspace files from final runtime image.
+RUN rm -rf /app/projects /app/packages /app/node_modules /app/package-lock.json /app/package.json /app/README.md /app/vitest.base.ts
 
 # Copy nginx and supervisor configs
 COPY projects/talktogether/nginx.conf /etc/nginx/sites-available/default

@@ -5,19 +5,13 @@ import { apiSchema, paths, tables } from "@s-core/talktogether";
 import bcrypt from 'bcrypt';
 import cors from 'cors';
 import express from 'express';
+import fs from 'fs';
 import session, { Session, SessionData } from 'express-session';
 import { imgPath } from "../app";
 import { createIdentification } from "./pdf";
 
 const env = process.env.NODE_ENV || 'development';
 type SessionContext = Session & SessionData & { session: { userId?: number; userEmail?: string } };
-
-const configuredCorsOrigins = (process.env.CORS_ORIGINS || '')
-    .split(',')
-    .map((origin) => origin.trim())
-    .filter((origin) => origin.length > 0);
-
-const isCookieSecure = (process.env.COOKIE_SECURE || '').toLowerCase() === 'true';
 
 const writeLog = (level: "INFO" | "ERROR", ...parts: unknown[]) => {
     const message = parts.map((part) => {
@@ -37,6 +31,34 @@ const writeLog = (level: "INFO" | "ERROR", ...parts: unknown[]) => {
     }
     process.stdout.write(line);
 };
+
+const loadCorsOrigins = () => {
+    const corsConfigPath = '/app/data/corsAllowedOrigins.json';
+    const defaultOrigins = (process.env.CORS_ORIGINS || '')
+        .split(',')
+        .map((origin) => origin.trim())
+        .filter((origin) => origin.length > 0);
+    
+    try {
+        if (fs.existsSync(corsConfigPath)) {
+            const fileContent = fs.readFileSync(corsConfigPath, 'utf-8');
+            const parsed = JSON.parse(fileContent) as { origins?: string[] };
+            if (Array.isArray(parsed.origins)) {
+                writeLog('INFO', `Loaded CORS origins from ${corsConfigPath}: ${parsed.origins.length} entries`);
+                return parsed.origins;
+            }
+        }
+    } catch (err) {
+        writeLog('ERROR', `Failed to load CORS config from ${corsConfigPath}:`, err);
+    }
+    
+    writeLog('INFO', `Using default CORS origins from CORS_ORIGINS env var`);
+    return defaultOrigins;
+};
+
+const configuredCorsOrigins = loadCorsOrigins();
+
+const isCookieSecure = (process.env.COOKIE_SECURE || '').toLowerCase() === 'true';
 
 const getUploadOriginalName = (file: unknown) => {
     if (typeof file === "object" && file !== null && "originalname" in file) {
@@ -63,6 +85,8 @@ export async function serverFactory(
             origin: [
                 /^http:\/\/localhost(:\d+)?$/,
                 /^http:\/\/127\.0\.0\.1(:\d+)?$/,
+                /^http:\/\/100\.71\.92\.82(:\d+)?$/,
+                /^https:\/\/talktogether\.sascha-wernegger\.me(:\d+)?$/,
                 ...configuredCorsOrigins
             ],
             credentials: true
@@ -188,7 +212,34 @@ export async function serverFactory(
             "/createIdentification": {
                 post: async (req) => {
                     const s = new PassThrough();
-                    const userIds = req.map(v => Number(v.userId));
+                    if (!Array.isArray(req)) {
+                        throw {
+                            status: 400,
+                            error: "Invalid request body",
+                            details: "Expected an array of salesman payload objects"
+                        };
+                    }
+
+                    // Accept both legacy `userId` and current `id` payload shapes.
+                    const userIds = req
+                        .map((v) => {
+                            if (typeof v !== "object" || v === null) {
+                                return Number.NaN;
+                            }
+                            const candidate = (v as { userId?: unknown; id?: unknown }).userId
+                                ?? (v as { userId?: unknown; id?: unknown }).id;
+                            return Number(candidate);
+                        })
+                        .filter((id) => Number.isInteger(id) && id > 0);
+
+                    if (userIds.length === 0) {
+                        throw {
+                            status: 400,
+                            error: "Invalid request body",
+                            details: "No valid salesman IDs were provided"
+                        };
+                    }
+
                     const salesman = await db.find("Salesman", {
                         where: [{ function: "in", params: ["id", { value: userIds }] }]
                     })

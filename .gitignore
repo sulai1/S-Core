@@ -5,3 +5,6 @@ dist
 .eslintcache
 coverage
 .vscode
+
+# Ansible vault password file - NEVER commit this
+.vault_pass

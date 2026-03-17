@@ -5,13 +5,13 @@
   "license": "ISC",
   "author": "",
   "type": "module",
-  "main": "./dist/cjs/indext.js",
-  "types": "./dist/cjs/indext.d.ts",
+  "main": "./dist/cjs/src/index.js",
+  "types": "./dist/cjs/src/index.d.ts",
   "exports": {
     ".": {
-      "types": "./dist/cjs/indext.d.ts",
-      "import": "./dist/cjs/indext.js",
-      "default": "./dist/cjs/indext.js"
+      "types": "./dist/cjs/src/index.d.ts",
+      "import": "./dist/cjs/src/index.js",
+      "default": "./dist/cjs/src/index.js"
     }
   },
   "scripts": {

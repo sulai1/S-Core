@@ -26,6 +26,7 @@
     "dependencies": {
         "@quasar/extras": "^1.16.4",
         "@s-core/client": "^0.0.1",
+        "@s-core/core": "^0.0.1",
         "@s-core/talktogether": "^0.0.1",
         "@types/axios": "^0.14.4",
         "axios": "^1.8.2",

@@ -1,0 +1,37 @@
+- name: Bootstrap passwordless SSH access
+  hosts: all
+  gather_facts: false
+  vars:
+    ssh_authorized_user: "{{ ansible_user }}"
+    ssh_key_basename: "{{ lookup('env', 'HOME') }}/.ssh/{{ inventory_hostname }}"
+
+  pre_tasks:
+    - name: Check for host-specific private key
+      delegate_to: localhost
+      become: false
+      ansible.builtin.stat:
+        path: "{{ ssh_key_basename }}"
+      register: ssh_privkey_stat
+
+    - name: Generate host-specific SSH key pair if missing
+      delegate_to: localhost
+      become: false
+      ansible.builtin.command:
+        cmd: ssh-keygen -t ed25519 -f {{ ssh_key_basename }} -C "ansible-{{ inventory_hostname }}" -N ""
+      when: not ssh_privkey_stat.stat.exists
+
+    - name: Set public key file path
+      delegate_to: localhost
+      become: false
+      ansible.builtin.set_fact:
+        ssh_public_key_file: "{{ ssh_key_basename }}.pub"
+
+  tasks:
+    - name: Install host-specific public key in target authorized_keys
+      become: true
+      ansible.posix.authorized_key:
+        user: "{{ ssh_authorized_user }}"
+        state: present
+        key: "{{ lookup('file', ssh_public_key_file) }}"
+        manage_dir: true
+
