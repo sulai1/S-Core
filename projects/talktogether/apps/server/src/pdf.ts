@@ -6,10 +6,11 @@ import { imgPath } from "../app";
 
 export async function getNewID(salesmanId: number, db: DataSource<typeof tables, SelectFunctionDefinitions>): Promise<Identification> {
     const validTo = new Date(new Date().setMonth(new Date().getMonth() + 9))
+
     // get current id
     const res = await db.find("Identification", {
         where: [
-            { function: "=", params: ["id", { value: salesmanId }] },
+            { function: "=", params: ["salesman", { value: salesmanId }] },
             { function: ">", params: ["validTo", { value: new Date(new Date().setMonth(new Date().getMonth() - 6)).toISOString() }] },
             { function: "<", params: ["id_nr", { value: 1000 }] }
         ],

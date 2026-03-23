@@ -24,10 +24,9 @@
       </div>
     </div>
 
-    <div class="row">
       <q-input v-model="search" label="Suche Verkäufer (ID oder Name)" />
-    </div>
     <q-virtual-scroll
+      :key="search"
       :items="filteredLimited"
       :virtual-scroll-item-size="48"
       :style="scrollStyle"

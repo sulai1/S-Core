@@ -1,6 +1,6 @@
 <template>
   <div class="row q-pa-md">
-    <div class="col-md-7 q-pa-md" style="max-width: 100%;" >
+    <div class="col-12 col-md-7 q-pa-md" style="max-width: 100%;" >
       <div class="row" style="width: 100%;">
         <div class="col-6">
           <q-select v-model="item" data-testid="item" label="Item" class="q-mb-md" style="width: 100%;"
@@ -12,14 +12,27 @@
           </q-field>
         </div>
       </div>
-      <TransactionComponent v-if="selectedSalesman" v-model:transaction="transaction" :items="items" :salesman="selectedSalesman?.id"
-        @commit="addTransaction" id="transaction-component" />
+
+      <FindSalesman v-model="selectedSalesman" :salesmen="salesmen">
+      </FindSalesman>
+
+    </div>
+    <div class="col-12 col-md-5 q-pa-md">
       <div class="q-mt-md table-scroll-wrapper" >
-        <TableComponent v-show="!$q.screen.lt.md"
+        <div class="transaction-panel">
+          <div class="text-subtitle2 q-mb-sm">Transaktion erfassen</div>
+          <TransactionComponent
+            v-model:transaction="transaction"
+            :items="items"
+            :salesman="selectedSalesman?.id ?? null"
+            @commit="addTransaction"
+            id="transaction-component"
+          />
+        </div>
+        <TableComponent 
           :columns="columns"
           :data="transactions"
-          :style="scrollStyle"
-          class="responsive-table">
+          :style="scrollStyle">
           <template v-slot:after-row="{ row }">
             <td colspan="100%">
               <q-btn size="sm" flat color="primary" icon="delete" @click="cancel(row)" />
@@ -38,10 +51,6 @@
             </template>
         </TableComponent>
       </div>
-    </div>
-    <div class="col-md-5 q-pa-md">
-      <FindSalesman v-model="selectedSalesman" :salesmen="salesmen">
-      </FindSalesman>
     </div>
   </div>
 </template>
@@ -221,11 +230,26 @@ async function cancel(t: Transaction) {
   border: 3px solid var(--q-primary);
   border-radius: 12px;
 }
+
+.transaction-panel {
+  display: block;
+  width: 100%;
+  margin-top: 8px;
+}
 .responsive-table {
   font-size: 1em;
   max-width: 100%;
 }
 @media (max-width: 600px) {
+  .transaction-panel {
+    min-height: 120px;
+  }
+
+  #transaction-component {
+    margin-top: 8px;
+    margin-bottom: 8px;
+  }
+
   .table-scroll-wrapper {
     max-height: 220px;
     overflow-y: auto;

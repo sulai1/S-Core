@@ -3,7 +3,6 @@
     <div class="col-12 col-md-3 order-1 order-md-1">
       <div id="salesman" style="position:sticky; top:5vh; align-self:flex-start; z-index:1; overflow-y:auto; max-height:95vh;">
         <SalesmanComponent v-if="selectedSalesman" v-model="selectedSalesman">
-          <q-btn v-if="selectedSalesman" label="Ausweis" @click="addToPrintList(selectedSalesman)" />
           <q-btn v-if="selectedSalesman" label="Anwenden" @click="updateSalesman(selectedSalesman)" />
           <q-btn v-if="selectedSalesman" label="Löschen" @click="deleteSalesman(selectedSalesman)" />
         </SalesmanComponent>
@@ -25,7 +24,11 @@
     </div>
     <div class="col-12 col-md-3 order-2 order-md-2">
       <div id="print-sidebar" style="position:sticky; top:5vh; align-self:flex-start; z-index:1; overflow-y:auto; max-height:95vh;">
-        <PrintComponent v-model="printList"></PrintComponent>
+        <PrintComponent v-model="printList">
+          <template v-slot:actions>
+            <q-btn v-if="selectedSalesman" icon="add" @click="addToPrintList(selectedSalesman)" />
+          </template>
+        </PrintComponent>
       </div>
     </div>
   </q-page>
