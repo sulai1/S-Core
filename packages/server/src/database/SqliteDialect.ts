@@ -27,6 +27,17 @@ export class SqliteDialect implements SQLDialect {
         return `${expr} AS "${newName}"`;
     }
 
+    isImmediateParam(func: string, index: number): boolean {
+        if (func === "cast" && index === 1) {
+            return true;
+        } else if (func === "date_trunc" && index === 0) {
+            return true;
+        } else if (func === "date_part" && index === 0) {
+            return true;
+        }
+        return false;
+    }
+
     function(name: string, ...args: any[]): string {
         if (typeof name !== "string") {
             throw new Error("Function name must be a string");
@@ -61,7 +72,7 @@ export class SqliteDialect implements SQLDialect {
         const supported: DataSourceSchema = {};
         for (const table in schema) {
             const tableDef = schema[table];
-            for(const column of Object.keys(tableDef.columns) as (keyof typeof tableDef.columns)[]) {
+            for (const column of Object.keys(tableDef.columns) as (keyof typeof tableDef.columns)[]) {
                 if (tableDef.columns[column].generated) {
                     console.warn(`Column ${table}.${column} is generated, which is not supported by SQLite. This column will be ignored.`);
                     delete tableDef.columns[column].generated;

@@ -30,6 +30,7 @@
         "@s-core/talktogether": "^0.0.1",
         "@types/axios": "^0.14.4",
         "axios": "^1.8.2",
+        "chartjs": "^0.3.24",
         "cropperjs": "^1.5.13",
         "quasar": "^2.16.0",
         "vue": "^3.4.18",

@@ -1,4 +1,4 @@
-import { FunctionDefinitions, InferFunctionTypes } from "./FunctionsType.js";
+import { InferFunctionTypes } from "./FunctionsType.js";
 
 export * from "./Expression.js";
 export * from "./FunctionCall.js";
@@ -20,6 +20,11 @@ export const stringFunctionDefinitions = {
     substring: [[String, Number, Number, String] as const] as const,
 } as const;
 
+export const dateFunctionDefinitions = {
+    date_part: [[String, String, String]] as const,
+    date_trunc: [[String, String, String]] as const,
+} as const;
+
 export const aggregateFunctionDefinitions = {
     sum: [[Number, Number] as const] as const,
     avg: [[Number, Number] as const] as const,
@@ -28,7 +33,7 @@ export const aggregateFunctionDefinitions = {
     min: [[Number, Number] as const, [String, String] as const, [Date, Date] as const] as const,
 } as const;
 
-export const utillityFunctions = {
+export const utilityFunctions = {
     cast: [[() => "" as any, String, () => "" as any]] as const,
     coalesce: [[String, String, String] as const, [Number, Number, Number] as const, [Boolean, Boolean, Boolean] as const, [Date, Date, Date] as const] as const,
 } as const;
@@ -50,23 +55,25 @@ export const booleanFunctionDefinitions = {
 
 export type MathFunctionDefinitions = InferFunctionTypes<typeof mathFunctionDefinitions>;
 export type StringFunctionDefinitions = InferFunctionTypes<typeof stringFunctionDefinitions>;
+export type DateFunctionDefinitions = InferFunctionTypes<typeof dateFunctionDefinitions>;
 export type AggregateFunctionDefinitions = InferFunctionTypes<typeof aggregateFunctionDefinitions>;
-export type UtillityFunctions = InferFunctionTypes<typeof utillityFunctions>;
+export type UtilityFunctions = InferFunctionTypes<typeof utilityFunctions>;
 export type BooleanFunctionDefinitions = InferFunctionTypes<typeof booleanFunctionDefinitions>;
-
 // Combined function definitions
 export type StandardFunctionDefinitions = MathFunctionDefinitions
     & StringFunctionDefinitions
+    & DateFunctionDefinitions
     & BooleanFunctionDefinitions
-    & UtillityFunctions;
+    & UtilityFunctions;
 
 export type SelectFunctionDefinitions = StandardFunctionDefinitions & AggregateFunctionDefinitions;
 
 export const standardFunctionDefinitions = {
     ...mathFunctionDefinitions,
+    ...dateFunctionDefinitions,
     ...stringFunctionDefinitions,
     ...booleanFunctionDefinitions,
-    ...utillityFunctions,
+    ...utilityFunctions,
 };
 
 export const selectFunctionDefinitions = {

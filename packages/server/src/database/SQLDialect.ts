@@ -11,6 +11,8 @@ export type SQLDialect = {
      */
     function(name: string, ...args: string[]): string;
 
+    isImmediateParam(func: string, index: number): boolean;
+
     separator: string;
 
     /**

@@ -1,4 +1,4 @@
-import type { DataSourceSchema, TableInstanceTypes } from '@s-core/client';
+import type { DataSourceSchema, TableInstanceTypes } from '@s-core/core';
 import { identification } from './identification.js';
 import { item } from './item.js';
 import { salesman } from './salesman.js';

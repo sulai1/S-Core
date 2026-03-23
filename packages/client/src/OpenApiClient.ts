@@ -47,7 +47,7 @@ export async function createOpenApiClient<
             'Content-Type': 'application/json',
         },
         withCredentials: true, // Enable sending cookies with cross-origin requests
-    })) as Client;
+    })) as unknown as Client;
     const bundledSchema = await $RefParser.bundle<OpenAPIV3_1.Document>(schema);
     const res = {} as OpenApiModule<Paths, Options>;
     for (const url in bundledSchema.paths) {

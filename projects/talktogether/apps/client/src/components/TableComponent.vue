@@ -112,9 +112,8 @@ function filter(text: string) {
     return;
   }
   filteredSortedData.value = [...props.data].filter((row) => {
-    return props.columns.map(col=>typeof col.property === "function" ? col.property(row) : row[col.property]).some((value) => {
-      return value?.toString().toLowerCase().includes(text.toLowerCase());
-    });
+    return props.columns.map(col=>typeof col.property === "function" ? col.property(row) : row[col.property])
+    .join(" ").toLowerCase().includes(text.toLowerCase());
   });
 }
 

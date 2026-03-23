@@ -32,22 +32,21 @@ export class SQLQueryBuilder<FuncDefs extends FunctionsType> implements QueryBui
         attr: F,
         bind: unknown[],
     ): string {
-        if (typeof attr === "object" && "function" in attr) {
+        if (typeof attr === "object" && "function" in attr && typeof attr.function === "string") {
 
-            if (attr.function === "cast") {
-                const resolved = this.resolveAttr(attr.params[0], bind);
-                const type = attr.params[1];
-                if (typeof type !== "object" || !("value" in type) || typeof type.value !== "string") {
-                    throw new Error("Invalid cast type");
-                }
-                return this.dialect.function("cast", resolved, type.value);
-            }
-            const params = attr.params;
             const resolved = [];
-            if (Array.isArray(params)) {
-                for (const p in params) {
-                    const param = params[p];
-                    resolved.push(this.resolveAttr(param as Expression<any, any, FuncDefs>, bind));
+            if (Array.isArray(attr.params)) {
+                for (const p in attr.params) {
+                    const param = attr.params[p];
+                    if (this.dialect.isImmediateParam(attr.function, Number(p))) {
+                        if (typeof param === "object" && "value" in param)
+                            resolved.push(String(param.value));
+                        else {
+                            throw new Error("Immediate parameter must be a value");
+                        }
+                    } else {
+                        resolved.push(this.resolveAttr(param as Expression<any, any, FuncDefs>, bind));
+                    }
                 }
             }
             if (typeof attr.function !== "string") {
@@ -106,8 +105,8 @@ export class SQLQueryBuilder<FuncDefs extends FunctionsType> implements QueryBui
             return "";
         }
         const orderStrings = order.map(o => {
-            const attr = this.resolveAttr(o[0] as Expression, bind).split(" ");
-            return attr + " " + o[1];
+            const attr = this.resolveAttr(o[0] as Expression, bind);
+            return `${attr} ${o[1]}`;
         });
         return "ORDER BY " + orderStrings.join(", ");
     }

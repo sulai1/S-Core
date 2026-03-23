@@ -27,6 +27,9 @@
           </q-item>
           <q-item></q-item>
       </div>
+        <slot>
+
+        </slot>
   </q-card-section>
   <q-separator />
   <q-slide-transition>
@@ -49,7 +52,7 @@
           <div class="col">
             <q-file
               v-model="imgFile"
-              label="Bild auswählen"
+              :label="salesman?.image ?? 'Bild hinzufügen'"
               accept="image/*"
               dense
               filled
@@ -58,9 +61,6 @@
           <q-btn icon="crop" @click="showCropper = true" :disable="!selectedSalesmanImage" />
         </div>
         <q-separator class="q-my-md" />
-        <slot>
-
-        </slot>
       </div>
     </q-card-section>
   </q-slide-transition>

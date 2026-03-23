@@ -1,4 +1,4 @@
-import { Condition, FunctionCall, SelectAttributes, SelectFunctionDefinitions} from "@s-core/core";
+import { Condition, FunctionCall, SelectAttributes, SelectFunctionDefinitions } from "@s-core/core";
 import { describe, expect, test } from "vitest";
 import { SqliteDialect, SQLQueryBuilder } from "../../../src/index.js";
 
@@ -105,6 +105,10 @@ describe("AbstractQueryBuilder", () => {
         ],
         expected: 'ORDER BY sum("table1"."column2") desc, "table2"."a" asc',
         aggregates: ['sum("table1"."column2")'],
+    }, {
+        name: "function with spaced arguments does not add extra comma",
+        order: [[{ function: "cast", params: ["table1.column1", { value: "TEXT" }] }, "asc"]],
+        expected: 'ORDER BY CAST("table1"."column1" AS TEXT) asc',
     }])("orderBy $name", ({ order, expected, aggregates, bind }) => {
         const actualBind = [] as unknown[];
         const result = builder.orderBy(order, actualBind);

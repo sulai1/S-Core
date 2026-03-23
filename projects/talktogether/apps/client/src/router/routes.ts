@@ -18,8 +18,13 @@ const routes: RouteRecordRaw[] = [
     }),
     meta: { requiresAuth: true },
     children: [{
-      path: '', name: "salesmen", component: () => import('pages/IndexPage.vue').catch((error) => {
+      path: '', name: "index", component: () => import('pages/IndexPage.vue').catch((error) => {
         console.error('Failed to load IndexPage.vue:', error);
+        return import('pages/ErrorNotFound.vue');
+      }),
+    }, {
+      path: 'salesmen', name: "salesmen", component: () => import('pages/SalesmanPage.vue').catch((error) => {
+        console.error('Failed to load SalesmanPage.vue:', error);
         return import('pages/ErrorNotFound.vue');
       }),
     }, {

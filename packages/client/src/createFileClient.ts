@@ -83,7 +83,7 @@ export function createFileClient(
     baseURL: string,
     options: FileClientOptions = {}
 ): FileClient {
-    const client: Client = options.client ? options.client : axios.create({ baseURL });
+    const client: Client = options.client ? options.client : axios.create({ baseURL }) as unknown as Client;
     const basePath = options.basePath ?? "";
 
     return {

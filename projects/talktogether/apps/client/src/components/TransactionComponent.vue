@@ -151,7 +151,7 @@ function addTransaction() {
   }
   item.value.quantity -= quantity.value;
   emits('commit', {
-    id: "",
+    id: 0,
     date: new Date().toISOString(),
     item: item.value.id,
     salesman: props.salesman,

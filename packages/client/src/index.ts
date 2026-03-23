@@ -29,7 +29,7 @@ export function createDatasourceClient<
         client?: Client;
     } = {}
 ): DataSource<Tables, InferFunctionTypes<F>> {
-    const client: Client = options.client ? options.client : axios.create({ baseURL: baseURL });
+    const client: Client = options.client ? options.client : axios.create({ baseURL: baseURL }) as unknown as Client;
     return {
         async get(table, key) {
             const res = await client.post(`/get`, { table, key });

@@ -33,6 +33,19 @@ export class PostgresDialect implements SQLDialect {
         return `${expr} AS ${this.quote(newName)}`;
     }
 
+    isImmediateParam(func: string, index: number): boolean {
+        if (func === "cast" && index === 1) {
+            return true;
+        }
+        else if (func === "date_trunc" && index === 0) {
+            return true;
+        } else if (func === "date_part" && index === 0) {
+            return true;
+        }
+        return false;
+    }
+
+
     function(name: string, ...args: any[]): string {
         if (typeof name !== "string") {
             throw new Error("Function name must be a string");
@@ -59,6 +72,12 @@ export class PostgresDialect implements SQLDialect {
             const field = args[0] as unknown;
             const valueList = args[1] as unknown[];
             return `${field} = ANY(${valueList})`;
+        }
+        if (name === "date_trunc" && args.length === 2) {
+            return `DATE_TRUNC('${args[0]}', ${args[1]}::timestamp)`;
+        }
+        if (name === "date_part" && args.length === 2) {
+            return `DATE_PART('${args[0]}', ${args[1]}::timestamp)`;
         }
         return `${name}(${args.join(", ")})`;
     }
