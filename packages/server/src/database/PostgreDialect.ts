@@ -3,7 +3,7 @@ import { SQLDialect } from "./SQLDialect.js";
 import { isInfixFunction } from "./SqliteDialect.js";
 
 
-export class PostgreDialect implements SQLDialect {
+export class PostgresDialect implements SQLDialect {
     readonly type = "postgres";
     private readonly tables: DataSourceSchema = {};
     readonly tableLookup: { [key: string]: string } = {};

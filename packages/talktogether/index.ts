@@ -1,5 +1,5 @@
 
-export * from "./src/models";
-export * from "./src/index";
-export * from "./src/schema";
-export * from "./src/datasourceSchema";
+export * from "./src/models/index.js";
+export * from "./src/index.js";
+export * from "./src/schema.js";
+export * from "./src/datasourceSchema.js";

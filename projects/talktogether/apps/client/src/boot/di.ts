@@ -1,9 +1,9 @@
 import { defineBoot } from '#q-app/wrappers';
 import type { Client, OpenApiModule } from "@s-core/client";
 import { createDatasourceClient, createFileClient, createOpenApiClient } from "@s-core/client";
-import type { paths } from '@s-core/talktogether/src';
-import { type tables } from '@s-core/talktogether/src/models';
-import { apiSchema } from '@s-core/talktogether/src/schema';
+import type { paths } from '@s-core/talktogether';
+import { type tables } from '@s-core/talktogether';
+import { apiSchema } from '@s-core/talktogether';
 import axios from 'axios';
 import { Buffer } from 'buffer';
 

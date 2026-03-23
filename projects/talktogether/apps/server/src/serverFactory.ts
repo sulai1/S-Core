@@ -1,14 +1,13 @@
 import { PassThrough } from "node:stream";
-import { Application, createDatasourceSchema, createFileSchema, DataSource, FilePaths, SelectFunctionDefinitions } from "@s-core/core";
+import { Application, createDatasourceSchema, createFileSchema, DataSource, FilePaths, Logger, SelectFunctionDefinitions } from "@s-core/core";
 import { createDatasourceServer, createFileServerModule, createServer } from "@s-core/server";
 import { apiSchema, paths, tables } from "@s-core/talktogether";
 import bcrypt from 'bcrypt';
-import cors from 'cors';
 import express from 'express';
-import fs from 'fs';
 import session, { Session, SessionData } from 'express-session';
 import { imgPath } from "../app";
 import { createIdentification } from "./pdf";
+import { createCors } from "./cors";
 
 const env = process.env.NODE_ENV || 'development';
 type SessionContext = Session & SessionData & { session: { userId?: number; userEmail?: string } };
@@ -32,31 +31,6 @@ const writeLog = (level: "INFO" | "ERROR", ...parts: unknown[]) => {
     process.stdout.write(line);
 };
 
-const loadCorsOrigins = () => {
-    const corsConfigPath = '/app/data/corsAllowedOrigins.json';
-    const defaultOrigins = (process.env.CORS_ORIGINS || '')
-        .split(',')
-        .map((origin) => origin.trim())
-        .filter((origin) => origin.length > 0);
-    
-    try {
-        if (fs.existsSync(corsConfigPath)) {
-            const fileContent = fs.readFileSync(corsConfigPath, 'utf-8');
-            const parsed = JSON.parse(fileContent) as { origins?: string[] };
-            if (Array.isArray(parsed.origins)) {
-                writeLog('INFO', `Loaded CORS origins from ${corsConfigPath}: ${parsed.origins.length} entries`);
-                return parsed.origins;
-            }
-        }
-    } catch (err) {
-        writeLog('ERROR', `Failed to load CORS config from ${corsConfigPath}:`, err);
-    }
-    
-    writeLog('INFO', `Using default CORS origins from CORS_ORIGINS env var`);
-    return defaultOrigins;
-};
-
-const configuredCorsOrigins = loadCorsOrigins();
 
 const isCookieSecure = (process.env.COOKIE_SECURE || '').toLowerCase() === 'true';
 
@@ -72,25 +46,15 @@ const getUploadOriginalName = (file: unknown) => {
 
 
 export async function serverFactory(
-    provider: Application<{ db: () => DataSource<typeof tables, SelectFunctionDefinitions> }>,
+    provider: Application<{ 
+        db: () => DataSource<typeof tables, SelectFunctionDefinitions>,
+        logger: () => Logger
+    }>,
     options?: { port?: number }
 ) {
     const db = provider.getModule("db");
     const server = createServer()
-        .use((req, res, next) => {
-            console.log(req.url);
-            next()
-        })
-        .use(cors({
-            origin: [
-                /^http:\/\/localhost(:\d+)?$/,
-                /^http:\/\/127\.0\.0\.1(:\d+)?$/,
-                /^http:\/\/100\.71\.92\.82(:\d+)?$/,
-                /^https:\/\/talktogether\.sascha-wernegger\.me(:\d+)?$/,
-                ...configuredCorsOrigins
-            ],
-            credentials: true
-        }))
+        .use(createCors(provider))
         .use(express.json());
     server.extend("/", session({
         secret: process.env.SESSION_SECRET || 'your-secret-key-change-in-production',
@@ -243,6 +207,7 @@ export async function serverFactory(
                     const salesman = await db.find("Salesman", {
                         where: [{ function: "in", params: ["id", { value: userIds }] }]
                     })
+                    
                     createIdentification(salesman, s, db).catch(err => {
                         writeLog("ERROR", "Error creating identification:", err);
                         s.destroy(err);

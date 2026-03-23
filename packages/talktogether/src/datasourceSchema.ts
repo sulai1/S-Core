@@ -1,5 +1,5 @@
 import { createDatasourceSchema } from "@s-core/core";
-import { identification, item, salesman, transaction } from "./models";
+import { identification, item, salesman, transaction } from "./models/index.js";
 
 export const datasourceSchema = createDatasourceSchema("test", {
     salesman,

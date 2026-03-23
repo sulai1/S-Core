@@ -114,3 +114,8 @@ Available task tags in `ansible/tasks.yml`:
 - `runtime`
 
 For deployment variable details, see `projects/talktogether/ansible/README.md`.
+
+
+# TODO
+* check ID generation
+* editable config for validto and when id gets reused

@@ -1,6 +1,6 @@
 import { createDatasourceSchema } from "@s-core/client";
 import { OpenAPIV3_1 } from "openapi-types";
-import { identification, item, salesman, transaction } from "./models";
+import { identification, item, salesman, transaction } from "./models/index.js";
 
 export const apiSchema = {
     openapi: "3.1.0",

@@ -4,7 +4,7 @@ import { DataSource, SelectFunctionDefinitions } from "@s-core/core";
 import { Identification, Salesman, tables } from "@s-core/talktogether";
 import { imgPath } from "../app";
 
-async function getNewID(salesmanId: number, db: DataSource<typeof tables, SelectFunctionDefinitions>): Promise<Identification> {
+export async function getNewID(salesmanId: number, db: DataSource<typeof tables, SelectFunctionDefinitions>): Promise<Identification> {
     const validTo = new Date(new Date().setMonth(new Date().getMonth() + 9))
     // get current id
     const res = await db.find("Identification", {
@@ -17,7 +17,7 @@ async function getNewID(salesmanId: number, db: DataSource<typeof tables, Select
         limit: 1
     })
     if (res?.[0]?.id) {
-        const resUpdate = await db.update("Identification", {
+        await db.update("Identification", {
             validTo: validTo.toISOString(),
             updatedAt: new Date().toISOString(),
         }, [{ function: "=", params: ["id", { value: res[0].id }] }])

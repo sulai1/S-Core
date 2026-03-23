@@ -12,7 +12,7 @@ export const item = {
         quantity: { type: Number },
         createdAt: { type: String, generated: true },
         updatedAt: { type: String, generated: true },
-        validTo: { type: String, generated: true },
+        validTo: { type: String},
     },
 } satisfies TableSchema
 

@@ -1,6 +1,6 @@
 import { Repository, SelectFunctionDefinitions, selectFunctionDefinitions, TableSchema } from "@s-core/core";
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, test } from "vitest";
-import { Database, PostgreDialect } from "../../../src/database/index.js";
+import { Database, PostgresDialect } from "../../../src/database/index.js";
 
 const CrudModelSchema = {
     name: "CRUDModel",
@@ -35,7 +35,7 @@ const db = new Database({
     synchronize: true,
     functions: selectFunctionDefinitions,
     tables: { CRUDModel: CrudModelSchema },
-    dialect: new PostgreDialect(),
+    dialect: new PostgresDialect(),
 });
 let repository: Repository<typeof CrudModelSchema, SelectFunctionDefinitions>;
 beforeAll(async () => {

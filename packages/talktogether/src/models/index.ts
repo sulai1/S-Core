@@ -1,15 +1,15 @@
 import type { DataSourceSchema, TableInstanceTypes } from '@s-core/client';
-import { identification } from './identification';
-import { item } from './item';
-import { salesman } from './salesman';
-import { transaction } from './transaction';
-import { user } from './user';
+import { identification } from './identification.js';
+import { item } from './item.js';
+import { salesman } from './salesman.js';
+import { transaction } from './transaction.js';
+import { user } from './user.js';
 
-export * from './identification';
-export * from './item';
-export * from './salesman';
-export * from './transaction';
-export * from './user';
+export * from './identification.js';
+export * from './item.js';
+export * from './salesman.js';
+export * from './transaction.js';
+export * from './user.js';
 
 export const tables = {
     Identification: identification,
