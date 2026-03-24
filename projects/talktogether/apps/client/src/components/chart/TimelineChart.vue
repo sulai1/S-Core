@@ -40,8 +40,16 @@ export interface TimelineEvent {
   category?: string;
 }
 
+export interface TimelineSeries {
+  label: string;
+  events: TimelineEvent[];
+  backgroundColor?: string;
+  borderColor?: string;
+  fillArea?: boolean;
+}
+
 interface Props {
-  events?: TimelineEvent[];
+  data?: TimelineEvent[] | TimelineSeries[];
   title?: string;
   yAxisLabel?: string;
   backgroundColor?: string;
@@ -50,7 +58,7 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  events: () => [],
+  data: () => [],
   title: 'Timeline',
   yAxisLabel: 'Value',
   backgroundColor: 'rgba(75, 192, 192, 0.1)',
@@ -58,35 +66,74 @@ const props = withDefaults(defineProps<Props>(), {
   fillArea: true,
 });
 
-const sortedEvents = computed(() => {
-  return [...props.events].sort((a, b) => {
-    const dateA = new Date(a.date);
-    const dateB = new Date(b.date);
-    return dateA.getTime() - dateB.getTime();
-  });
+// Default color palette for multiple series
+const colorPalettes = [
+  { bg: 'rgba(75, 192, 192, 0.1)', border: 'rgb(75, 192, 192)' },
+  { bg: 'rgba(255, 99, 132, 0.1)', border: 'rgb(255, 99, 132)' },
+  { bg: 'rgba(54, 162, 235, 0.1)', border: 'rgb(54, 162, 235)' },
+  { bg: 'rgba(255, 206, 86, 0.1)', border: 'rgb(255, 206, 86)' },
+  { bg: 'rgba(153, 102, 255, 0.1)', border: 'rgb(153, 102, 255)' },
+  { bg: 'rgba(255, 159, 64, 0.1)', border: 'rgb(255, 159, 64)' },
+];
+
+const isSeriesArray = (arr: unknown[]): arr is TimelineSeries[] => {
+  return arr.length > 0 && 'events' in (arr[0] as object);
+};
+
+const activeSeries = computed(() => {
+  if (!props.data || props.data.length === 0) {
+    return [];
+  }
+
+  if (isSeriesArray(props.data)) {
+    return props.data;
+  }
+
+  // Wrap TimelineEvent[] in a series
+  return [
+    {
+      label: props.title,
+      events: props.data,
+      backgroundColor: props.backgroundColor,
+      borderColor: props.borderColor,
+      fillArea: props.fillArea,
+    },
+  ];
+});
+
+const sortedSeries = computed(() => {
+  return activeSeries.value.map((s) => ({
+    ...s,
+    events: [...s.events].sort((a, b) => {
+      const dateA = new Date(a.date);
+      const dateB = new Date(b.date);
+      return dateA.getTime() - dateB.getTime();
+    }),
+  }));
 });
 
 const dateFormatter = new Intl.DateTimeFormat('de-DE');
 
 const chartData = computed(() => ({
-  datasets: [
-    {
-      label: props.title,
-      data: sortedEvents.value.map((event) => ({
+  datasets: sortedSeries.value.map((s, index) => {
+    const colors = colorPalettes[index % colorPalettes.length]!;
+    return {
+      label: s.label,
+      data: s.events.map((event) => ({
         x: new Date(event.date).getTime(),
         y: event.value,
       })),
-      backgroundColor: props.backgroundColor,
-      borderColor: props.borderColor,
+      backgroundColor: s.backgroundColor || colors.bg,
+      borderColor: s.borderColor || colors.border,
       borderWidth: 2,
-      fill: props.fillArea,
+      fill: s.fillArea ?? true,
       pointRadius: 5,
       pointHoverRadius: 7,
-      pointBackgroundColor: props.borderColor,
+      pointBackgroundColor: s.borderColor || colors.border,
       pointBorderColor: '#fff',
       pointBorderWidth: 2,
-    },
-  ],
+    };
+  }),
 }));
 
 const chartOptions = computed<ChartOptions<'line'>>(() => ({

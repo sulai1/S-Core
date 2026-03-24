@@ -30,7 +30,6 @@
                 <q-input v-model="editItem.edition" label="Edition" dense outlined class="q-mb-md" />
                 <q-input v-model.number="editItem.cost" label="Cost" type="number" dense outlined class="q-mb-md" />
                 <q-input v-model.number="editItem.price" label="Price" type="number" dense outlined class="q-mb-md" />
-                <q-input v-model.number="editItem.quantity" label="Quantity" type="number" dense outlined class="q-mb-md" />
                 <q-input
                     v-model="validTo"
                     label="Valid To"

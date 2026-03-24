@@ -18,7 +18,7 @@ const routes: RouteRecordRaw[] = [
     }),
     meta: { requiresAuth: true },
     children: [{
-      path: '', name: "index", component: () => import('pages/IndexPage.vue').catch((error) => {
+      path: '', name: "dashboard", component: () => import('pages/IndexPage.vue').catch((error) => {
         console.error('Failed to load IndexPage.vue:', error);
         return import('pages/ErrorNotFound.vue');
       }),

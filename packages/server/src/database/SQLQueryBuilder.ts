@@ -59,7 +59,7 @@ export class SQLQueryBuilder<FuncDefs extends FunctionsType> implements QueryBui
         } else if (typeof attr === "object" && "value" in attr) {
             return this.dialect.bindParam(attr.value, bind);
         }
-        throw new Error("Invalid attribute");
+        throw new Error("Invalid attribute: " + JSON.stringify(attr));
     }
 
     select<S extends SelectAttributes<any, FuncDefs>>(

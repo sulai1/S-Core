@@ -145,20 +145,21 @@ watch(total, () => {
 });
 
 function addTransaction() {
-  if( !item.value || !props.salesman){
+  if( !item.value || (props.salesman !== 0 && !props.salesman) ) {
     alert("Please select an item and a salesman");
     return;
   }
-  item.value.quantity -= quantity.value;
-  emits('commit', {
-    id: 0,
-    date: new Date().toISOString(),
-    item: item.value.id,
-    salesman: props.salesman,
-    price: item.value.price,
-    quantity: -quantity.value,
-    total: total.value,
-  });
+    item.value.quantity -= quantity.value;
+    const price = quantity.value > 0 ? item.value.price : item.value.cost;
+    emits('commit', {
+      id: 0,
+      date: new Date().toISOString(),
+      item: item.value.id,
+      salesman: props.salesman,
+      price: price,
+      quantity: -quantity.value,
+      total: total.value,
+    });
 }
 function resetPrice() {
     quantity.value = price.value ? Math.round((total.value / price.value) * 10) / 10 : 0;
