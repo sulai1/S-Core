@@ -48,31 +48,22 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref,  watch} from 'vue';
-import TimelineChart from 'src/components/chart/TimelineChart.vue';
-import type {  TimelineSeries } from 'src/components/chart/TimelineChart.vue';
-import ScrollableBarChart from 'src/components/chart/ScrollableBarChart.vue';
-import type { BarChartItem } from 'src/components/chart/ScrollableBarChart.vue';
 import { datasource } from 'src/boot/di';
+import type { BarChartItem } from 'src/components/chart/ScrollableBarChart.vue';
+import ScrollableBarChart from 'src/components/chart/ScrollableBarChart.vue';
+import type { TimelineSeries } from 'src/components/chart/TimelineChart.vue';
+import TimelineChart from 'src/components/chart/TimelineChart.vue';
 import TableComponent from 'src/components/TableComponent.vue';
+import { ref, watch } from 'vue';
 
-// Example timeline data - replace with your actual data
 const timelineSeries = ref<TimelineSeries[]>([]);
 const newsPaperStats = ref<{ name:string, pos:number, neg:number, diff:number}[]>([]);
-const barChartData = computed<BarChartItem[]>(() => {
-  return newsPaperStats.value.map((entry) => {
-    const isPositive = entry.diff >= 0;
-    return {
-      label: entry.name,
-      value: entry.diff,
-      backgroundColor: isPositive ? 'rgba(75, 192, 192, 0.45)' : 'rgba(255, 99, 132, 0.45)',
-      borderColor: isPositive ? 'rgb(75, 192, 192)' : 'rgb(255, 99, 132)',
-    };
-  });
-});
+const barChartData = ref<BarChartItem[]>([]);
+
 const validFrom = ref<string>(new Date(new Date().setMonth(new Date().getMonth() - 3)).toISOString().substring(0, 10));
 const validTo = ref<string>(new Date(new Date().setMonth(new Date().getMonth() + 3)).toISOString().substring(0, 10));
-watch([validFrom, validTo], async () => {
+
+  watch([validFrom, validTo], async () => {
 
     const currentIssue = await datasource.find("Item", {
       attributes: {
@@ -88,60 +79,88 @@ watch([validFrom, validTo], async () => {
     const timelineData: TimelineSeries[] = [];
     const newsPaperData: { name:string, pos:number, neg:number, diff:number}[] = [];
     for (const item of currentIssue) {
-      const transactionData = await datasource.find("Transaction", {
+      const transactionData = await getTransactionData(item.id, item.name, validFrom.value, validTo.value);
+      timelineData.push(transactionData);
+      const newsPaperStatsData = await getNewsPaperStats(item.id, item.name, validFrom.value, validTo.value);
+      newsPaperData.push(...newsPaperStatsData);
+
+    }
+    timelineSeries.value = timelineData;
+    newsPaperStats.value = newsPaperData;
+    barChartData.value = await getSalesmanData(validFrom.value, validTo.value);
+
+}, { immediate: true });
+  async function getTransactionData(itemId: number, itemName: string, from: string, to: string): Promise<TimelineSeries> {
+    const data = await datasource.find("Transaction", {
         attributes: {
           date: {function: "date_trunc", params: [{value:"day"},"date"]},
           value: {function: "sum", params: ["total"]},
         },
         where:[
-          {function: "=", params: ["item", {value: item.id}]},
+          {function: "=", params: ["item", {value: itemId}]},
           {function: "<", params: ["quantity", {value: 0}]},
-          {function: "between", params: ["date", {value: validFrom.value}, {value: validTo.value}]}
+          {function: "between", params: ["date", {value: from}, {value: to}]}
       ],
         groupBy: [{ function: "date_trunc", params: [{value:"day"},"date"]}],
         orderBy: [[{function: "date_trunc", params: [{value:"day"},"date"]}, "desc"]],
         limit: 20
       });
-      timelineData.push({
-        label: `Verkauf von ${item.name as string}`,
-        events: transactionData.map((t: { date: string; value: number }) => ({
+      return{
+        label: `Verkauf von ${itemName}`,
+        events: data.map((t: { date: string; value: number }) => ({
           date: t.date,
           value: t.value,
           label: "date"
       })),
-      });
-      const newsPaperSold = await datasource.find("Transaction",{
-        attributes:{
-          a:{function: "sum", params: ["quantity"]},
-          b:{function: "sum", params: ["total"]},
-        },
-        where:[
-          {function: "=", params: ["item", {value: item.id}]},
-          {function: "<", params:["quantity", {value: 0}]},
-          {function: "between", params: ["date", {value: validFrom.value}, {value: validTo.value}]}
-        ]        
-      }) 
-      const newsPaperBought = await datasource.find("Transaction",{
-        attributes:{
-          a:{function: "sum", params: ["quantity"]},
-          b:{function: "sum", params: ["total"]},
-        },
-        where:[
-          {function: "=", params: ["item", {value: item.id}]},
-          {function: ">", params:["quantity", {value: 0}]}
-        ]        
-      })
-      const sold = Math.abs(newsPaperSold[0]?.a ?? 0);
-      const bought = Math.abs(newsPaperBought[0]?.a ?? 0);
-      const diff =   bought -sold;
-      newsPaperData.push({ name: "Stück " + String(item.name), pos: sold, neg: bought, diff });
-      const sold2 = Math.abs(newsPaperSold[0]?.b ?? 0);
-      const bought2 = Math.abs(newsPaperBought[0]?.b ?? 0);
-      const diff2 = sold2 - bought2;
-      newsPaperData.push({ name: "Betrag " + String(item.name), pos: sold2, neg: bought2, diff: diff2 });
-    }
-    timelineSeries.value = timelineData;
-    newsPaperStats.value = newsPaperData;
+      };
+  }
+  async function getNewsPaperStats(itemId: number, itemName: string, from: string, to: string): Promise<{ name:string, pos:number, neg:number, diff:number}[]> {
+    const newsPaperSold = await datasource.find("Transaction",{
+          attributes:{
+            a:{function: "sum", params: ["quantity"]},
+            b:{function: "sum", params: ["total"]},
+          },
+          where:[
+            {function: "=", params: ["item", {value: itemId}]},
+            {function: "<", params:["quantity", {value: 0}]},
+            {function: "between", params: ["date", {value: from}, {value: to}]}
+          ]        
+        }) 
+        const newsPaperBought = await datasource.find("Transaction",{
+          attributes:{
+            a:{function: "sum", params: ["quantity"]},
+            b:{function: "sum", params: ["total"]},
+          },
+          where:[
+            {function: "=", params: ["item", {value: itemId}]},
+            {function: ">", params:["quantity", {value: 0}]}
+          ]        
+        })
+        const sold = Math.abs(newsPaperSold[0]?.a ?? 0);
+        const bought = Math.abs(newsPaperBought[0]?.a ?? 0);
+        const diff =   bought -sold;
+        const sold2 = Math.abs(newsPaperSold[0]?.b ?? 0);
+        const bought2 = Math.abs(newsPaperBought[0]?.b ?? 0);
+        const diff2 = sold2 - bought2;
+        return [
+          { name: "Stück " + itemName, pos: sold, neg: bought, diff },
+          { name: "Betrag " + itemName, pos: sold2, neg: bought2, diff: diff2 }
+        ];
+  }
+  async function getSalesmanData( from: string, to: string): Promise<BarChartItem[]> {
+    return await datasource.select({ s: "Salesman", t: "Transaction" },{
+          attributes:{
+            label:{function: "concat", params: ["s.first", "s.last"]},
+            value:{function: "sum", params: ["t.total"]},
+          },
+          where:[
+            {function: "between", params: ["t.date", {value: from}, {value: to}]},
+            {function: "<", params: ["t.quantity", {value: 0}]},
+            {function: "=", params: ["t.salesman", "s.id"]},
+          ],
+          groupBy:[{function: "concat", params: ["s.first", "s.last"]}],
+          orderBy:[[{function: "sum", params: ["t.total"]}, "desc"]],
+        });
+  }
 
-}, { immediate: true });
 </script>
