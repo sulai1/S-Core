@@ -11,8 +11,7 @@ export async function getNewID(salesmanId: number, db: DataSource<typeof tables,
     const res = await db.find("Identification", {
         where: [
             { function: "=", params: ["salesman", { value: salesmanId }] },
-            { function: ">", params: ["validTo", { value: new Date(new Date().setMonth(new Date().getMonth() - 6)).toISOString() }] },
-            { function: "<", params: ["id_nr", { value: 1000 }] }
+            { function: ">", params: ["validTo", { value: new Date(new Date().setMonth(new Date().getMonth() - 6)).toISOString() }] }
         ],
         orderBy: [["validTo", "desc"]],
         limit: 1
