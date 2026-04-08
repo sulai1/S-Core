@@ -5,7 +5,7 @@
       <div class="col-6">
           <q-item>
               <q-item-section>
-                  <q-item-label>Id</q-item-label>
+                  <q-item-label>Ausweis Nr</q-item-label>
                   <q-item-label>{{ identification?.[0]?.id_nr }}</q-item-label>
               </q-item-section>
           </q-item>
@@ -32,38 +32,28 @@
         </slot>
   </q-card-section>
   <q-separator />
-  <q-slide-transition>
-    <q-card-section>
-      <q-btn
-          flat
-          dense
-          :icon="editOpen ? 'expand_less' : 'expand_more'"
-          @click="editOpen = !editOpen"
-          class="q-mb-sm"
-          label="Bearbeiten"
-      />
-      <div v-show="editOpen">
-        <q-input v-if="salesman" v-model="salesman.id" label="Id" dense  />
-        <q-input v-if="salesman" v-model="salesman.last" label="Lastname" dense />
-        <q-input v-if="salesman" v-model="salesman.first" label="Firstname" dense />
-        <q-input v-if="salesman" v-model="salesman.phone" label="Phone" dense />
-        <q-input v-if="salesman" v-model="salesman.message" label="Message" dense />
-        <div class="row">
-          <div class="col">
-            <q-file
-              v-model="imgFile"
-              :label="salesman?.image ?? 'Bild hinzufügen'"
-              accept="image/*"
-              dense
-              filled
-            />
-          </div>
-          <q-btn icon="crop" @click="showCropper = true" :disable="!selectedSalesmanImage" />
+  <q-card-section>
+    <div>
+      <q-input v-if="salesman" v-model="salesman.id" label="Id" dense disable  />
+      <q-input v-if="salesman" v-model="salesman.last" label="Lastname" dense />
+      <q-input v-if="salesman" v-model="salesman.first" label="Firstname" dense />
+      <q-input v-if="salesman" v-model="salesman.phone" label="Phone" dense />
+      <q-input v-if="salesman" v-model="salesman.message" label="Message" dense />
+      <div class="row">
+        <div class="col">
+          <q-file
+            v-model="imgFile"
+            :label="salesman?.image ?? 'Bild hinzufügen'"
+            accept="image/*"
+            dense
+            filled
+          />
         </div>
-        <q-separator class="q-my-md" />
+        <q-btn icon="crop" @click="showCropper = true" :disable="!selectedSalesmanImage" />
       </div>
-    </q-card-section>
-  </q-slide-transition>
+      <q-separator class="q-my-md" />
+    </div>
+  </q-card-section>
 </template>
 
 <script setup lang="ts">
@@ -75,7 +65,6 @@ import ImageCropper from './ImageCropper.vue';
 const imgFile = ref<File  | null>(null);
 const showCropper = ref(false);
 const salesman = defineModel<Salesman>();
-const editOpen = ref(false);
 
 const identification = ref<Identification[]>([])
 const selectedSalesmanImage = ref<string | null>(null);
