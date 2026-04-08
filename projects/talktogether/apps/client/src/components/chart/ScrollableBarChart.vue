@@ -1,15 +1,13 @@
 <template>
   <div class="bar-chart-container">
-    <div class="chart-scroll-wrapper" :style="wrapperStyle">
-      <div class="chart-canvas-wrapper" :style="canvasWrapperStyle">
-        <Bar :data="chartData" :options="chartOptions" />
-      </div>
+    <div class="chart-canvas-wrapper">
+      <Bar :data="chartData" :options="chartOptions" />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, type CSSProperties } from 'vue';
+import { computed } from 'vue';
 import { Bar } from 'vue-chartjs';
 import {
   Chart as ChartJS,
@@ -21,8 +19,9 @@ import {
   Tooltip,
   Legend,
 } from 'chart.js';
+import zoomPlugin from 'chartjs-plugin-zoom';
 
-ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
+ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, zoomPlugin);
 
 export interface BarChartItem {
   label: string;
@@ -60,57 +59,22 @@ const hasLimitedWindow = computed(() => {
 
 const effectiveVisibleBars = computed(() => {
   if (typeof props.visibleBars === 'number' && props.visibleBars > 0) {
-    return props.visibleBars;
+    return Math.min(props.visibleBars, Math.max(props.data.length, 1));
   }
 
-  return props.data.length;
+  return Math.max(props.data.length, 1);
 });
 
-const perBarPixels = computed(() => props.barPixelSize + props.barGapPixelSize);
+const categoryAxisKey = computed(() => (isHorizontal.value ? 'y' : 'x'));
 
-const totalChartPixels = computed(() => {
-  return Math.max(props.data.length, 1) * perBarPixels.value;
-});
-
-const visibleWindowPixels = computed(() => {
-  return Math.max(effectiveVisibleBars.value, 1) * perBarPixels.value;
-});
-
-const wrapperStyle = computed<CSSProperties>(() => {
+const categoryWindow = computed(() => {
   if (!hasLimitedWindow.value) {
-    return {
-      overflowX: 'hidden',
-      overflowY: 'hidden',
-    };
-  }
-
-  if (isHorizontal.value) {
-    return {
-      maxHeight: `${visibleWindowPixels.value}px`,
-      overflowY: 'auto',
-      overflowX: 'hidden',
-    };
+    return {};
   }
 
   return {
-    maxWidth: '100%',
-    overflowX: 'auto',
-    overflowY: 'hidden',
-  };
-});
-
-const canvasWrapperStyle = computed<CSSProperties>(() => {
-  if (isHorizontal.value) {
-    return {
-      minHeight: `${totalChartPixels.value}px`,
-      width: '100%',
-      minWidth: '100%',
-    };
-  }
-
-  return {
-    minWidth: `${totalChartPixels.value}px`,
-    minHeight: '360px',
+    min: 0,
+    max: Math.max(effectiveVisibleBars.value - 1, 0),
   };
 });
 
@@ -135,6 +99,7 @@ const chartOptions = computed<ChartOptions<'bar'>>(() => ({
   responsive: true,
   maintainAspectRatio: false,
   indexAxis: isHorizontal.value ? 'y' : 'x',
+  animation: false,
   plugins: {
     legend: {
       display: false,
@@ -152,6 +117,19 @@ const chartOptions = computed<ChartOptions<'bar'>>(() => ({
         label: (context) => `${context.parsed.x ?? context.parsed.y}`,
       },
     },
+    zoom: {
+      limits: {
+        [categoryAxisKey.value]: {
+          min: 0,
+          max: Math.max(props.data.length - 1, 0),
+          minRange: Math.max(effectiveVisibleBars.value, 1),
+        },
+      },
+      pan: {
+        enabled: hasLimitedWindow.value,
+        mode: 'y',
+      },
+    },
   },
   scales: {
     x: {
@@ -161,7 +139,8 @@ const chartOptions = computed<ChartOptions<'bar'>>(() => ({
         text: !isHorizontal.value ? props.axisLabel : '',
       },
       ticks: {
-        autoSkip: false,
+        autoSkip: true,
+        maxTicksLimit: 6,
       },
       grid: {
         color: 'rgba(0, 0, 0, 0.06)',
@@ -169,6 +148,8 @@ const chartOptions = computed<ChartOptions<'bar'>>(() => ({
     },
     y: {
       beginAtZero: isHorizontal.value,
+      min: isHorizontal.value ? categoryWindow.value.min : undefined,
+      max: isHorizontal.value ? categoryWindow.value.max : undefined,
       title: {
         display: isHorizontal.value,
         text: isHorizontal.value ? props.axisLabel : '',
@@ -193,11 +174,18 @@ const chartOptions = computed<ChartOptions<'bar'>>(() => ({
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-.chart-scroll-wrapper {
-  width: 100%;
-}
-
 .chart-canvas-wrapper {
   position: relative;
+  min-height: 360px;
+}
+
+@media (max-width: 600px) {
+  .bar-chart-container {
+    padding: 12px;
+  }
+
+  .chart-canvas-wrapper {
+    min-height: 300px;
+  }
 }
 </style>
