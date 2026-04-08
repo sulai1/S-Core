@@ -1,10 +1,10 @@
 <template>
   <q-page class="row q-col-gutter-md justify-evenly">
     <div class="col-12 col-md-3 order-1 order-md-1">
+      <q-btn label="Hinzufügen" @click="addSalesman()" />
+        <q-btn v-if="selectedSalesman" label="Bearbeiten" @click="editSalesman(selectedSalesman)" />
+        <q-btn v-if="selectedSalesman" label="Löschen" @click="deleteSalesman(selectedSalesman)" />
       <div v-if="selectedSalesman" id="salesman" style="position:sticky; top:5vh; align-self:flex-start; z-index:1; overflow-y:auto; max-height:95vh;">
-        <q-btn label="Hinzufügen" @click="addSalesman()" />
-        <q-btn label="Bearbeiten" @click="editSalesman(selectedSalesman)" />
-        <q-btn label="Löschen" @click="deleteSalesman(selectedSalesman)" />
         <q-card-section class="row items-center">
           <q-img class="col-6" id="portrait" v-if="selectedSalesmanImage" :src="selectedSalesmanImage" alt="Salesman Image" />
           <div class="col-6">

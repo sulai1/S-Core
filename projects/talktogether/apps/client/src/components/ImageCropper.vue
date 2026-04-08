@@ -1,30 +1,36 @@
 <template>
-  <q-dialog v-model="show" persistent>
-    <q-card style="min-width: 360px; max-width: 900px;">
-      <q-card-section>
+  <q-dialog
+    v-model="show"
+    persistent
+    :maximized="$q.screen.lt.sm"
+    transition-show="slide-up"
+    transition-hide="slide-down"
+  >
+    <q-card class="cropper-card">
+      <q-card-section class="cropper-card-section">
         <div class="cropper-container">
-          <div style="display:flex; gap:12px;">
-            <div style="flex:1; min-width:280px;">
-              <img ref="imgRef" :src="src ?? ''" alt="to-crop" style="max-width:100%; display:block;" />
+          <div class="cropper-layout">
+            <div class="cropper-preview-panel">
+              <img ref="imgRef" :src="src ?? ''" alt="to-crop" class="cropper-image" />
             </div>
-            <div style="width:240px; display:flex; flex-direction:column; gap:8px;">
-              <q-btn size="sm" color="primary" label="Detect face" @click="detectFace" />
-              <q-btn size="sm" color="primary" label="Reset" @click="resetCrop" />
+
+            <div class="cropper-controls">
+              <div class="control-actions flex-row">
+                <q-btn size="sm" color="primary" label="Detect face" class="control-btn" @click="detectFace" />
+                <q-btn size="sm" color="primary" outline label="Reset" class="control-btn" @click="resetCrop" />
+              </div>
+
               <q-separator />
-              <div>
-                <div>Zoom</div>
-                <q-slider :model-value="zoom" :min="0.5" :max="3" :step="0.01" @update:model-value="onZoom"/>
+
+              <div class="control-group">
+                <div class="text-subtitle2">Rotate</div>
+                <q-slider :model-value="rotate" :min="-180" :max="180" :step="1" @update:model-value="onRotate" />
               </div>
-              <div>
-                <div>Rotate</div>
-                <q-slider :model-value="rotate" :min="-180" :max="180" :step="1" @update:model-value="onRotate"/>
-                <div style="margin-top:6px; display:flex; gap:8px; align-items:center;">
-                  <q-input dense type="number" style="width:120px;" :model-value="rotate" @update:model-value="onRotate" />
-                  <q-btn dense flat label="0°" @click="onRotate(0)" />
-                </div>
+
+              <div class="confirm-actions">
+                <q-btn color="positive" label="Confirm crop" class="control-btn" @click="confirm" />
+                <q-btn color="negative" label="Cancel" flat class="control-btn" @click="cancel" />
               </div>
-              <q-btn color="positive" label="Confirm crop" @click="confirm" />
-              <q-btn color="negative" label="Cancel" flat @click="cancel" />
             </div>
           </div>
         </div>
@@ -35,6 +41,7 @@
 
 <script setup lang="ts">
 import { ref, watch, onMounted, onBeforeUnmount, nextTick } from 'vue'
+import { useQuasar } from 'quasar'
 // cropperjs types may be missing; suppress errors for the import
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
@@ -48,6 +55,7 @@ declare class FaceDetector {
 
 const props = defineProps<{ src: string | null, show?: boolean, initRotate?: number }>()
 const emit = defineEmits(['update:show', 'cropped'])
+const $q = useQuasar()
 
 const show = ref<boolean>(!!props.show)
 watch(()=>props.show, v => show.value = !!v)
@@ -172,12 +180,6 @@ function resetCrop(){
   rotate.value = 0
 }
 
-function onZoom(v: number | null){
-  if(v == null) return
-  zoom.value = v
-  if(!cropper) return
-  try{ cropper.zoomTo(v) }catch{/* ignore */}
-}
 
 function onRotate(v: string | number | null){
   if(v == null) return
@@ -206,5 +208,118 @@ function cancel(){
 </script>
 
 <style scoped>
-.cropper-container { display:block }
+.cropper-container {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+}
+
+.cropper-card {
+  width: min(960px, 96vw);
+  max-width: 96vw;
+  height: min(92vh, 900px);
+  display: flex;
+  flex-direction: column;
+}
+
+.cropper-card-section {
+  padding: 16px;
+  height: 100%;
+  display: flex;
+  min-height: 0;
+}
+
+.cropper-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+}
+
+.cropper-preview-panel {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.cropper-image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.cropper-controls {
+  width: 100%;
+  max-width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: auto;
+  padding-top: 8px;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.control-actions,
+.confirm-actions {
+  display: flex;
+  flex-direction: row;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.control-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.control-btn {
+  flex: 1 1 160px;
+}
+
+.rotate-row {
+  margin-top: 6px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.rotate-input {
+  width: 120px;
+  max-width: 100%;
+}
+
+@media (max-width: 767px) {
+  .cropper-card {
+    width: 100vw;
+    max-width: 100vw;
+    height: 100dvh;
+    border-radius: 0;
+  }
+
+  .cropper-card-section {
+    padding: 12px;
+  }
+
+  .cropper-layout {
+    gap: 12px;
+  }
+
+  .control-btn {
+    flex: 1 1 100%;
+  }
+}
 </style>

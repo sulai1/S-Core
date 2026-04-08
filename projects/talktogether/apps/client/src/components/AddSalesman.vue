@@ -89,10 +89,12 @@ function onFileChange (input: unknown) {
   else if(input instanceof File) f = input
   if(!f) return;
   image.value = f;
+  if (previewSrc.value) {
+    URL.revokeObjectURL(previewSrc.value);
+  }
   previewSrc.value = URL.createObjectURL(image.value);
   cropSrc.value = previewSrc.value;
-  // open cropper right away
-  cropperVisible.value = true;
+  cropperVisible.value = false;
 }
 
 function openCropper (){
