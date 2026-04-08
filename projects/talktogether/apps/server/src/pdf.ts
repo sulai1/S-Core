@@ -39,10 +39,10 @@ export async function getNewID(salesmanId: number, db: DataSource<typeof tables,
         ],
         orderBy: [["id_nr", "asc"]],
     })
-    let freeId = 1;
     const set = new Set(newId.map((row) => row.newId));
+    let freeId = 1;
     for (const id of set) {
-        if (id !== freeId)
+        if (id > freeId)
             break;
         else {
             freeId += 1;
