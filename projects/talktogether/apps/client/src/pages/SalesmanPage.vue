@@ -2,6 +2,7 @@
   <q-page class="row q-col-gutter-md justify-evenly">
     <div class="col-12 col-md-3 order-1 order-md-1">
       <q-btn label="Hinzufügen" @click="addSalesman()" />
+        <q-btn v-if="selectedSalesman" label="Details" @click="showSalesmanDetails(selectedSalesman)" />
         <q-btn v-if="selectedSalesman" label="Bearbeiten" @click="editSalesman(selectedSalesman)" />
         <q-btn v-if="selectedSalesman" label="Löschen" @click="deleteSalesman(selectedSalesman)" />
       <div v-if="selectedSalesman" id="salesman" style="position:sticky; top:5vh; align-self:flex-start; z-index:1; overflow-y:auto; max-height:95vh;">
@@ -148,6 +149,15 @@ function addSalesman () {
 function rowColor(row: Salesman) {
   return row.message?.toLowerCase().includes("sperr") ? 'bg-red-3' : '';
 }
+
+const showSalesmanDetails = (salesman?: Salesman) => {
+  if (typeof salesman?.id === 'undefined') {
+    alert('id is required');
+    return;
+  }
+
+  router.push({ name: 'salesman-detail', params: { id: salesman.id } }).catch((e: unknown) => console.error(e));
+};
 
 const editSalesman = (salesman?: Salesman) => {
   if (typeof salesman?.id === 'undefined') {

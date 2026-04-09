@@ -48,6 +48,11 @@ const routes: RouteRecordRaw[] = [
         return import('pages/ErrorNotFound.vue');
       }),
     }, {
+      path: 'salesmen/:id', name: "salesman-detail", component: () => import('pages/SalesmanDetailPage.vue').catch((error) => {
+        console.error('Failed to load SalesmanDetailPage.vue:', error);
+        return import('pages/ErrorNotFound.vue');
+      }),
+    }, {
       path: 'edit-salesman/:id', name: "edit-salesman", component: () => import('pages/EditSalesmanPage.vue').catch((error) => {
         console.error('Failed to load EditSalesmanPage.vue:', error);
         return import('pages/ErrorNotFound.vue');
