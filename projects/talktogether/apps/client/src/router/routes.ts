@@ -33,6 +33,11 @@ const routes: RouteRecordRaw[] = [
         return import('pages/ErrorNotFound.vue');
       }),
     }, {
+      path: 'print', name: "print", component: () => import('pages/PrintPage.vue').catch((error) => {
+        console.error('Failed to load PrintPage.vue:', error);
+        return import('pages/ErrorNotFound.vue');
+      }),
+    }, {
       path: 'item', name: "item", component: () => import('pages/ItemPage.vue').catch((error) => {
         console.error('Failed to load ItemPage.vue:', error);
         return import('pages/ErrorNotFound.vue');

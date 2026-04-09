@@ -35,7 +35,7 @@
         </q-card-section>
       </div>
     </div>
-    <div class="col-12 col-md-6 order-3 order-md-3">
+    <div class="col-12 col-md-9 order-2 order-md-2">
       <TableComponent
         :data="salesmen"
         id="salesmen"
@@ -48,15 +48,6 @@
         </template>
       </TableComponent>
     </div>
-    <div class="col-12 col-md-3 order-2 order-md-2">
-      <div id="print-sidebar" style="position:sticky; top:5vh; align-self:flex-start; z-index:1; overflow-y:auto; max-height:95vh;">
-        <PrintComponent v-model="printList">
-          <template v-slot:actions>
-            <q-btn v-if="selectedSalesman" icon="add" @click="addToPrintList(selectedSalesman)" />
-          </template>
-        </PrintComponent>
-      </div>
-    </div>
   </q-page>
 </template>
 
@@ -64,7 +55,6 @@
 import { useQuasar } from 'quasar';
 import { baseUrl, datasource } from 'src/boot/di';
 import AddSalesman from 'src/components/AddSalesman.vue';
-import PrintComponent from 'src/components/PrintComponent.vue';
 import type { ColumnDesc, PropOrGetter } from 'src/components/table';
 import TableComponent from 'src/components/TableComponent.vue';
 import { onMounted, ref, watch } from 'vue';
@@ -99,7 +89,6 @@ const selectedSalesman = ref<Salesman|null>(null);
 const selectedSalesmanImage = ref<string | null>(null);
 const identification = ref<Identification[]|null>(null);
 const salesmen = ref<Salesman[]>([]);
-const printList = ref<Salesman[]>([]);
 
 const router = useRouter(); 
 
@@ -156,16 +145,6 @@ function addSalesman () {
       });
     }
 
-function addToPrintList(salesman?: Salesman){
-  console.log("addToPrintList", salesman);
-  if(!salesman) return;
-  if(!printList.value.find((s:Salesman) => s.id === salesman.id)){
-    printList.value = [salesman,...printList.value];
-  }
-  // ensure unique entries
-  printList.value = [...new Set(printList.value)];
-}
-
 function rowColor(row: Salesman) {
   return row.message?.toLowerCase().includes("sperr") ? 'bg-red-3' : '';
 }
@@ -215,7 +194,7 @@ const deleteSalesman =  (salesman?: Salesman) => {
   opacity: 1;
 }
 @media (max-width: 600px) {
-  #salesman, #print-sidebar {
+  #salesman {
     position: static !important;
     max-width: 100vw !important;
     margin-bottom: 12px;
@@ -229,10 +208,6 @@ const deleteSalesman =  (salesman?: Salesman) => {
   align-self:flex-start;
   z-index:1;
   overflow: auto;
-}
-#printList{
-  align-self:flex-start;
-  z-index:1;
 }
 
 .bg-red-3 {
