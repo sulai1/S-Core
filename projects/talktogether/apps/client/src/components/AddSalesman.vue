@@ -65,11 +65,12 @@ async function createSalesman () {
     if(!image.value){
         throw new Error("Please select an image")
     }
-    salesman.value.image = image.value.name;
+    const imageName = `${salesman.value.last}-${salesman.value.first}-${Date.now()}.jpg`
+    salesman.value.image = imageName;
 
     const uploadInfo = await uploads.upload({
       data: image.value,
-      filename: image.value.name,
+      filename: imageName,
     })
     if(!uploadInfo){
         throw new Error("Error uploading image")
@@ -114,7 +115,7 @@ function removeImage(){
 
 function onCropped(blob: Blob){
   // convert blob to File so uploadImage receives a File
-  const file = new File([blob], image.value?.name ?? `cropped-${Date.now()}.jpg`, { type: 'image/jpeg' })
+  const file = new File([blob],  `${salesman.value.last}-${salesman.value.first}-${Date.now()}.jpg`, { type: 'image/jpeg' })
   image.value = file;
   if(previewSrc.value){ URL.revokeObjectURL(previewSrc.value) }
   previewSrc.value = URL.createObjectURL(file);
