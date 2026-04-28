@@ -1,5 +1,5 @@
 <template>
-  <div class="timeline-chart-container">
+  <div ref="containerRef" class="timeline-chart-container">
     <div class="chart-wrapper">
       <Line :data="chartData" :options="chartOptions" />
     </div>
@@ -7,7 +7,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { Line } from 'vue-chartjs';
 import {
   Chart as ChartJS,
@@ -64,6 +64,37 @@ const props = withDefaults(defineProps<Props>(), {
   backgroundColor: 'rgba(75, 192, 192, 0.1)',
   borderColor: 'rgb(75, 192, 192)',
   fillArea: true,
+});
+
+const containerRef = ref<HTMLElement | null>(null);
+const chartTheme = ref({
+  fontFamily: 'Roboto, Helvetica Neue, Arial, sans-serif',
+  textColor: '#1f2937',
+  mutedTextColor: '#5f6b7a',
+  gridColor: 'rgba(31, 41, 55, 0.14)',
+});
+
+function readCssVar(styles: CSSStyleDeclaration, name: string, fallback: string): string {
+  const value = styles.getPropertyValue(name).trim();
+  return value || fallback;
+}
+
+function syncThemeFromStyles() {
+  if (!containerRef.value) {
+    return;
+  }
+
+  const styles = getComputedStyle(containerRef.value);
+  chartTheme.value = {
+    fontFamily: styles.fontFamily || chartTheme.value.fontFamily,
+    textColor: readCssVar(styles, '--dashboard-text-color', chartTheme.value.textColor),
+    mutedTextColor: readCssVar(styles, '--dashboard-muted-text-color', chartTheme.value.mutedTextColor),
+    gridColor: readCssVar(styles, '--dashboard-grid-color', chartTheme.value.gridColor),
+  };
+}
+
+onMounted(() => {
+  syncThemeFromStyles();
 });
 
 // Default color palette for multiple series
@@ -139,6 +170,10 @@ const chartData = computed(() => ({
 const chartOptions = computed<ChartOptions<'line'>>(() => ({
   responsive: true,
   maintainAspectRatio: false,
+  color: chartTheme.value.textColor,
+  font: {
+    family: chartTheme.value.fontFamily,
+  },
   interaction: {
     intersect: false,
     mode: 'index',
@@ -151,8 +186,10 @@ const chartOptions = computed<ChartOptions<'line'>>(() => ({
         usePointStyle: true,
         padding: 12,
         boxWidth: 10,
+        color: chartTheme.value.textColor,
         font: {
           size: 11,
+          family: chartTheme.value.fontFamily,
         },
       },
     },
@@ -162,15 +199,21 @@ const chartOptions = computed<ChartOptions<'line'>>(() => ({
       font: {
         size: 15,
         weight: 'bold',
+        family: chartTheme.value.fontFamily,
       },
+      color: chartTheme.value.textColor,
     },
     tooltip: {
       backgroundColor: 'rgba(0, 0, 0, 0.8)',
+      titleColor: '#ffffff',
+      bodyColor: '#ffffff',
       titleFont: {
         size: 13,
+        family: chartTheme.value.fontFamily,
       },
       bodyFont: {
         size: 12,
+        family: chartTheme.value.fontFamily,
       },
       padding: 12,
       displayColors: true,
@@ -189,12 +232,20 @@ const chartOptions = computed<ChartOptions<'line'>>(() => ({
       title: {
         display: true,
         text: props.yAxisLabel,
+        color: chartTheme.value.textColor,
+        font: {
+          family: chartTheme.value.fontFamily,
+        },
       },
       ticks: {
         maxTicksLimit: 6,
+        color: chartTheme.value.mutedTextColor,
+        font: {
+          family: chartTheme.value.fontFamily,
+        },
       },
       grid: {
-        color: 'rgba(0, 0, 0, 0.05)',
+        color: chartTheme.value.gridColor,
       },
     },
     x: {
@@ -203,6 +254,10 @@ const chartOptions = computed<ChartOptions<'line'>>(() => ({
         autoSkip: true,
         maxTicksLimit: 6,
         maxRotation: 0,
+        color: chartTheme.value.mutedTextColor,
+        font: {
+          family: chartTheme.value.fontFamily,
+        },
         callback: (value) => dateFormatter.format(new Date(Number(value))),
       },
       grid: {
@@ -218,9 +273,10 @@ const chartOptions = computed<ChartOptions<'line'>>(() => ({
   width: 100%;
   height: 100%;
   padding: 16px;
-  background: white;
+  background: var(--dashboard-surface-color, #ffffff);
+  border: 1px solid var(--dashboard-border-color, rgba(31, 41, 55, 0.12));
   border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 .chart-wrapper {

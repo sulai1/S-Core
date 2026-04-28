@@ -1,5 +1,5 @@
 <template>
-  <div class="bar-chart-container">
+  <div ref="containerRef" class="bar-chart-container">
     <div class="chart-canvas-wrapper">
       <Bar :data="chartData" :options="chartOptions" />
     </div>
@@ -7,7 +7,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { Bar } from 'vue-chartjs';
 import {
   Chart as ChartJS,
@@ -49,6 +49,37 @@ const props = withDefaults(defineProps<Props>(), {
   orientation: 'horizontal',
   barPixelSize: 36,
   barGapPixelSize: 20,
+});
+
+const containerRef = ref<HTMLElement | null>(null);
+const chartTheme = ref({
+  fontFamily: 'Roboto, Helvetica Neue, Arial, sans-serif',
+  textColor: '#1f2937',
+  mutedTextColor: '#5f6b7a',
+  gridColor: 'rgba(31, 41, 55, 0.14)',
+});
+
+function readCssVar(styles: CSSStyleDeclaration, name: string, fallback: string): string {
+  const value = styles.getPropertyValue(name).trim();
+  return value || fallback;
+}
+
+function syncThemeFromStyles() {
+  if (!containerRef.value) {
+    return;
+  }
+
+  const styles = getComputedStyle(containerRef.value);
+  chartTheme.value = {
+    fontFamily: styles.fontFamily || chartTheme.value.fontFamily,
+    textColor: readCssVar(styles, '--dashboard-text-color', chartTheme.value.textColor),
+    mutedTextColor: readCssVar(styles, '--dashboard-muted-text-color', chartTheme.value.mutedTextColor),
+    gridColor: readCssVar(styles, '--dashboard-grid-color', chartTheme.value.gridColor),
+  };
+}
+
+onMounted(() => {
+  syncThemeFromStyles();
 });
 
 const isHorizontal = computed(() => props.orientation === 'horizontal');
@@ -98,6 +129,10 @@ const chartData = computed(() => ({
 const chartOptions = computed<ChartOptions<'bar'>>(() => ({
   responsive: true,
   maintainAspectRatio: false,
+  color: chartTheme.value.textColor,
+  font: {
+    family: chartTheme.value.fontFamily,
+  },
   indexAxis: isHorizontal.value ? 'y' : 'x',
   animation: false,
   plugins: {
@@ -107,12 +142,20 @@ const chartOptions = computed<ChartOptions<'bar'>>(() => ({
     title: {
       display: true,
       text: props.title,
+      color: chartTheme.value.textColor,
       font: {
         size: 16,
         weight: 'bold',
+        family: chartTheme.value.fontFamily,
       },
     },
     tooltip: {
+      titleFont: {
+        family: chartTheme.value.fontFamily,
+      },
+      bodyFont: {
+        family: chartTheme.value.fontFamily,
+      },
       callbacks: {
         label: (context) => `${context.parsed.x ?? context.parsed.y}`,
       },
@@ -137,13 +180,21 @@ const chartOptions = computed<ChartOptions<'bar'>>(() => ({
       title: {
         display: !isHorizontal.value,
         text: !isHorizontal.value ? props.axisLabel : '',
+        color: chartTheme.value.textColor,
+        font: {
+          family: chartTheme.value.fontFamily,
+        },
       },
       ticks: {
         autoSkip: true,
         maxTicksLimit: 6,
+        color: chartTheme.value.mutedTextColor,
+        font: {
+          family: chartTheme.value.fontFamily,
+        },
       },
       grid: {
-        color: 'rgba(0, 0, 0, 0.06)',
+        color: chartTheme.value.gridColor,
       },
     },
     y: {
@@ -153,9 +204,17 @@ const chartOptions = computed<ChartOptions<'bar'>>(() => ({
       title: {
         display: isHorizontal.value,
         text: isHorizontal.value ? props.axisLabel : '',
+        color: chartTheme.value.textColor,
+        font: {
+          family: chartTheme.value.fontFamily,
+        },
       },
       ticks: {
         autoSkip: false,
+        color: chartTheme.value.mutedTextColor,
+        font: {
+          family: chartTheme.value.fontFamily,
+        },
       },
       grid: {
         display: !isHorizontal.value,
@@ -169,9 +228,10 @@ const chartOptions = computed<ChartOptions<'bar'>>(() => ({
 .bar-chart-container {
   width: 100%;
   padding: 20px;
-  background: white;
+  background: var(--dashboard-surface-color, #ffffff);
+  border: 1px solid var(--dashboard-border-color, rgba(31, 41, 55, 0.12));
   border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 .chart-canvas-wrapper {
