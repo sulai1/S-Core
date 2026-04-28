@@ -11,8 +11,12 @@
         <div class="col-12 col-sm-3">
           <q-checkbox v-model="onlyOpen" label="Nur offene Transaktionen" />
         </div>
-        <div class="col-12 col-sm-3">
+        <div class="col-12 col-sm-3 flex items-center q-gutter-sm">
           <q-btn color="primary" icon="filter_alt" label="Filtern" @click="list" />
+          <q-btn flat icon="clear" title="Filter zurücksetzen" @click="resetFilter" />
+        </div>
+        <div class="col-auto flex items-center text-grey-7">
+          {{ filteredTransactions.length }} Einträge
         </div>
       </div>
       <div class="q-mt-md table-scroll-wrapper" >
@@ -101,15 +105,22 @@ async function list() {
       { function: "=", params: ["s.id", "t.salesman"] },
       { function: "=", params: ["i.id", "t.item"] },
       { function: "between", params: ["t.date", 
-        dateFrom.value ? { value: `${dateFrom.value}T00:00:00.000Z` } : { value: '1970-01-01T00:00:00.000Z' },
-        dateTo.value ? { value: `${dateTo.value}T23:59:59.999Z` } : { value: new Date().toISOString() }
-      ] }
+        dateFrom.value ? { value: `${dateFrom.value}` } : { value: '1970-01-01T00:00:00.000Z' },
+        dateTo.value ? { value: `${dateTo.value}T23:59:59.999Z` } : { value: new Date(new Date().setHours(23, 59, 59, 999)).toISOString() }
+      ], ignoreIfParamIsNull: true }
   ] ,
     orderBy : [['t.date', 'desc']],
     limit: 500
   });
 
   transactions.value = res as unknown as TransactionWithNames[];
+}
+
+async function resetFilter() {
+  dateFrom.value = '';
+  dateTo.value = '';
+  onlyOpen.value = false;
+  await list();
 }
 
 async function cancel(t: Transaction) {

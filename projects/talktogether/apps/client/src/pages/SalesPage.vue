@@ -22,6 +22,18 @@
           id="transaction-component"
         />
       </div>
+      <q-banner
+        v-if="lastResult"
+        :class="lastResult.ok ? 'bg-positive text-white' : 'bg-negative text-white'"
+        dense
+        rounded
+        class="q-mt-sm"
+      >
+        <template v-slot:avatar>
+          <q-icon :name="lastResult.ok ? 'check_circle' : 'error'" />
+        </template>
+        {{ lastResult.message }}
+      </q-banner>
     </div>
     <div class="col-12 col-md-5 q-pa-md">
       <FindSalesman v-model="selectedSalesman" :salesmen="salesmen">
@@ -75,6 +87,7 @@ const transaction = ref<Transaction>({
 });
 
 const $q = useQuasar();
+const lastResult = ref<{ ok: boolean; message: string } | null>(null);
 const salesmen = ref<SalesmanWithLock[]>([]);
 const items = ref<Item[]>([]);
 const item = ref<Item >();
@@ -145,8 +158,12 @@ async function addTransaction(t: Transaction) {
       price: 0,
       quantity: 0,
     });
+    lastResult.value = {
+      ok: true,
+      message: `Transaktion gespeichert: ${t.quantity !== undefined ? Math.abs(t.quantity) : ''} Stück, ${t.total} €`,
+    };
   } else {
-    alert('Fehler beim Anlegen der Transaktion: ' + JSON.stringify(res));
+    lastResult.value = { ok: false, message: 'Fehler beim Anlegen der Transaktion: ' + JSON.stringify(res) };
   }
 }
 

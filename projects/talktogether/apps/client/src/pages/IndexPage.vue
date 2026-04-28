@@ -209,6 +209,14 @@ const invoiceAmountSeries = ref<TimelineSeries[]>([]);
 const validFrom = ref<string>(new Date(new Date().setMonth(new Date().getMonth() - 3)).toISOString().substring(0, 10));
 const validTo = ref<string>(new Date(new Date().setMonth(new Date().getMonth() + 3)).toISOString().substring(0, 10));
 
+function toRangeStartIso(date: string): string {
+  return `${date}T00:00:00.000Z`;
+}
+
+function toRangeEndIso(date: string): string {
+  return `${date}T23:59:59.999Z`;
+}
+
   watch([validFrom, validTo], async () => {
 
     const currentIssue = await datasource.find("Item", {
@@ -242,6 +250,8 @@ const validTo = ref<string>(new Date(new Date().setMonth(new Date().getMonth() +
 
 }, { immediate: true });
   async function getTransactionData(itemId: number, itemName: string, from: string, to: string): Promise<TimelineSeries> {
+    const fromIso = toRangeStartIso(from);
+    const toIso = toRangeEndIso(to);
     const data = await datasource.find("Transaction", {
         attributes: {
           date: {function: "date_trunc", params: [{value:"day"},"date"]},
@@ -250,11 +260,11 @@ const validTo = ref<string>(new Date(new Date().setMonth(new Date().getMonth() +
         where:[
           {function: "=", params: ["item", {value: itemId}]},
           {function: "<", params: ["quantity", {value: 0}]},
-          {function: "between", params: ["date", {value: from}, {value: to}]}
+          {function: "between", params: ["date", {value: fromIso}, {value: toIso}]}
       ],
         groupBy: [{ function: "date_trunc", params: [{value:"day"},"date"]}],
-        orderBy: [[{function: "date_trunc", params: [{value:"day"},"date"]}, "desc"]],
-        limit: 20
+        orderBy: [[{function: "date_trunc", params: [{value:"day"},"date"]}, "asc"]],
+        limit: 200
       });
       return{
         label: `Verkauf von ${itemName}`,
@@ -266,6 +276,8 @@ const validTo = ref<string>(new Date(new Date().setMonth(new Date().getMonth() +
       };
   }
   async function getNewsPaperStats(itemId: number, itemName: string, from: string, to: string): Promise<{ name:string, pos:number, neg:number, diff:number}[]> {
+    const fromIso = toRangeStartIso(from);
+    const toIso = toRangeEndIso(to);
     const newsPaperSold = await datasource.find("Transaction",{
           attributes:{
             a:{function: "sum", params: ["quantity"]},
@@ -274,7 +286,7 @@ const validTo = ref<string>(new Date(new Date().setMonth(new Date().getMonth() +
           where:[
             {function: "=", params: ["item", {value: itemId}]},
             {function: "<", params:["quantity", {value: 0}]},
-            {function: "between", params: ["date", {value: from}, {value: to}]}
+            {function: "between", params: ["date", {value: fromIso}, {value: toIso}]}
           ]        
         }) 
         const newsPaperBought = await datasource.find("Transaction",{
@@ -299,13 +311,15 @@ const validTo = ref<string>(new Date(new Date().setMonth(new Date().getMonth() +
         ];
   }
   async function getSalesmanData( from: string, to: string): Promise<BarChartItem[]> {
+    const fromIso = toRangeStartIso(from);
+    const toIso = toRangeEndIso(to);
     return await datasource.select({ s: "Salesman", t: "Transaction" },{
           attributes:{
             label:{function: "concat", params: ["s.first", "s.last"]},
             value:{function: "sum", params: ["t.total"]},
           },
           where:[
-            {function: "between", params: ["t.date", {value: from}, {value: to}]},
+            {function: "between", params: ["t.date", {value: fromIso}, {value: toIso}]},
             {function: "<", params: ["t.quantity", {value: 0}]},
             {function: "=", params: ["t.salesman", "s.id"]},
           ],
