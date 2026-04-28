@@ -70,6 +70,11 @@ import { onMounted, ref, shallowRef, watch } from 'vue';
 import type { ColumnDesc, PropOrGetter, SortFunction } from './table';
 
 
+export interface SortConfig {
+  column: string;
+  direction: 'asc' | 'desc';
+}
+
 const props = defineProps<{
     data:T[],
     columns:ColumnDesc<T,keyof T>[]
@@ -77,6 +82,7 @@ const props = defineProps<{
     rowClass?:string|((row:T) => string),
     searchable?:boolean
     maxHeight?:string
+    sort?: SortConfig[]
 }>();
 
 const selected = defineModel<T|null>("selected");
@@ -88,10 +94,39 @@ const searchString = ref<string>('');
 
 onMounted(() => {
   filteredSortedData.value = [...props.data];
+  
+  // Initialize sorting from prop if provided
+  if (props.sort && props.sort.length > 0) {
+    for (const sortConfig of props.sort) {
+      const column = props.columns.find(col => col.headerName === sortConfig.column);
+      if (column) {
+        const sortFn: SortFunction<T> = column.sortFunction ?? (
+          typeof column.property === "function"
+            ? (a: T, b: T) => {
+                const propFn = column.property as (row: T) => string;
+                const aVal = propFn(a);
+                const bVal = propFn(b);
+                return aVal < bVal ? -1 : aVal > bVal ? 1 : 0;
+              }
+            : (a: T, b: T) => {
+                const key = column.property as keyof T;
+                return a[key] < b[key] ? -1 : a[key] > b[key] ? 1 : 0;
+              }
+        );
+        sorting.value.push({
+          name: sortConfig.column,
+          order: sortConfig.direction,
+          f: sortFn
+        });
+      }
+    }
+    sortTable();
+  }
 });
 
 watch(()=>props.data, (newSalesmen) => {
   filteredSortedData.value = newSalesmen;
+  sortTable();
 },{deep:true});
 
 

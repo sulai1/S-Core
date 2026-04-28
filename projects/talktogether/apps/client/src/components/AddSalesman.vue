@@ -40,6 +40,7 @@ import type { salesman as sm } from '@s-core/talktogether';
 import { ref } from 'vue';
 import ImageCropper from './ImageCropper.vue';
 import { datasource, uploads } from 'src/boot/di';
+import { createOrRenewIdentificationForSalesman } from 'src/utils/identification';
 
 const salesman = ref<InferCreationSchema<typeof  sm>>({
   first: '',
@@ -65,11 +66,12 @@ async function createSalesman () {
     if(!image.value){
         throw new Error("Please select an image")
     }
-    salesman.value.image = image.value.name;
+    const imageName = `${salesman.value.last}-${salesman.value.first}-${Date.now()}.jpg`
+    salesman.value.image = imageName;
 
     const uploadInfo = await uploads.upload({
       data: image.value,
-      filename: image.value.name,
+      filename: imageName,
     })
     if(!uploadInfo){
         throw new Error("Error uploading image")
@@ -79,6 +81,13 @@ async function createSalesman () {
     if(!res){
         throw new Error("Creating salesman failed: " + JSON.stringify(res))
     }
+
+    const newSalesmanId = Number((res[0] as { id?: number } | undefined)?.id ?? 0);
+    if (!Number.isInteger(newSalesmanId) || newSalesmanId <= 0) {
+      throw new Error('Creating salesman failed: missing id');
+    }
+
+    await createOrRenewIdentificationForSalesman(newSalesmanId);
 }
 
 function onFileChange (input: unknown) {
@@ -89,10 +98,12 @@ function onFileChange (input: unknown) {
   else if(input instanceof File) f = input
   if(!f) return;
   image.value = f;
+  if (previewSrc.value) {
+    URL.revokeObjectURL(previewSrc.value);
+  }
   previewSrc.value = URL.createObjectURL(image.value);
   cropSrc.value = previewSrc.value;
-  // open cropper right away
-  cropperVisible.value = true;
+  cropperVisible.value = false;
 }
 
 function openCropper (){
@@ -112,7 +123,7 @@ function removeImage(){
 
 function onCropped(blob: Blob){
   // convert blob to File so uploadImage receives a File
-  const file = new File([blob], image.value?.name ?? `cropped-${Date.now()}.jpg`, { type: 'image/jpeg' })
+  const file = new File([blob],  `${salesman.value.last}-${salesman.value.first}-${Date.now()}.jpg`, { type: 'image/jpeg' })
   image.value = file;
   if(previewSrc.value){ URL.revokeObjectURL(previewSrc.value) }
   previewSrc.value = URL.createObjectURL(file);

@@ -1,15 +1,42 @@
 <template>
   <q-page class="row q-col-gutter-md justify-evenly">
     <div class="col-12 col-md-3 order-1 order-md-1">
-      <div id="salesman" style="position:sticky; top:5vh; align-self:flex-start; z-index:1; overflow-y:auto; max-height:95vh;">
-        <SalesmanComponent v-if="selectedSalesman" v-model="selectedSalesman">
-          <q-btn icon="add" label="Anwenden" @click="updateSalesman(selectedSalesman)" />
-          <q-btn icon="delete" label="Löschen" @click="deleteSalesman(selectedSalesman)" />
-          <q-btn :icon="selectedSalesman.locked ? 'lock_open' : 'lock'" :label="selectedSalesman.locked ? 'Entsperren' : 'Sperren'" :color="selectedSalesman.locked ? 'warning' : 'negative'" @click="toggleLock(selectedSalesman)" />
-        </SalesmanComponent>
+      <q-btn label="Hinzufügen" @click="addSalesman()" />
+        <q-btn v-if="selectedSalesman" label="Details" @click="showSalesmanDetails(selectedSalesman)" />
+        <q-btn v-if="selectedSalesman" label="Bearbeiten" @click="editSalesman(selectedSalesman)" />
+        <q-btn v-if="selectedSalesman" label="Löschen" @click="deleteSalesman(selectedSalesman)" />
+      <div v-if="selectedSalesman" id="salesman" style="position:sticky; top:5vh; align-self:flex-start; z-index:1; overflow-y:auto; max-height:95vh;">
+        <q-card-section class="row items-center">
+          <q-img class="col-6" id="portrait" v-if="selectedSalesmanImage" :src="selectedSalesmanImage" alt="Salesman Image" />
+          <div class="col-6">
+              <q-item>
+                  <q-item-section>
+                      <q-item-label>Id</q-item-label>
+                      <q-item-label>{{ identification?.[0]?.id_nr }}</q-item-label>
+                  </q-item-section>
+              </q-item>
+              <q-item>
+                  <q-item-section>
+                      <q-item-label>Erneuert</q-item-label>
+                      <q-item-label>
+                          {{ new Date(identification?.[0]?.updatedAt??new Date()).toLocaleDateString() }}
+                      </q-item-label>
+                  </q-item-section>
+              </q-item>
+              <q-item>
+                  <q-item-section>
+                      <q-item-label>Gültig</q-item-label>
+                      <q-item-label>
+                          {{ new Date(identification?.[0]?.validTo??new Date()).toLocaleDateString() }}
+                      </q-item-label>
+                  </q-item-section>
+              </q-item>
+              <q-item></q-item>
+            </div>
+        </q-card-section>
       </div>
     </div>
-    <div class="col-12 col-md-6 order-3 order-md-3">
+    <div class="col-12 col-md-9 order-2 order-md-2">
       <TableComponent
         :data="salesmen"
         id="salesmen"
@@ -17,34 +44,24 @@
         v-model:selected="selectedSalesman"
         :row-class="rowColor"
         searchable
+        :sort="[{ column: 'Id', direction: 'desc' }]"
       >
         <template v-slot:toolbar>
-          <q-btn label="Hinzufügen" @click="addSalesman()" />
         </template>
       </TableComponent>
-    </div>
-    <div class="col-12 col-md-3 order-2 order-md-2">
-      <div id="print-sidebar" style="position:sticky; top:5vh; align-self:flex-start; z-index:1; overflow-y:auto; max-height:95vh;">
-        <PrintComponent v-model="printList">
-          <template v-slot:actions>
-            <q-btn v-if="selectedSalesman" icon="add" @click="addToPrintList(selectedSalesman)" />
-          </template>
-        </PrintComponent>
-      </div>
     </div>
   </q-page>
 </template>
 
 <script setup lang="ts">
 import { useQuasar } from 'quasar';
-import { datasource } from 'src/boot/di';
+import { baseUrl, datasource } from 'src/boot/di';
 import AddSalesman from 'src/components/AddSalesman.vue';
-import PrintComponent from 'src/components/PrintComponent.vue';
-import SalesmanComponent from 'src/components/SalesmanComponent.vue';
 import type { ColumnDesc, PropOrGetter } from 'src/components/table';
 import TableComponent from 'src/components/TableComponent.vue';
-import { onMounted, ref } from 'vue';
-import type { Salesman } from '@s-core/talktogether';
+import { onMounted, ref, watch } from 'vue';
+import type { Identification, Salesman } from '@s-core/talktogether';
+import { useRouter } from 'vue-router';
 
 const columns:ColumnDesc<Salesman,PropOrGetter<Salesman>>[] = [
   {headerName:'Id', property:'id', sortable:true, sortFunction:(a,b)=> (a.id ?? 0) - (b.id ?? 0)},
@@ -71,8 +88,11 @@ const columns:ColumnDesc<Salesman,PropOrGetter<Salesman>>[] = [
 ]
 
 const selectedSalesman = ref<Salesman|null>(null);
+const selectedSalesmanImage = ref<string | null>(null);
+const identification = ref<Identification[]|null>(null);
 const salesmen = ref<Salesman[]>([]);
-const printList = ref<Salesman[]>([]);
+
+const router = useRouter(); 
 
 onMounted(async () => {
   const res = await datasource.find("Salesman", {
@@ -83,34 +103,21 @@ onMounted(async () => {
   }
 });
 
-const updateSalesman = async (salesman?: Salesman) => {
-  if(typeof salesman?.id === "undefined"){
-    alert("id is required");
+
+watch(selectedSalesman, async ()=>{
+  if(!selectedSalesman.value || !selectedSalesman.value.image) {
+    selectedSalesmanImage.value = null;
     return;
-  };
+  }
+  selectedSalesmanImage.value = `${baseUrl}/images/${selectedSalesman.value.image}`;
 
-  await datasource.update("Salesman", salesman, [{ function:"=",params:["id",{value:salesman.id}]}] );
-};
-
-const deleteSalesman =  (salesman?: Salesman) => {
-  if(typeof salesman?.id === "undefined"){
-    alert("id is required");
-    return;
-  };
-
-  $q.dialog({
-          title: 'Verkäufer löschen',
-          message: `Verkäufer ${salesman.first} ${salesman.last} wirklich löschen?`,
-          ok: 'OK',
-          cancel: 'Abbrechen',
-          persistent: true
-  }).onOk(() => {
-    if(!salesman?.id) return;
-    datasource.delete("Salesman", [{ function:"=",params:["id",{value:salesman.id}]}] ).catch((e: unknown)=> console.error(e));
-    salesmen.value = salesmen.value.filter((s:Salesman) => s.id !== salesman.id);
-  });
-};
-
+    if(selectedSalesman.value.id){
+        const res =  await datasource.find("Identification",{where:[{ function:"=", params: ["salesman", {value: selectedSalesman.value.id}]}]})
+        if(res.length > 0){
+         identification.value = res as unknown as Identification[];
+        }
+    }
+},{ immediate:true})
 
 const $q = useQuasar();
 function addSalesman () {
@@ -123,7 +130,7 @@ function addSalesman () {
             { function: '=', params: ["last",{ value: data.last }] },
           ],
           limit: 1,
-          orderBy: [['updatedAt', 'desc'], ['id', 'desc']],
+          orderBy: [['id', 'desc'],['updatedAt', 'desc'], ],
         }).then((res: unknown[])=>{
           if(res){
             if( res[0]){
@@ -140,28 +147,50 @@ function addSalesman () {
       });
     }
 
-function addToPrintList(salesman?: Salesman){
-  console.log("addToPrintList", salesman);
-  if(!salesman) return;
-  if(!printList.value.find((s:Salesman) => s.id === salesman.id)){
-    printList.value = [salesman,...printList.value];
-  }
-  // ensure unique entries
-  printList.value = [...new Set(printList.value)];
-}
-
-async function toggleLock(salesman: Salesman) {
-  if (typeof salesman?.id === 'undefined') return;
-  const newLocked = !salesman.locked;
-  await datasource.update('Salesman', { locked: newLocked }, [{ function: '=', params: ['id', { value: salesman.id }] }]);
-  salesman.locked = newLocked;
-}
-
 function rowColor(row: Salesman) {
   if (row.locked) return 'bg-orange-3';
   return row.message?.toLowerCase().includes('sperr') ? 'bg-red-3' : '';
 }
 
+const showSalesmanDetails = (salesman?: Salesman) => {
+  if (typeof salesman?.id === 'undefined') {
+    alert('id is required');
+    return;
+  }
+
+  router.push({ name: 'salesman-detail', params: { id: salesman.id } }).catch((e: unknown) => console.error(e));
+};
+
+const editSalesman = (salesman?: Salesman) => {
+  if (typeof salesman?.id === 'undefined') {
+    alert('id is required');
+    return;
+  }
+
+  router.push({ name: 'edit-salesman', params: { id: salesman.id } }).catch((e: unknown) => console.error(e));
+};
+
+const deleteSalesman =  (salesman?: Salesman) => {
+  if(typeof salesman?.id === "undefined"){
+    alert("id is required");
+    return;
+  };
+
+  $q.dialog({
+          title: 'Verkäufer löschen',
+          message: `Verkäufer ${salesman.first} ${salesman.last} wirklich löschen?`,
+          ok: 'OK',
+          cancel: 'Abbrechen',
+          persistent: true
+  }).onOk(() => {
+    if(!salesman?.id) return;
+    datasource.delete("Identification", [{ function:"=",params:["salesman",{value:salesman.id}]}] ).catch((e: unknown)=> console.error(e));
+    datasource.delete("Salesman", [{ function:"=",params:["id",{value:salesman.id}]}] ).then(()=>{
+      salesmen.value = salesmen.value.filter(s => s.id !== salesman.id);
+    }).catch((e: unknown)=> console.error(e));
+    
+  });
+};
 </script>
 
 <style scoped>
@@ -177,7 +206,7 @@ function rowColor(row: Salesman) {
   opacity: 1;
 }
 @media (max-width: 600px) {
-  #salesman, #print-sidebar {
+  #salesman {
     position: static !important;
     max-width: 100vw !important;
     margin-bottom: 12px;
@@ -191,10 +220,6 @@ function rowColor(row: Salesman) {
   align-self:flex-start;
   z-index:1;
   overflow: auto;
-}
-#printList{
-  align-self:flex-start;
-  z-index:1;
 }
 
 .bg-red-3 {

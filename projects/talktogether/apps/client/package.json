@@ -31,6 +31,7 @@
         "@types/axios": "^0.14.4",
         "axios": "^1.8.2",
         "chartjs": "^0.3.24",
+        "chartjs-plugin-zoom": "^2.2.0",
         "cropperjs": "^1.5.13",
         "quasar": "^2.16.0",
         "vue": "^3.4.18",

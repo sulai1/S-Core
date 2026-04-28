@@ -1,15 +1,32 @@
 <template>
-  <q-page class="q-col-gutter-md">
-    <div class = "row">
-      <q-input v-model="validFrom" label="Gültig von" dense outlined class="q-mb-md" type="date"
-        :rules="[ val => !val || /^\d{4}-\d{2}-\d{2}$/.test(val) || 'Ungültiges Datumsformat (YYYY-MM-DD)']"
-      />
-      <q-input v-model="validTo" label="Gültig bis" dense outlined class="q-mb-md" type="date"
-        :rules="[ val => !val || /^\d{4}-\d{2}-\d{2}$/.test(val) || 'Ungültiges Datumsformat (YYYY-MM-DD)']"
-      />
+  <q-page class="dashboard-page q-pa-md">
+    <div class="row q-col-gutter-md q-mb-md items-start">
+      <div class="col-12 col-sm-6">
+        <q-input
+          v-model="validFrom"
+          label="Gültig von"
+          dense
+          outlined
+          class="full-width"
+          type="date"
+          :rules="[ val => !val || /^\d{4}-\d{2}-\d{2}$/.test(val) || 'Ungültiges Datumsformat (YYYY-MM-DD)']"
+        />
+      </div>
+      <div class="col-12 col-sm-6">
+        <q-input
+          v-model="validTo"
+          label="Gültig bis"
+          dense
+          outlined
+          class="full-width"
+          type="date"
+          :rules="[ val => !val || /^\d{4}-\d{2}-\d{2}$/.test(val) || 'Ungültiges Datumsformat (YYYY-MM-DD)']"
+        />
+      </div>
     </div>
-    <div class="row">
-      <div class="col-4">
+
+    <div class="row q-col-gutter-md items-stretch">
+      <div class="col-12 col-xl-4 col-lg-5">
         <TimelineChart
           :data="timelineSeries"
           title="Verkauf"
@@ -17,30 +34,35 @@
           backgroundColor="rgba(75, 192, 192, 0.1)"
           borderColor="rgb(75, 192, 192)"
           :fillArea="true"
+          class="dashboard-widget"
         />
       </div>
-      <div class="col-3">
-        <q-card class="my-card" style="height:100%">
-          <q-card-section>
-            <div class="text-h6">Zeitungen</div>
-            <TableComponent
-              :columns="[{ headerName: 'Name', property: 'name' }, 
-              { headerName: 'Verkauf', property: 'pos', cellClass: () => 'text-positive' }, 
-              { headerName: 'Einkauf', property: 'neg', cellClass: () => 'text-negative'}, 
-              { headerName: 'Gewinn', property: 'diff' }]"
-              :data="newsPaperStats"
-              style="overflow: hidden;"
-            ></TableComponent>
 
+      <div class="col-12 col-xl-3 col-lg-4">
+        <q-card class="my-card dashboard-card">
+          <q-card-section class="fit">
+            <div class="text-h6 q-mb-sm">Zeitungen</div>
+            <div class="dashboard-table-wrapper">
+              <TableComponent
+                :columns="[{ headerName: 'Name', property: 'name' }, 
+                { headerName: 'Verkauf', property: 'pos', cellClass: () => 'text-positive' }, 
+                { headerName: 'Einkauf', property: 'neg', cellClass: () => 'text-negative'}, 
+                { headerName: 'Gewinn', property: 'diff' }]"
+                :data="newsPaperStats"
+                max-height="320px"
+              />
+            </div>
           </q-card-section>
         </q-card>
       </div>
-      <div class="col-5">
+
+      <div class="col-12 col-xl-5 col-lg-12">
         <ScrollableBarChart
           :data="barChartData"
           title="Gewinn pro Eintrag"
           axisLabel="Gewinn"
           :visibleBars="6"
+          class="dashboard-widget"
         />
       </div>
     </div>
@@ -164,3 +186,25 @@ const validTo = ref<string>(new Date(new Date().setMonth(new Date().getMonth() +
   }
 
 </script>
+
+<style scoped>
+.dashboard-page {
+  width: 100%;
+}
+
+.dashboard-widget,
+.dashboard-card {
+  height: 100%;
+}
+
+.dashboard-table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+}
+
+@media (max-width: 1023px) {
+  .dashboard-page {
+    padding: 12px;
+  }
+}
+</style>

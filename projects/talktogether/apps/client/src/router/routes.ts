@@ -33,6 +33,11 @@ const routes: RouteRecordRaw[] = [
         return import('pages/ErrorNotFound.vue');
       }),
     }, {
+      path: 'print', name: "print", component: () => import('pages/PrintPage.vue').catch((error) => {
+        console.error('Failed to load PrintPage.vue:', error);
+        return import('pages/ErrorNotFound.vue');
+      }),
+    }, {
       path: 'item', name: "item", component: () => import('pages/ItemPage.vue').catch((error) => {
         console.error('Failed to load ItemPage.vue:', error);
         return import('pages/ErrorNotFound.vue');
@@ -40,11 +45,6 @@ const routes: RouteRecordRaw[] = [
     }, {
       path: 'transaction', name: "transaction", component: () => import('pages/TransactionPage.vue').catch((error) => {
         console.error('Failed to load TransactionPage.vue:', error);
-        return import('pages/ErrorNotFound.vue');
-      }),
-    }, {
-      path: 'sales', name: "sales", component: () => import('pages/SalesPage.vue').catch((error) => {
-        console.error('Failed to load SalesPage.vue:', error);
         return import('pages/ErrorNotFound.vue');
       }),
     }, {
@@ -60,6 +60,16 @@ const routes: RouteRecordRaw[] = [
     }, {
       path: 'invoice/:id', name: "invoice-detail", component: () => import('pages/InvoiceDetailPage.vue').catch((error) => {
         console.error('Failed to load InvoiceDetailPage.vue:', error);
+        return import('pages/ErrorNotFound.vue');
+      }),
+    }, {
+      path: 'salesmen/:id', name: "salesman-detail", component: () => import('pages/SalesmanDetailPage.vue').catch((error) => {
+        console.error('Failed to load SalesmanDetailPage.vue:', error);
+        return import('pages/ErrorNotFound.vue');
+      }),
+    }, {
+      path: 'edit-salesman/:id', name: "edit-salesman", component: () => import('pages/EditSalesmanPage.vue').catch((error) => {
+        console.error('Failed to load EditSalesmanPage.vue:', error);
         return import('pages/ErrorNotFound.vue');
       }),
     }],

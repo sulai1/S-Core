@@ -138,8 +138,7 @@ const chartData = computed(() => ({
 
 const chartOptions = computed<ChartOptions<'line'>>(() => ({
   responsive: true,
-  maintainAspectRatio: true,
-  aspectRatio: 2,
+  maintainAspectRatio: false,
   interaction: {
     intersect: false,
     mode: 'index',
@@ -150,9 +149,10 @@ const chartOptions = computed<ChartOptions<'line'>>(() => ({
       position: 'top',
       labels: {
         usePointStyle: true,
-        padding: 15,
+        padding: 12,
+        boxWidth: 10,
         font: {
-          size: 12,
+          size: 11,
         },
       },
     },
@@ -160,7 +160,7 @@ const chartOptions = computed<ChartOptions<'line'>>(() => ({
       display: true,
       text: props.title,
       font: {
-        size: 16,
+        size: 15,
         weight: 'bold',
       },
     },
@@ -190,6 +190,9 @@ const chartOptions = computed<ChartOptions<'line'>>(() => ({
         display: true,
         text: props.yAxisLabel,
       },
+      ticks: {
+        maxTicksLimit: 6,
+      },
       grid: {
         color: 'rgba(0, 0, 0, 0.05)',
       },
@@ -197,6 +200,9 @@ const chartOptions = computed<ChartOptions<'line'>>(() => ({
     x: {
       type: 'linear',
       ticks: {
+        autoSkip: true,
+        maxTicksLimit: 6,
+        maxRotation: 0,
         callback: (value) => dateFormatter.format(new Date(Number(value))),
       },
       grid: {
@@ -210,7 +216,8 @@ const chartOptions = computed<ChartOptions<'line'>>(() => ({
 <style scoped>
 .timeline-chart-container {
   width: 100%;
-  padding: 20px;
+  height: 100%;
+  padding: 16px;
   background: white;
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
@@ -220,5 +227,16 @@ const chartOptions = computed<ChartOptions<'line'>>(() => ({
   position: relative;
   width: 100%;
   max-width: 100%;
+  min-height: 320px;
+}
+
+@media (max-width: 600px) {
+  .timeline-chart-container {
+    padding: 12px;
+  }
+
+  .chart-wrapper {
+    min-height: 260px;
+  }
 }
 </style>
