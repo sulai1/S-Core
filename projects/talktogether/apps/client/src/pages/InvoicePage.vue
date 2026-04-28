@@ -459,7 +459,7 @@ async function saveInvoice() {
     })) as InvoiceItem[];
 
     await datasource.insert('InvoiceItem', itemsToInsert);
-    await datasource.update('Transaction', { state: 1 } as Transaction, [{ function: 'in', params: ['id', { value: transactionIds }] }]);
+    await datasource.update('Transaction', { state: 1 }, [{ function: 'in', params: ['id', { value: transactionIds }] }]);
 
     invoiceTransactions.value = [];
     selectedInvoiceIds.value = [];

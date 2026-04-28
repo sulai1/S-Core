@@ -173,7 +173,7 @@ const updateItem = async () => {
     return;
   }
   saving.value = true;
-  await datasource.update("Item", editItem.value as Item, [{ function:"=", params: ["id", { value: editItem.value.id }]}] );
+  await datasource.update("Item", editItem.value, [{ function:"=", params: ["id", { value: editItem.value.id }]}] );
   saving.value = false;
 
   await closeEditor();
@@ -187,7 +187,7 @@ onMounted(async () => {
 async function list() {
   const res = await datasource.find("Item", {orderBy: [['id', 'desc']]});
   if (res) {
-    items.value = res as unknown as Item[];
+    items.value = res;
   }
 }
 </script>

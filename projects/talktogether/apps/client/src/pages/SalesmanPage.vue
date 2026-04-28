@@ -99,7 +99,7 @@ onMounted(async () => {
     orderBy: [['updatedAt', 'desc'], ['id', 'desc']],
   });
   if (res) {
-    salesmen.value = res as unknown as Salesman[];
+    salesmen.value = res;
   }
 });
 
@@ -114,7 +114,7 @@ watch(selectedSalesman, async ()=>{
     if(selectedSalesman.value.id){
         const res =  await datasource.find("Identification",{where:[{ function:"=", params: ["salesman", {value: selectedSalesman.value.id}]}]})
         if(res.length > 0){
-         identification.value = res as unknown as Identification[];
+         identification.value = res;
         }
     }
 },{ immediate:true})

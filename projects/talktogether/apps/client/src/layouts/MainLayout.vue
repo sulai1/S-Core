@@ -50,6 +50,7 @@ const leftDrawerOpen = ref(false);
 const navItems = [
   { name: 'dashboard', label: 'Dashboard', icon: 'dashboard' },
   { name: 'salesmen', label: 'Verkäufer', icon: 'groups' },
+  { name: 'sales', label: 'Verkäufe', icon: 'shopping_cart' },
   { name: 'id', label: 'Ausweise', icon: 'badge' },
   { name: 'print', label: 'Drucken', icon: 'print' },
   { name: 'item', label: 'Artikel', icon: 'inventory_2' },

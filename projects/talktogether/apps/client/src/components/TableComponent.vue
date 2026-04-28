@@ -100,16 +100,16 @@ onMounted(() => {
     for (const sortConfig of props.sort) {
       const column = props.columns.find(col => col.headerName === sortConfig.column);
       if (column) {
+        const prop = column.property;
         const sortFn: SortFunction<T> = column.sortFunction ?? (
-          typeof column.property === "function"
+          typeof prop === "function"
             ? (a: T, b: T) => {
-                const propFn = column.property as (row: T) => string;
-                const aVal = propFn(a);
-                const bVal = propFn(b);
+                const aVal = prop(a);
+                const bVal = prop(b);
                 return aVal < bVal ? -1 : aVal > bVal ? 1 : 0;
               }
             : (a: T, b: T) => {
-                const key = column.property as keyof T;
+                const key = prop;
                 return a[key] < b[key] ? -1 : a[key] > b[key] ? 1 : 0;
               }
         );

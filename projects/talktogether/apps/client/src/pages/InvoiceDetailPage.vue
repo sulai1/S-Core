@@ -357,7 +357,7 @@ async function loadInvoiceItems(targetInvoiceId: number): Promise<InvoiceItemVie
     limit: 2000,
   });
 
-  return itemResult as unknown as InvoiceItemView[];
+  return itemResult;
 }
 
 function goBack() {

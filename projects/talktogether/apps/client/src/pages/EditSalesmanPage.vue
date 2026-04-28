@@ -40,7 +40,7 @@ async function loadIdentificationHistory(salesmanId: number) {
     orderBy: [['validTo', 'desc']],
   });
 
-  identification.value = (idRes as unknown as Identification[]) ?? [];
+  identification.value = idRes ?? [];
 }
 
 onMounted(async () => {
@@ -64,13 +64,13 @@ onMounted(async () => {
     return;
   }
 
-  salesman.value = res[0] as unknown as Salesman;
+  salesman.value = res[0];
 
-  if (salesman.value.id) {
+  if (salesman.value?.id) {
     await loadIdentificationHistory(salesman.value.id);
   }
 
-  salesmanImage.value = salesman.value.image ? `${baseUrl}/images/${salesman.value.image}` : null;
+  salesmanImage.value = salesman.value?.image ? `${baseUrl}/images/${salesman.value.image}` : null;
 });
 
 const updateSalesman = async (salesman?: Salesman) => {

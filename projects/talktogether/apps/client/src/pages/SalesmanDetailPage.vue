@@ -215,7 +215,7 @@ onMounted(async () => {
     orderBy: [['updatedAt', 'desc'], ['createdAt', 'desc'], ['id_nr', 'desc']],
   });
 
-  identifications.value = idRes as Identification[];
+  identifications.value = idRes;
 
   const transactionStatsRes = await datasource.find('Transaction', {
     attributes: {

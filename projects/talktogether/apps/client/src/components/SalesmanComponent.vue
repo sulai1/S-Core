@@ -80,7 +80,7 @@ watch(salesman, async ()=>{
     if(salesman.value.id){
         const res =  await datasource.find("Identification",{where:[{ function:"=", params: ["salesman", {value: salesman.value.id}]}]})
         if(res.length > 0){
-         identification.value = res as unknown as Identification[];
+         identification.value = res;
         }
     }
 },{ immediate:true})

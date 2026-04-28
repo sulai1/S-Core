@@ -28,6 +28,11 @@ const routes: RouteRecordRaw[] = [
         return import('pages/ErrorNotFound.vue');
       }),
     }, {
+      path: 'sales', name: "sales", component: () => import('pages/SalesPage.vue').catch((error) => {
+        console.error('Failed to load SalesPage.vue:', error);
+        return import('pages/ErrorNotFound.vue');
+      }),
+    }, {
       path: 'id', name: "id", component: () => import('pages/IdPage.vue').catch((error) => {
         console.error('Failed to load IdPage.vue:', error);
         return import('pages/ErrorNotFound.vue');

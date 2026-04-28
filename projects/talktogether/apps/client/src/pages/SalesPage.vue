@@ -33,14 +33,25 @@
 <script setup lang="ts">
 
 import type { Item, Transaction } from '@s-core/talktogether';
+import { useQuasar } from 'quasar';
 import { datasource } from 'src/boot/di';
-import type { SalesmanView } from 'src/components/FindSalesman.vue';
 import FindSalesman from 'src/components/FindSalesman.vue';
 import TransactionComponent from 'src/components/TransactionComponent.vue';
 import {  onMounted, ref } from 'vue';
 
+type SalesmanWithLock = {
+  image: string,
+  message: string,
+  validTo: string,
+  id_nr: number,
+  first: string,
+  last: string,
+  id: number,
+  locked?: boolean,
+};
+
 const transactions = ref<Transaction[]>([]);
-const selectedSalesman = ref<SalesmanView>({
+const selectedSalesman = ref<SalesmanWithLock>({
   first: "",
   last: "",
   id: 0,
@@ -48,6 +59,7 @@ const selectedSalesman = ref<SalesmanView>({
   message: "",
   validTo: "",
   image: "",
+  locked: false,
 });
 
 
@@ -62,7 +74,8 @@ const transaction = ref<Transaction>({
   id: 0
 });
 
-const salesmen = ref<SalesmanView[]>([]);
+const $q = useQuasar();
+const salesmen = ref<SalesmanWithLock[]>([]);
 const items = ref<Item[]>([]);
 const item = ref<Item >();
 
@@ -75,7 +88,7 @@ onMounted(async () => {
     orderBy: [['name', 'asc']],
   });
 
-  items.value = resItem as unknown as Item[];
+  items.value = resItem;
   item.value = items.value.length > 0 ? items.value[0] : {} as Item;
 
   const resSalesman = await datasource.select({s:"Salesman", i:"Identification"}, {
@@ -86,7 +99,8 @@ onMounted(async () => {
       last:"s.last",
       message:"s.message",
       validTo:"i.validTo",
-      image:"s.image"
+      image:"s.image",
+      locked:"s.locked"
     },
     orderBy: [['i.id_nr', 'asc']],
     where: [
@@ -103,11 +117,21 @@ async function list() {
     limit: 5
   });
 
-  transactions.value = res as unknown as Transaction[];
+  transactions.value = res;
 }
 
 
 async function addTransaction(t: Transaction) {
+  const salesmanId = Number(t.salesman);
+  const transactionSalesman = salesmen.value.find((s) => s.id === salesmanId);
+  if (transactionSalesman?.locked) {
+    $q.dialog({
+      title: 'Error',
+      message: 'Error salesman locked',
+    });
+    return;
+  }
+
   const res = await datasource.insert("Transaction",[{
     ...t,
   }]);

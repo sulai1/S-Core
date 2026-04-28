@@ -89,7 +89,7 @@ onMounted(async () => {
     ],
   });
  
-  salesmen.value = resSalesman as PrintableSalesman[];
+  salesmen.value = resSalesman;
   if (!selectedSalesman.value.id && salesmen.value.length > 0) {
     selectedSalesman.value = salesmen.value[0] as PrintableSalesman;
   }
