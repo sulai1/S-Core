@@ -11,6 +11,7 @@ export const salesman = {
         message: { type: String, nullable: true },
         createdAt: { type: String, generated: true },
         updatedAt: { type: String, generated: true },
+        locked: { type: Boolean, nullable: true },
     }
 } satisfies TableSchema
 

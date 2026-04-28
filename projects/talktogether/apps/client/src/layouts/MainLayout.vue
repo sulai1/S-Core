@@ -11,6 +11,8 @@
         <q-btn flat round dense label="Ausweise" @click="$router.push({name:'id'})" />
         <q-btn flat round dense label="Artikel" @click="$router.push({name:'item'})" />
         <q-btn flat round dense label="Transaktionen" @click="$router.push({name:'transaction'})" />
+        <q-btn flat round dense label="Verkauf" @click="$router.push({name:'sales'})" />
+        <q-btn flat round dense label="Rechnung" @click="$router.push({name:'invoice'})" />
         </div>
       </q-toolbar>
     </q-header>

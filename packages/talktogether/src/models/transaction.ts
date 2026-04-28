@@ -10,6 +10,7 @@ export const transaction = {
         quantity: { type: Number, nullable: false },
         price: { type: Number, nullable: false },
         total: { type: Number, nullable: false },
+        state: { type: Number, nullable: true },
     },
 } satisfies TableSchema
 

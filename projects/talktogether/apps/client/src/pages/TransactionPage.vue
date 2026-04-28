@@ -1,54 +1,31 @@
 <template>
   <div class="row q-pa-md">
-    <div class="col-12 col-md-7 q-pa-md" style="max-width: 100%;" >
-      <div class="row" style="width: 100%;">
-        <div class="col-6">
-          <q-select v-model="item" data-testid="item" label="Item" class="q-mb-md" style="width: 100%;"
-            :options="items" :option-label="(o) => o.name + ' ' + o.edition" option-value="id" dense/>
+    <div class="col-12 col-md-9 q-pa-md">
+      <div class="row q-col-gutter-sm items-end q-mb-md">
+        <div class="col-12 col-sm-3">
+          <q-input v-model="dateFrom" type="date" label="Von" dense />
         </div>
-        <div class="col-6">
-          <q-field label="Lagerbestand" class="q-mb-md"  stack-label dense style="min-width: 100px;" readonly >
-            {{ item?.quantity }}
-          </q-field>
+        <div class="col-12 col-sm-3">
+          <q-input v-model="dateTo" type="date" label="Bis" dense />
+        </div>
+        <div class="col-12 col-sm-3">
+          <q-checkbox v-model="onlyOpen" label="Nur offene Transaktionen" />
+        </div>
+        <div class="col-12 col-sm-3">
+          <q-btn color="primary" icon="filter_alt" label="Filtern" @click="list" />
         </div>
       </div>
-
-      <FindSalesman v-model="selectedSalesman" :salesmen="salesmen">
-      </FindSalesman>
-
-    </div>
-    <div class="col-12 col-md-5 q-pa-md">
       <div class="q-mt-md table-scroll-wrapper" >
-        <div class="transaction-panel">
-          <div class="text-subtitle2 q-mb-sm">Transaktion erfassen</div>
-          <TransactionComponent
-            v-model:transaction="transaction"
-            :items="items"
-            :salesman="selectedSalesman?.id ?? null"
-            @commit="addTransaction"
-            id="transaction-component"
-          />
-        </div>
         <TableComponent 
           :columns="columns"
-          :data="transactions"
+          :data="filteredTransactions"
           :style="scrollStyle">
           <template v-slot:after-row="{ row }">
             <td colspan="100%">
               <q-btn size="sm" flat color="primary" icon="delete" @click="cancel(row)" />
             </td>
           </template>
-          <template v-slot:cell="{ value, column }">
-            <q-btn v-if="column?.property==='salesman'" flat class="text-primary" @click="findSalesman(value)">
-              {{ value }}
-            </q-btn>
-            <q-btn v-else-if="column?.property==='item'" flat class="text-primary" @click="findItem(value)">
-              {{ value }}
-            </q-btn>
-            <span  v-else>
-              {{ value }}
-            </span>
-            </template>
+          
         </TableComponent>
       </div>
     </div>
@@ -57,55 +34,34 @@
 
 <script setup lang="ts">
 
-import type { Item, Transaction } from '@s-core/talktogether';
+import type { Transaction } from '@s-core/talktogether';
 import { useQuasar } from 'quasar';
 import { datasource } from 'src/boot/di';
-import type { SalesmanView } from 'src/components/FindSalesman.vue';
-import FindSalesman from 'src/components/FindSalesman.vue';
 import { type ColumnDesc, type PropOrGetter } from 'src/components/table';
 import TableComponent from 'src/components/TableComponent.vue';
-import TransactionComponent from 'src/components/TransactionComponent.vue';
 import { computed, onMounted, ref } from 'vue';
 
 const $q = useQuasar();
 
-const transactions = ref<Transaction[]>([]);
-const selectedSalesman = ref<SalesmanView>({
-  first: "",
-  last: "",
-  id: 0,
-  id_nr: 0,
-  message: "",
-  validTo: "",
-  image: "",
+type TransactionWithNames = Transaction & { first: string, last: string, item: string };
+
+const transactions = ref<TransactionWithNames[]>([]);
+const dateFrom = ref('');
+const dateTo = ref('');
+const onlyOpen = ref(false);
+
+const filteredTransactions = computed(() => {
+  if (!onlyOpen.value) {
+    return transactions.value;
+  }
+  return transactions.value.filter((transaction) => Number(transaction.state ?? 0) === 0);
 });
 
 
-const columns = ref<ColumnDesc<Transaction,PropOrGetter<Transaction>>[]>([
-  { headerName: 'Verkäufer', property:'salesman', cellClass: () => 'text-primary',
-    onClick: async (e,row)=> {
-      const salesman: SalesmanView[] = await datasource.select({s:"Salesman", i:"Identification"}, {
-        attributes:{
-          id:"s.id",
-          id_nr:"i.id_nr",
-          first:"s.first",
-          last:"s.last",
-          message:"s.message",
-          validTo:"i.validTo",
-          image:"s.image"
-        },
-         where: [
-          {function:"=", params: ["s.id", {value:row.salesman}]},
-          {function:"=", params: ["i.salesman", {value:row.salesman}]},
-          {function:">=", params: ["i.validTo", {value:new Date().toISOString()}]}
-        ],
-      });
-      if(salesman && salesman[0]) {
-        selectedSalesman.value =  salesman[0];
-      }
-    }
-  },
-  { headerName: 'Artikel', property: 'item', sortable: true },
+const columns = ref<ColumnDesc<TransactionWithNames,PropOrGetter<TransactionWithNames>>[]>([
+  { headerName: 'Vorname', property: 'first', sortable: true},
+  { headerName: 'Nachname', property: 'last', sortable: true},
+  { headerName: 'Artikel', property: 'item', sortable: true},
   { headerName: 'Stück', property:'quantity' },
   { headerName: 'Gesamt', property:'total' },
   { headerName: 'Preis', property:'price' },
@@ -123,93 +79,37 @@ const scrollStyle = computed(() => {
   return 'max-height: 480px;';
 });
 
-
-// Keep a stable object reference so child inputs aren't reset by re-assignment
-const transaction = ref<Transaction>({
-  date: new Date().toISOString(),
-  item: null as unknown as number, // will hold item id
-  salesman: null as unknown as number, // will hold salesman id
-  price: 0,
-  quantity: 0,
-  total: 0,
-  id: 0
-});
-
-const salesmen = ref<SalesmanView[]>([]);
-const items = ref<Item[]>([]);
-const item = ref<Item >();
-
 onMounted(async () => {
-
   await list();
-
-  const resItem = await datasource.find("Item", {
-    where:[ {function:">=", params: ["validTo", { value:new Date().toISOString()}]} ],
-    orderBy: [['name', 'asc']],
-  });
-
-  items.value = resItem as unknown as Item[];
-  item.value = items.value.length > 0 ? items.value[0] : {} as Item;
-
-  const resSalesman = await datasource.select({s:"Salesman", i:"Identification"}, {
-    attributes: {
-      id:"s.id",
-      id_nr:"i.id_nr",
-      first:"s.first",
-      last:"s.last",
-      message:"s.message",
-      validTo:"i.validTo",
-      image:"s.image"
-    },
-    orderBy: [['i.id_nr', 'asc']],
-    where: [
-      {function:">=", params: ["i.validTo", { value:new Date().toISOString()}]},
-      {function:"=", params: ["s.id", "i.salesman"]}
-    ]
-  });
-  salesmen.value = resSalesman;
 });
-
 async function list() {
-  const res = await datasource.find("Transaction", {
-    orderBy : [['date', 'desc']],
-    limit: 100
+
+  const res = await datasource.select({t:"Transaction", s:"Salesman", i:"Item"}, {
+    attributes:{
+      id:"t.id",
+      date:"t.date",
+      item:"i.name",
+      quantity:"t.quantity",
+      total:"t.total",
+      price:"t.price",
+      state:"t.state",
+      first: "s.first",
+      last:  "s.last",
+      salesmen:"t.salesman"
+    },
+    where: [
+      { function: "=", params: ["s.id", "t.salesman"] },
+      { function: "=", params: ["i.id", "t.item"] },
+      { function: "between", params: ["t.date", 
+        dateFrom.value ? { value: `${dateFrom.value}T00:00:00.000Z` } : { value: '1970-01-01T00:00:00.000Z' },
+        dateTo.value ? { value: `${dateTo.value}T23:59:59.999Z` } : { value: new Date().toISOString() }
+      ] }
+  ] ,
+    orderBy : [['t.date', 'desc']],
+    limit: 500
   });
 
-  transactions.value = res as unknown as Transaction[];
-}
-
-function findSalesman(id: number) {
-  const salesman = salesmen.value.find((s: SalesmanView) => s.id === id);
-  if(salesman) {
-    selectedSalesman.value = salesman ;
-  }
-}
-
-function findItem(id: number) {
-  const foundItem = items.value.find((i: Item) => i.id === id);
-  if(foundItem) {
-    item.value = foundItem;
-  }
-}
-
-async function addTransaction(t: Transaction) {
-  const res = await datasource.insert("Transaction",[{
-    ...t,
-  }]);
-  if (res) {
-    await list();
-    // Reset fields without replacing the object reference (avoids input reset flicker)
-    Object.assign(transaction.value, {
-      date: new Date(),
-      item: null,
-      salesman: null,
-      price: 0,
-      quantity: 0,
-    });
-  } else {
-    alert('Fehler beim Anlegen der Transaktion: ' + JSON.stringify(res));
-  }
+  transactions.value = res as unknown as TransactionWithNames[];
 }
 
 async function cancel(t: Transaction) {

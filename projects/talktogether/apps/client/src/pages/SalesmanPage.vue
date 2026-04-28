@@ -5,6 +5,7 @@
         <SalesmanComponent v-if="selectedSalesman" v-model="selectedSalesman">
           <q-btn icon="add" label="Anwenden" @click="updateSalesman(selectedSalesman)" />
           <q-btn icon="delete" label="Löschen" @click="deleteSalesman(selectedSalesman)" />
+          <q-btn :icon="selectedSalesman.locked ? 'lock_open' : 'lock'" :label="selectedSalesman.locked ? 'Entsperren' : 'Sperren'" :color="selectedSalesman.locked ? 'warning' : 'negative'" @click="toggleLock(selectedSalesman)" />
         </SalesmanComponent>
       </div>
     </div>
@@ -149,8 +150,16 @@ function addToPrintList(salesman?: Salesman){
   printList.value = [...new Set(printList.value)];
 }
 
+async function toggleLock(salesman: Salesman) {
+  if (typeof salesman?.id === 'undefined') return;
+  const newLocked = !salesman.locked;
+  await datasource.update('Salesman', { locked: newLocked }, [{ function: '=', params: ['id', { value: salesman.id }] }]);
+  salesman.locked = newLocked;
+}
+
 function rowColor(row: Salesman) {
-  return row.message?.toLowerCase().includes("sperr") ? 'bg-red-3' : '';
+  if (row.locked) return 'bg-orange-3';
+  return row.message?.toLowerCase().includes('sperr') ? 'bg-red-3' : '';
 }
 
 </script>
