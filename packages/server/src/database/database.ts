@@ -1,4 +1,4 @@
-import { DataSource, DefaultNamingStrategy, EntitySchema, QueryBuilder, QueryRunner } from "typeorm";
+import { DataSource, DefaultNamingStrategy, EntitySchema, QueryRunner } from "typeorm";
 import { Condition, DataSource as DS, DataSourceSchema, FilterRequest, FunctionDefinitions, InferCreationSchema, InferFunctionTypes, Join, normalizeFilterRequest, Repository, SelectAttributes, SelectResult, TableCreationTypes, TableInstanceTypes, TablePrimaryKeyTypes, TableSchema } from "@s-core/core";
 import { SQLDialect } from "./SQLDialect.js";
 import { SQLQueryBuilder } from "./SQLQueryBuilder.js";
@@ -28,7 +28,6 @@ export class Database<
     Functions extends FunctionDefinitions = FunctionDefinitions,
 > implements DS<Tables, InferFunctionTypes<Functions>> {
     private runner!: QueryRunner;
-    private typeormBuilder!: QueryBuilder<any>;
     private source: DataSource;
     private readonly options: DatabaseOptions<Tables, Functions>;
     readonly queryBuilder: SQLQueryBuilder<InferFunctionTypes<Functions>>;
@@ -156,9 +155,8 @@ export class Database<
 
     async connect(): Promise<void> {
         await this.ensureDatabaseExists();
-        this.runner = this.source.createQueryRunner();
-        this.typeormBuilder = this.source.createQueryBuilder();
         await this.source.initialize();
+        this.runner = this.source.createQueryRunner();
         await this.runner.connect();
     }
 
@@ -301,7 +299,16 @@ export class Database<
         data: InferCreationSchema<Tables[T]>[],
     ): Promise<TablePrimaryKeyTypes<Tables>[T][]> {
         const tableName = this.tableLookup[table];
-        const result = await this.typeormBuilder.insert().into(tableName).values(data as any[]).execute();
+        if (typeof tableName !== "string" || tableName.length === 0) {
+            throw new Error(`Unknown table key '${String(table)}'`);
+        }
+
+        const result = await this.source
+            .createQueryBuilder()
+            .insert()
+            .into(tableName)
+            .values(data as any[])
+            .execute();
         return result.identifiers as TablePrimaryKeyTypes<Tables>[T][];
     }
 

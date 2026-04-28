@@ -115,6 +115,7 @@
 import type { Invoice, InvoiceItem, Transaction } from '@s-core/talktogether';
 import { useQuasar } from 'quasar';
 import { datasource } from 'src/boot/di';
+import { useAuth } from 'src/composables/useAuth';
 import TableComponent from 'src/components/TableComponent.vue';
 import type { ColumnDesc, PropOrGetter } from 'src/components/table';
 import { computed, onMounted, ref, watch } from 'vue';
@@ -130,6 +131,7 @@ type RecentInvoiceView = Invoice & {
 };
 
 const $q = useQuasar();
+const { currentUser } = useAuth();
 
 const openTransactions = ref<TransactionView[]>([]);
 const selectedOpenIds = ref<number[]>([]);
@@ -440,6 +442,8 @@ async function saveInvoice() {
       description: description.value.trim() || defaultDescription.value,
       total: Number(invoiceTotal.value.toFixed(2)),
       state: 0,
+      invoice_type: 1,
+      user_id: currentUser.value?.id ?? null,
     } as Invoice;
 
     const invoiceInsertResult = await datasource.insert('Invoice', [invoiceToInsert]);

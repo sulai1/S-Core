@@ -10,6 +10,8 @@ export const invoice = {
         total: { type: Number, nullable: false },
         created_at: { type: String, generated: true },
         state: { type: Number, nullable: false },
+        invoice_type: { type: Number, nullable: false },
+        user_id: { type: Number, nullable: true },
     },
 } satisfies TableSchema;
 

@@ -52,6 +52,16 @@ const routes: RouteRecordRaw[] = [
         console.error('Failed to load InvoicePage.vue:', error);
         return import('pages/ErrorNotFound.vue');
       }),
+    }, {
+      path: 'invoices', name: "invoices", component: () => import('pages/InvoiceListPage.vue').catch((error) => {
+        console.error('Failed to load InvoiceListPage.vue:', error);
+        return import('pages/ErrorNotFound.vue');
+      }),
+    }, {
+      path: 'invoice/:id', name: "invoice-detail", component: () => import('pages/InvoiceDetailPage.vue').catch((error) => {
+        console.error('Failed to load InvoiceDetailPage.vue:', error);
+        return import('pages/ErrorNotFound.vue');
+      }),
     }],
   },
 
