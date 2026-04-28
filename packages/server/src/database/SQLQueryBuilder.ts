@@ -36,6 +36,9 @@ export class SQLQueryBuilder<FuncDefs extends FunctionsType> implements QueryBui
 
             const resolved = [];
             if (Array.isArray(attr.params)) {
+                if ("ignoreIfParamIsNull" in attr && attr.ignoreIfParamIsNull && attr.params.some(p => !p)) {
+                    return "";
+                }
                 for (const p in attr.params) {
                     const param = attr.params[p];
                     if (this.dialect.isImmediateParam(attr.function, Number(p))) {

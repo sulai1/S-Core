@@ -19,6 +19,7 @@ export type FunctionCall<
 }[keyof FunctionsReturning<Defs, ParamType>]
 
 
+
 export function isFunctionCall<T = any>(obj: unknown): obj is FunctionCall<T> {
     if (
         typeof obj === "object"

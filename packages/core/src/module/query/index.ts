@@ -17,4 +17,6 @@ export * from "./SelectResult.js";
  * 
  */
 export type Condition<DataType extends Record<string, unknown> = Record<string, unknown>, Defs extends FunctionsType = FunctionsType> =
-    FunctionCall<boolean, DataType, Defs>;
+    FunctionCall<boolean, DataType, Defs> & {
+        ignoreIfParamIsNull?: boolean;
+    };
