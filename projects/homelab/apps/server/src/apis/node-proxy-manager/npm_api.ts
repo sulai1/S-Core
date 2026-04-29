@@ -1,4 +1,4 @@
-import type { components} from '@s-core/nginx-proxy-manager';
+import type { components } from '@s-core/nginx-proxy-manager';
 import type { Certificate } from 'crypto';
 import { NpmAuthService } from './node-proxy-manager';
 import type { TokenResponse } from '..';

@@ -48,7 +48,7 @@ describe("AbstractQueryBuilder", () => {
 
     test.for<{
         name: string,
-        conditions: Condition<any, SelectFunctionDefinitions>[],
+        conditions: Condition<Record<string, any>, SelectFunctionDefinitions>[],
         expected: string,
         bind?: unknown[],
         aggregates?: (string | FunctionCall)[]
@@ -62,7 +62,7 @@ describe("AbstractQueryBuilder", () => {
         expected: 'WHERE ("table1"."column1" = $1)',
     }])("where $name", ({ conditions, expected, aggregates, bind }) => {
         const actualBind = [] as unknown[];
-        const result = builder.where(conditions, actualBind);
+        const result = builder.where(conditions as Condition[], actualBind);
         expect(result).toEqual(expected);
         if (bind)
             expect(actualBind).toEqual(bind);

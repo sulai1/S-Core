@@ -38,7 +38,7 @@ export class InMemoryTokenStore implements TokenStore {
         refresh().then(token => {
             this.tokens.set(key, token);
         }).catch(err => {
-            throw new ApiError("Initial token fetch failed"+err );
+            throw new ApiError("Initial token fetch failed: " + err);
         });
         this.refreshers.set(key, refresh);
     }
@@ -57,7 +57,7 @@ export class InMemoryTokenStore implements TokenStore {
     ): Token | undefined {
         const token = this.tokens.get(path);
         const now = Date.now();
-        if (!token || new Date(token.expires).getTime() < now ) {
+        if (!token || new Date(token.expires).getTime() < now) {
             const refresher = this.refreshers.get(path);
             if (refresher) {
                 refresher().then(newToken => {

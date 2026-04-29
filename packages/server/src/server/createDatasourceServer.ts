@@ -93,7 +93,7 @@ export function createDatasourceServer<
         "/select": {
             post: async <T extends { [key: string]: keyof Tables & string }>(req: {
                 tables: T;
-                query: FilterRequestNormalized<any, Functions, any>
+                query: FilterRequest<any, Functions, any>
             }) => {
                 try {
                     return await datasource.select(req.tables, req.query);

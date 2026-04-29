@@ -13,14 +13,14 @@ import { Condition } from "./index.js";
  * @returns An object representing the filter request structure.
  */
 export type FilterRequestNormalized<
-    DataType extends Record<string, unknown> = Record<string, unknown>,
-    Defs extends FunctionsType = FunctionsType,
+    DataType extends Record<string, unknown> = any,
+    Defs extends FunctionsType = any,
     Attributes extends SelectAttributes<DataType, Defs> = SelectAttributes<DataType, Defs>
 > = {
-    where: Condition<Required<DataType>, Defs>[];
+    where: Condition<DataType, Defs>[];
     attributes: Attributes;
-    orderBy?: ([FunctionCall<any, Required<DataType>, Defs> | Extract<keyof Required<DataType>, string>, "asc" | "desc"])[];
-    groupBy?: (FunctionCall<any, Required<DataType>, Defs> | Extract<keyof Required<DataType>, string>)[];
+    orderBy?: ([FunctionCall<any, DataType, Defs> | Extract<keyof DataType, string>, "asc" | "desc"])[];
+    groupBy?: (FunctionCall<any, DataType, Defs> | Extract<keyof DataType, string>)[];
     limit?: number;
     offset?: number;
 };
@@ -41,7 +41,7 @@ export type FilterRequest<
     where?: Condition<DataType, Defs>[] | Partial<DataType>;
     attributes?: Attributes;
     orderBy?: ([FunctionCall<any, DataType, Defs> | Extract<keyof DataType, string>, "asc" | "desc"])[];
-    groupBy?: (FunctionCall<any, Required<DataType>, Defs> | Extract<keyof Required<DataType>, string>)[];
+    groupBy?: (FunctionCall<any, DataType, Defs> | Extract<keyof DataType, string>)[];
     limit?: number;
     offset?: number;
 };

@@ -1,14 +1,17 @@
-import { Condition, Expression, FilterRequest, FilterRequestNormalized, FunctionsType, SelectAttributes } from "@s-core/core";
+import { Condition, Expression, FilterRequest, FilterRequestNormalized, FunctionsType, InferTableSchema, SelectAttributes } from "@s-core/core";
 import { QueryBuilder } from "./QueryBuilder.js";
 import { SQLDialect } from "./SQLDialect.js";
 
-export class SQLQueryBuilder<FuncDefs extends FunctionsType> implements QueryBuilder<FuncDefs> {
+export class SQLQueryBuilder<Functions extends FunctionsType> implements QueryBuilder<Functions> {
 
     constructor(
         readonly dialect: SQLDialect,
     ) { }
 
-    buildSelect(req: FilterRequestNormalized<any, FuncDefs>, tables: string | { [alias: string]: string; }): { query: string; bind: unknown[]; } {
+    buildSelect(
+        req: FilterRequestNormalized<any, Functions>,
+        tables: string | { [alias: string]: string; }
+    ): { query: string; bind: unknown[]; } {
         const bind: unknown[] = [];
         const parts: string[] = [];
 
@@ -17,7 +20,7 @@ export class SQLQueryBuilder<FuncDefs extends FunctionsType> implements QueryBui
         parts.push(this.from(tableAlias));
 
         if (req.where && req.where.length > 0) {
-            parts.push(this.where(req.where, bind));
+            parts.push(this.where(req.where as Condition[], bind));
         }
         parts.push(this.groupBy(req.groupBy ?? [], bind));
         parts.push(this.orderBy(req.orderBy ?? [], bind));
@@ -28,7 +31,7 @@ export class SQLQueryBuilder<FuncDefs extends FunctionsType> implements QueryBui
         return { query: parts.join(" "), bind };
     }
 
-    private resolveAttr<F extends Expression<any, any, FuncDefs>>(
+    private resolveAttr<F extends Expression<any, any, Functions>>(
         attr: F,
         bind: unknown[],
     ): string {
@@ -48,7 +51,7 @@ export class SQLQueryBuilder<FuncDefs extends FunctionsType> implements QueryBui
                             throw new Error("Immediate parameter must be a value");
                         }
                     } else {
-                        resolved.push(this.resolveAttr(param as Expression<any, any, FuncDefs>, bind));
+                        resolved.push(this.resolveAttr(param as Expression<any, any, Functions>, bind));
                     }
                 }
             }
@@ -65,7 +68,7 @@ export class SQLQueryBuilder<FuncDefs extends FunctionsType> implements QueryBui
         throw new Error("Invalid attribute: " + JSON.stringify(attr));
     }
 
-    select<S extends SelectAttributes<any, FuncDefs>>(
+    select<S extends SelectAttributes<any, Functions>>(
         attrs: S | undefined,
         bind: unknown[],
     ): string {
@@ -81,8 +84,8 @@ export class SQLQueryBuilder<FuncDefs extends FunctionsType> implements QueryBui
         return "SELECT " + s.join(",\n");
     }
 
-    where(
-        conditions: Condition<any, FuncDefs>[] | undefined,
+    where<T extends {}>(
+        conditions: Condition<T, Functions>[] | undefined,
         bind: unknown[],
     ): string {
         if (!conditions || conditions.length === 0) {
@@ -101,7 +104,7 @@ export class SQLQueryBuilder<FuncDefs extends FunctionsType> implements QueryBui
     }
 
     orderBy(
-        order: FilterRequest<any, FuncDefs>["orderBy"],
+        order: FilterRequest<any, Functions>["orderBy"],
         bind: unknown[],
     ): string {
         if (!order || order.length === 0) {
@@ -115,7 +118,7 @@ export class SQLQueryBuilder<FuncDefs extends FunctionsType> implements QueryBui
     }
 
     groupBy(
-        group: FilterRequest<any, FuncDefs>["groupBy"],
+        group: FilterRequest<any, Functions>["groupBy"],
         bind: unknown[],
     ): string {
         if (!group || group.length === 0) {

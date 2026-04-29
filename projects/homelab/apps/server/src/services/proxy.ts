@@ -1,4 +1,4 @@
-import { RequestHandler } from "express";
+import type { RequestHandler } from "express";
 import { createProxyMiddleware } from "http-proxy-middleware";
 
 export let cachedToken: { token: string; expiresAt: number };

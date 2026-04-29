@@ -14,6 +14,7 @@
     "file": "nodemon",
     "test": "jest",
     "lint": "eslint --ext .js,.ts,.vue ./",
+    "typecheck": "tsc --noEmit",
     "test:debug": "cross-env NODE_ENV=development jest",
     "deploy": "bash deploy.sh",
     "typeorm": "npx typeorm-ts-node-commonjs",

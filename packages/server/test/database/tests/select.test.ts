@@ -21,7 +21,7 @@ const s = {
             type: String,
             nullable: true,
         },
-        fk:{
+        fk: {
             type: Number,
             nullable: true,
         }
@@ -52,7 +52,7 @@ let db = new Database({
 beforeAll(async () => {
     await db.connect();
     await db.insert("Test", [{ a: 1, b: 2 }]);
-    await db.insert("s", [{ id:1, name: "test1" }, { id:2, name: "test2", test: "test", fk: 1 }]);
+    await db.insert("s", [{ id: 1, name: "test1" }, { id: 2, name: "test2", test: "test", fk: 1 }]);
 });
 
 afterAll(async () => {

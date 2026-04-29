@@ -1,5 +1,5 @@
 import { DataSource, DefaultNamingStrategy, EntitySchema, QueryRunner } from "typeorm";
-import { Condition, DataSource as DS, DataSourceSchema, FilterRequest, FunctionDefinitions, InferCreationSchema, InferFunctionTypes, Join, normalizeFilterRequest, Repository, SelectAttributes, SelectResult, TableCreationTypes, TableInstanceTypes, TablePrimaryKeyTypes, TableSchema } from "@s-core/core";
+import { Condition, DataSource as DS, DataSourceSchema, FilterRequest, FunctionDefinitions, InferCreationSchema, InferFunctionTypes, Join, normalizeFilterRequest, Repository, SelectAttributes, SelectResult, TableCreationTypes, TableInstanceTypes, TablePrimaryKeyTypes, TableSchema, InferTableSchema, FilterRequestNormalized } from "@s-core/core";
 import { SQLDialect } from "./SQLDialect.js";
 import { SQLQueryBuilder } from "./SQLQueryBuilder.js";
 
@@ -24,7 +24,7 @@ class AsIsNamingStrategy extends DefaultNamingStrategy {
 }
 
 export class Database<
-    Tables extends { [key: string]: TableSchema<any> } = Record<string, any>,
+    Tables extends DataSourceSchema = Record<string, any>,
     Functions extends FunctionDefinitions = FunctionDefinitions,
 > implements DS<Tables, InferFunctionTypes<Functions>> {
     private runner!: QueryRunner;
@@ -186,24 +186,24 @@ export class Database<
             },
             create: async (data: TableCreationTypes<Tables>[T]) => (await this.insert(table, [data]))[0] as Promise<TablePrimaryKeyTypes<Tables>[T]>,
             update: async (
-                value: Partial<TableInstanceTypes<Tables>[T]> & TablePrimaryKeyTypes<Tables>[T],
+                value: Partial<InferTableSchema<Tables[T]>> & TablePrimaryKeyTypes<Tables>[T],
             ) => {
-                const where: Condition<TableCreationTypes<Tables>[T], InferFunctionTypes<Functions>>[] = [];
+                const where: Condition<InferTableSchema<Tables[T]>, InferFunctionTypes<Functions>>[] = [];
                 for (const key of Object.keys(value) as (keyof TablePrimaryKeyTypes<Tables>[T])[]) {
                     if (key in value) {
                         where.push({
                             function: "=",
                             params: [key, { value: value[key] }],
-                        } as Condition<TableCreationTypes<Tables>[T], InferFunctionTypes<Functions>>);
+                        } as Condition<InferTableSchema<Tables[T]>, InferFunctionTypes<Functions>>);
                     }
                 }
-                await this.update(table, value, where);
+                await this.update(table, value, where);;
             },
-            delete: async (...where: Condition<TableCreationTypes<Tables>[T], InferFunctionTypes<Functions>>[]) => {
+            delete: async (...where: Condition<InferTableSchema<Tables[T]>, InferFunctionTypes<Functions>>[]) => {
                 await this.delete(table, where);
             },
-            find: (req) => this.find(table, req as any),
-            findOne: async (req) => {
+            find: (req: FilterRequest<InferTableSchema<Tables[T]>, InferFunctionTypes<Functions>, any>) => this.find(table, req as any),
+            findOne: async (req: FilterRequest<InferTableSchema<Tables[T]>, InferFunctionTypes<Functions>, any>) => {
                 const res = await this.find(table, req as any);
                 return res[0] as TableInstanceTypes<Tables>[T] | undefined;
             }
@@ -217,13 +217,13 @@ export class Database<
 
     async update<T extends keyof Tables>(
         table: T,
-        data: Partial<TableInstanceTypes<Tables>[T]>,
-        where: Condition<Required<TableInstanceTypes<Tables>[T]>, InferFunctionTypes<Functions>>[]
+        data: Partial<InferTableSchema<Tables[T]>>,
+        where: Condition<InferTableSchema<Tables[T]>, InferFunctionTypes<Functions>>[]
     ): Promise<void> {
         const bind = [] as unknown[];
         const setParts: string[] = [];
         for (const key in data) {
-            const value = data[key];
+            const value = data[key as keyof InferTableSchema<Tables[T]>];
             const param = this.queryBuilder.dialect.bindParam(value, bind);
             setParts.push(`${this.queryBuilder.dialect.access(key)} = ${param}`);
         }
@@ -233,7 +233,7 @@ export class Database<
         await this.source.query(sql, bind);
     }
 
-    async delete<T extends keyof Tables>(table: T, where: Condition<Required<TableInstanceTypes<Tables>[T]>, InferFunctionTypes<Functions>>[]): Promise<void> {
+    async delete<T extends keyof Tables>(table: T, where: Condition<InferTableSchema<Tables[T]>, InferFunctionTypes<Functions>>[]): Promise<void> {
         const tableName = this.tableLookup[table];
         const bind = [] as unknown[];
         const whereClause = this.queryBuilder.where(where, bind);
@@ -241,9 +241,9 @@ export class Database<
         await this.source.query(sql, bind);
     }
 
-    async find<T extends keyof Tables, S extends SelectAttributes<TableInstanceTypes<Tables>[T], InferFunctionTypes<Functions>> | (keyof TableInstanceTypes<Tables>[T])[] | undefined = undefined>(
+    async find<T extends keyof Tables, S extends SelectAttributes<InferTableSchema<Tables[T]>, InferFunctionTypes<Functions>> | (keyof InferTableSchema<Tables[T]>)[] | undefined = undefined>(
         table: T,
-        req: FilterRequest<TableInstanceTypes<Tables>[T], InferFunctionTypes<Functions>, S>
+        req: FilterRequest<InferTableSchema<Tables[T]>, InferFunctionTypes<Functions>, S>
     ): Promise<SelectResult<TableInstanceTypes<Tables>[T], InferFunctionTypes<Functions>, S>> {
         const tableName = this.tableLookup[table];
         if (typeof tableName !== "string") {
@@ -270,9 +270,10 @@ export class Database<
         return attributes;
     }
 
-    async select<T extends {
-        [key: string]: keyof Tables & string;
-    }, S extends SelectAttributes<Join<TableInstanceTypes<Tables>, T>, InferFunctionTypes<Functions>> | (keyof Join<TableInstanceTypes<Tables>, T>)[] | undefined = undefined>(
+    async select<
+        T extends { [key: string]: keyof Tables & string },
+        S extends SelectAttributes<Join<TableInstanceTypes<Tables>, T>, InferFunctionTypes<Functions>>
+    >(
         tables: T,
         req: FilterRequest<Join<TableInstanceTypes<Tables>, T>, InferFunctionTypes<Functions>, S>
     ): Promise<SelectResult<Join<TableInstanceTypes<Tables>, T>, InferFunctionTypes<Functions>, S>> {
@@ -284,7 +285,7 @@ export class Database<
             }
             tableNames[alias] = this.tableLookup[table];
         }
-        const normalizedReq = normalizeFilterRequest(req);
+        const normalizedReq = normalizeFilterRequest(req as FilterRequest<any, any, any>);
         if (Object.keys(normalizedReq.attributes).length === 0) {
             normalizedReq.attributes = this.buildDefaultJoinAttributes(tables);
         }
