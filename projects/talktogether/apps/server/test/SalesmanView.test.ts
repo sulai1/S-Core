@@ -1,8 +1,11 @@
 import { beforeAll, describe, expect, test } from "vitest";
-import { app } from "../app";
+import { appCollection } from "../app";
+
+let app: Awaited<ReturnType<typeof appCollection.build>>;
 
 beforeAll(async () => {
-    await app.start();
+    app = await appCollection.build();
+    app.start();
 });
 
 describe("SalesmanView", () => {

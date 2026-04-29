@@ -22,9 +22,10 @@ export type DataSource<
     ) => Promise<SelectResult<InferTableSchema<Tables[T]>, Functions, S>>;
     select<
         T extends {},
-        S extends SelectAttributes<Join<TableInstanceTypes<Tables>, T>, Functions>>(
-            tables: T,
-            query: FilterRequest<Join<TableInstanceTypes<Tables>, T>, Functions, S>,
-        ): Promise<SelectResult<Join<TableInstanceTypes<Tables>, T>, Functions, S>>;
+        S extends SelectAttributes<Join<TableInstanceTypes<Tables>, T>, Functions>
+    >(
+        tables: T,
+        query: FilterRequest<Join<TableInstanceTypes<Tables>, T>, Functions, S>,
+    ): Promise<SelectResult<Join<TableInstanceTypes<Tables>, T>, Functions, S>>;
     createRepository: <T extends keyof Tables>(table: T) => Repository<Tables[T], Functions>;
 }

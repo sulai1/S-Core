@@ -1,6 +1,7 @@
 import { defineConfig } from 'vitest/config';
 import vue from '@vitejs/plugin-vue'
 import { quasar } from '@quasar/vite-plugin';
+import { fileURLToPath, URL } from 'node:url';
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -22,7 +23,8 @@ export default defineConfig({
   ],
   resolve: {
     alias: {
-      '@': './src',
+      '@': fileURLToPath(new URL('./src', import.meta.url)),
+      src: fileURLToPath(new URL('./src', import.meta.url)),
     },
   },
 });

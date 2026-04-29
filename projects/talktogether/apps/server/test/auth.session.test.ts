@@ -49,7 +49,7 @@ describe("talktogether auth session", () => {
         };
 
         const provider = {
-            getModule: vi.fn(() => db),
+            getModule: vi.fn((name: string) => name === "db" ? db : name === "logger" ? { info: vi.fn(), error: vi.fn() } : undefined),
             on: vi.fn()
         };
 
@@ -150,7 +150,7 @@ describe("talktogether auth session", () => {
         };
 
         const provider = {
-            getModule: vi.fn(() => db),
+            getModule: vi.fn((name: string) => name === "db" ? db : name === "logger" ? { info: vi.fn(), error: vi.fn() } : undefined),
             on: vi.fn()
         };
 
