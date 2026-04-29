@@ -12,10 +12,8 @@ export type SelectAttributes<
     DataType extends Record<string, unknown> = Record<string, unknown>,
     Defs extends FunctionsType = FunctionsType
 > = {
-        [ResultName in string]: {
-            [FuncName in keyof Defs]: FunctionCall<any, DataType, Defs> | Extract<keyof DataType, string>;
-        }[keyof Defs];
-    };
+    [ResultName in string]: FunctionCall<any, DataType, Defs> | Extract<keyof DataType, string>;
+};
 
 export type KeysOfType<
     Obj extends object,

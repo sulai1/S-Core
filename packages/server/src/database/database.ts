@@ -272,7 +272,7 @@ export class Database<
 
     async select<
         T extends { [key: string]: keyof Tables & string },
-        S extends SelectAttributes<Join<TableInstanceTypes<Tables>, T>, InferFunctionTypes<Functions>>
+        S extends SelectAttributes<Join<TableInstanceTypes<Tables>, T>, InferFunctionTypes<Functions>> | (keyof Join<TableInstanceTypes<Tables>, T>)[] | undefined = undefined
     >(
         tables: T,
         req: FilterRequest<Join<TableInstanceTypes<Tables>, T>, InferFunctionTypes<Functions>, S>

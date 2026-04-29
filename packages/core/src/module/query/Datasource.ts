@@ -21,8 +21,8 @@ export type DataSource<
         query: FilterRequest<InferTableSchema<Tables[T]>, Functions, S>,
     ) => Promise<SelectResult<InferTableSchema<Tables[T]>, Functions, S>>;
     select<
-        T extends {},
-        S extends SelectAttributes<Join<TableInstanceTypes<Tables>, T>, Functions>
+        T extends Record<string, keyof Tables & string>,
+        S extends SelectAttributes<Join<TableInstanceTypes<Tables>, T>, Functions> | (keyof Join<TableInstanceTypes<Tables>, T>)[] | undefined = undefined
     >(
         tables: T,
         query: FilterRequest<Join<TableInstanceTypes<Tables>, T>, Functions, S>,
