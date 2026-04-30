@@ -20,7 +20,10 @@ export class SQLQueryBuilder<Functions extends FunctionsType> implements QueryBu
         parts.push(this.from(tableAlias));
 
         if (req.where && req.where.length > 0) {
-            parts.push(this.where(req.where as Condition[], bind));
+            const where = this.where(req.where, bind);
+            if (where.trim() !== "") {
+                parts.push(where);
+            }
         }
         parts.push(this.groupBy(req.groupBy ?? [], bind));
         parts.push(this.orderBy(req.orderBy ?? [], bind));
@@ -28,7 +31,7 @@ export class SQLQueryBuilder<Functions extends FunctionsType> implements QueryBu
         parts.push(this.limit(req.limit));
         parts.push(this.offset(req.offset));
 
-        return { query: parts.join(" "), bind };
+        return { query: parts.join(" ").trimEnd(), bind };
     }
 
     private resolveAttr<F extends Expression<any, any, Functions>>(
@@ -39,7 +42,7 @@ export class SQLQueryBuilder<Functions extends FunctionsType> implements QueryBu
 
             const resolved = [];
             if (Array.isArray(attr.params)) {
-                if ("ignoreIfParamIsNull" in attr && attr.ignoreIfParamIsNull && attr.params.some(p => !p)) {
+                if ("ignoreIfParamIsNull" in attr && attr.ignoreIfParamIsNull && attr.params.some(p => typeof p === "object" && "value" in p && (!p.value && p.value !== 0))) {
                     return "";
                 }
                 for (const p in attr.params) {
@@ -91,7 +94,11 @@ export class SQLQueryBuilder<Functions extends FunctionsType> implements QueryBu
         if (!conditions || conditions.length === 0) {
             return "";
         }
-        const conditionStrings = conditions.map(cond => this.resolveAttr(cond as Condition, bind));
+        const conditionStrings = conditions.map(cond => this.resolveAttr(cond as Condition, bind))
+            .filter(s => s.trim() !== "");
+        if (conditionStrings.length === 0) {
+            return "";
+        }
         return "WHERE " + conditionStrings.join(" AND ");
     }
 

@@ -7,6 +7,17 @@ const builder = new SQLQueryBuilder<SelectFunctionDefinitions>(dialect);
 
 describe("AbstractQueryBuilder", () => {
 
+    test("ignore udefined parameters in select", () => {
+        const result = builder.buildSelect({
+            attributes: { a: "table1.column1" },
+            where: [
+                { function: "<", ignoreIfParamIsNull: true, params: [{ value: null as unknown as string }, "table1.column1"] },
+                { function: "<", ignoreIfParamIsNull: true, params: [{ value: 0 }, "table2.column1"] }
+            ]
+        },
+            "table1");
+        expect(result.query).toEqual(`SELECT "table1"."column1" AS "a" FROM "table1" AS "table1" WHERE ($1 < "table2"."column1")`);
+    });
 
     test.for<{
         name: string,
