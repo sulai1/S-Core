@@ -7,7 +7,7 @@ export const AppDataSource = new DataSource({
     port: parseInt(process.env.DB_PORT || "5432"),
     username: process.env.DB_USER || "postgres",
     password: process.env.DB_PASSWORD || "postgres",
-    database: process.env.DB_NAME || "talktogether",
+    database: process.env.DB_NAME || "talktogether_dev",
     synchronize: false,
     logging: false,
     migrations: [path.join(__dirname, "../migrations/*.ts"), path.join(__dirname, "../migrations/*.js")],

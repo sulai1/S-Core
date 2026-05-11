@@ -15,7 +15,7 @@
     "check": "npm run lint && npm run typecheck",
     "docs": "typedoc --out docs src",
     "build": "npm run build --workspaces --if-present",
-    "build:packages": "npm run build --if-present --workspace @s-core/client --workspace @s-core/core --workspace @s-core/server --workspace @s-core/talktogether --workspace @s-core/loki --workspace @s-core/nginx-proxy-manager",
+    "build:packages": "npm run build --if-present --workspace @s-core/core --workspace @s-core/client --workspace @s-core/server --workspace @s-core/talktogether --workspace @s-core/loki --workspace @s-core/nginx-proxy-manager",
     "watch:packages:client": "npm run watch --workspace @s-core/client",
     "watch:packages:core": "npm run watch --workspace @s-core/core",
     "watch:packages:server": "npm run watch --workspace @s-core/server",

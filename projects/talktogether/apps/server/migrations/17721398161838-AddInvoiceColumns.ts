@@ -3,6 +3,8 @@ import { MigrationInterface, QueryRunner, TableColumn } from "typeorm";
 export class AddInvoiceColumns1777368000001 implements MigrationInterface {
 
     public async up(queryRunner: QueryRunner): Promise<void> {
+
+
         // Add invoice_type column if it doesn't exist
         await queryRunner.query(`
             ALTER TABLE IF EXISTS public."invoices"

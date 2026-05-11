@@ -2,6 +2,7 @@ import { defineConfig } from 'vitest/config';
 import vue from '@vitejs/plugin-vue'
 import { quasar } from '@quasar/vite-plugin';
 import { fileURLToPath, URL } from 'node:url';
+import type { PluginOption } from 'vite';
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -16,7 +17,7 @@ export default defineConfig({
     ],
   },
   plugins: [
-    vue(),
+    vue() as unknown as PluginOption,
     quasar({
       sassVariables: 'src/quasar-variables.scss',
     }),

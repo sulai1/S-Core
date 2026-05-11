@@ -2,7 +2,7 @@ import { extendSchema, Schema } from "./Schema.js";
 
 export * from "./BasicObject.js";
 export * from "./file/index.js";
-export * from "./datsource/index.js";
+export * from "./datasource/index.js";
 export * from "./Schema.js";
 
 export type SafeResult<T, E extends Error = Error> = {

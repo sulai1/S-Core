@@ -1,4 +1,4 @@
-import { Condition, Expression, FilterRequest, FilterRequestNormalized, FunctionsType, InferTableSchema, SelectAttributes } from "@s-core/core";
+import { Condition, Expression, FilterRequest, FilterRequestNormalized, FunctionsType, SelectAttributes, SerializedExpression, SerializedQuery } from "@s-core/core";
 import { QueryBuilder } from "./QueryBuilder.js";
 import { SQLDialect } from "./SQLDialect.js";
 
@@ -7,6 +7,85 @@ export class SQLQueryBuilder<Functions extends FunctionsType> implements QueryBu
     constructor(
         readonly dialect: SQLDialect,
     ) { }
+
+    build(query: SerializedQuery): { query: string; bind: unknown[]; } {
+        const bind: unknown[] = [];
+        return { query: this.buildQuery(query, bind), bind };
+    }
+
+    private buildQuery(query: SerializedQuery, bind: unknown[]): string {
+        const parts: string[] = [];
+
+        // SELECT
+        if (!query.select || Object.keys(query.select).length === 0) {
+            parts.push("SELECT *");
+        } else {
+            const attrs = Object.entries(query.select).map(([alias, expr]) =>
+                this.dialect.rename(this.resolveSerializedExpr(expr, bind), alias)
+            );
+            parts.push("SELECT " + attrs.join(",\n"));
+        }
+
+        // FROM
+        const fromParts = Object.entries(query.from).map(([alias, source]) => {
+            if (typeof source === "string") {
+                return this.dialect.rename(this.dialect.quote(source), alias);
+            }
+            const subSql = this.buildQuery(source.query, bind);
+            return `${source.lateral ? "LATERAL " : ""}(${subSql}) AS ${this.dialect.quote(alias)}`;
+        });
+        parts.push("FROM " + fromParts.join(", "));
+
+        // WHERE
+        if (query.where && query.where.length > 0) {
+            const conditions = query.where
+                .map(expr => this.resolveSerializedExpr(expr, bind))
+                .filter(s => s.trim() !== "");
+            if (conditions.length > 0) {
+                parts.push("WHERE " + conditions.join(" AND "));
+            }
+        }
+
+        // GROUP BY
+        if (query.groupBy && query.groupBy.length > 0) {
+            const groups = query.groupBy.map(expr => this.resolveSerializedExpr(expr, bind));
+            parts.push("GROUP BY " + groups.join(", "));
+        }
+
+        // ORDER BY
+        if (query.orderBy && query.orderBy.length > 0) {
+            const orders = query.orderBy.map(o => {
+                const expr = this.resolveSerializedExpr(o.exp, bind);
+                return `${expr} ${o.desc ? "DESC" : "ASC"}`;
+            });
+            parts.push("ORDER BY " + orders.join(", "));
+        }
+
+        return parts.filter(p => p.trim() !== "").join(" ").trimEnd();
+    }
+
+    private resolveSerializedExpr(expr: SerializedExpression | string, bind: unknown[]): string {
+        if (typeof expr === "string") {
+            const t = expr.split(this.dialect.separator);
+            return this.dialect.access(t[1] ?? t[0], t[1] ? t[0] : undefined);
+        }
+        if (expr.kind === "column") {
+            const t = expr.name.split(this.dialect.separator);
+            return this.dialect.access(t[1] ?? t[0], t[1] ? t[0] : undefined);
+        }
+        if (expr.kind === "value") {
+            return this.dialect.bindParam(expr.value, bind);
+        }
+        // expr.kind === "call"
+        const resolved = expr.params.map((p, i) => {
+            if (this.dialect.isImmediateParam(expr.function, i)) {
+                if (p.kind === "value") return String(p.value);
+                throw new Error("Immediate parameter must be a literal value");
+            }
+            return this.resolveSerializedExpr(p, bind);
+        });
+        return this.dialect.function(expr.function, ...resolved);
+    }
 
     buildSelect(
         req: FilterRequestNormalized<any, Functions>,

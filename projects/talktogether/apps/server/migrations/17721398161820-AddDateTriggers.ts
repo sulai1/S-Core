@@ -10,6 +10,7 @@ export class AddDateTriggers1772139816182 implements MigrationInterface {
             RETURNS TRIGGER AS $$
             BEGIN
                 NEW."createdAt" = CURRENT_TIMESTAMP;
+                NEW."updatedAt" = CURRENT_TIMESTAMP;
                 RETURN NEW;
             END;
             $$ language 'plpgsql';

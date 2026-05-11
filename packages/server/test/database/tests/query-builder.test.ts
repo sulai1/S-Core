@@ -1,4 +1,4 @@
-import { Condition, FunctionCall, SelectAttributes, SelectFunctionDefinitions } from "@s-core/core";
+import { Condition, FunctionCall, SelectAttributes, SelectFunctionDefinitions, SerializedQuery } from "@s-core/core";
 import { describe, expect, test } from "vitest";
 import { SqliteDialect, SQLQueryBuilder } from "../../../src/index.js";
 
@@ -6,6 +6,62 @@ const dialect = new SqliteDialect()
 const builder = new SQLQueryBuilder<SelectFunctionDefinitions>(dialect);
 
 describe("AbstractQueryBuilder", () => {
+
+    test("build serialized query", () => {
+        const query: SerializedQuery = {
+            from: { t1: "table1" },
+            select: {
+                id: { kind: "column", name: "t1.id" },
+                total: { kind: "call", function: "+", params: [{ kind: "column", name: "t1.value" }, { kind: "value", value: 2 }] },
+            },
+            where: [
+                { kind: "call", function: "=", params: [{ kind: "column", name: "t1.active" }, { kind: "value", value: true }] },
+            ],
+            groupBy: [{ kind: "column", name: "t1.id" }],
+            orderBy: [{ exp: { kind: "column", name: "t1.id" }, desc: true }],
+        };
+
+        const result = builder.build(query);
+
+        expect(result.query).toEqual(
+            'SELECT "t1"."id" AS "id",\n("t1"."value" + $1) AS "total" FROM "table1" AS "t1" WHERE ("t1"."active" = $2) GROUP BY "t1"."id" ORDER BY "t1"."id" DESC'
+        );
+        expect(result.bind).toEqual([2, true]);
+    });
+
+    test("build serialized query with nested source", () => {
+        const query: SerializedQuery = {
+            from: {
+                t1: "table1",
+                sub: {
+                    query: {
+                        from: { t2: "table2" },
+                        select: {
+                            id: { kind: "column", name: "t2.id" },
+                        },
+                        where: [
+                            { kind: "call", function: "=", params: [{ kind: "column", name: "t2.kind" }, { kind: "value", value: "A" }] },
+                        ],
+                    },
+                    lateral: true,
+                },
+            },
+            select: {
+                id: { kind: "column", name: "t1.id" },
+                subId: { kind: "column", name: "sub.id" },
+            },
+            where: [
+                { kind: "call", function: "=", params: [{ kind: "column", name: "t1.state" }, { kind: "value", value: 1 }] },
+            ],
+        };
+
+        const result = builder.build(query);
+
+        expect(result.query).toEqual(
+            'SELECT "t1"."id" AS "id",\n"sub"."id" AS "subId" FROM "table1" AS "t1", LATERAL (SELECT "t2"."id" AS "id" FROM "table2" AS "t2" WHERE ("t2"."kind" = $1)) AS "sub" WHERE ("t1"."state" = $2)'
+        );
+        expect(result.bind).toEqual(["A", 1]);
+    });
 
     test("ignore udefined parameters in select", () => {
         const result = builder.buildSelect({
