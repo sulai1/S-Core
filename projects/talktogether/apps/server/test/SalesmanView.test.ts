@@ -31,14 +31,14 @@ describe("SalesmanView", () => {
                 })
                 .where(e => e.fn("=", e.col("ident.salesman"), e.col("ident.id_nr")))
         ).select({
-            id: "s.id"
+            id: "i.id"
         }).orderBy("s.id")
             .limit(1).build();
 
         const res = await db.query(query);
         const id: number = res[0].id;
 
-        expect(id).toBe(1);
+        expect(id).toBe(0);
 
         expect(query).toBeDefined();
     })

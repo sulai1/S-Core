@@ -14,7 +14,7 @@ export class QuerySerializer<
     from<Sources extends FromMap<Tables>>(
         sources: Sources
     ): FromBuilder<Tables, Defs, Sources, ContextFrom<Tables, Sources>> {
-        return new SerializedFromBuilder<Tables, Defs, Sources, ContextFrom<Tables, Sources>>(sources);
+        return new SerializedFromBuilder<Tables, Defs, Sources, ContextFrom<Tables, Sources>>(sources, this.tables);
     }
 
     lateralFrom<
@@ -29,7 +29,7 @@ export class QuerySerializer<
         build: (from: FromBuilder<Tables, Defs, Sources, Ctx>) => SelectBuilder<Tables, Defs, Sources, Ctx, Row, Binds>,
     ): NestedSource<Row, Binds> {
         void outerSources;
-        const nestedFrom = new SerializedFromBuilder<Tables, Defs, Sources, Ctx>(sources);
+        const nestedFrom = new SerializedFromBuilder<Tables, Defs, Sources, Ctx>(sources, this.tables);
         const query = build(nestedFrom).build();
         return {
             query: query as unknown as SerializedQuery<SerializedFrom, Row, Binds>,
