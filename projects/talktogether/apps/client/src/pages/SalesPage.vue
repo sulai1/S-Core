@@ -17,6 +17,7 @@
         <TransactionComponent
           v-model:transaction="transaction"
           :items="items"
+          :selected-item-id="item?.id ?? null"
           :salesman="selectedSalesman?.id ?? null"
           @commit="addTransaction"
           id="transaction-component"
@@ -98,7 +99,7 @@ onMounted(async () => {
 
   const resItem = await datasource.find("Item", {
     where:[ {function:">=", params: ["validTo", { value:new Date().toISOString()}]} ],
-    orderBy: [['name', 'asc']],
+    orderBy: [['validTo', 'desc']],
   });
 
   items.value = resItem;
@@ -160,7 +161,7 @@ async function addTransaction(t: Transaction) {
     });
     lastResult.value = {
       ok: true,
-      message: `Transaktion gespeichert: ${t.quantity !== undefined ? Math.abs(t.quantity) : ''} Stück, ${t.total} €`,
+      message: `Transaktion gespeichert: ${item.value?.name ?? ''} ${t.quantity !== undefined ? Math.abs(t.quantity) : ''} Stück, ${t.total} €`,
     };
   } else {
     lastResult.value = { ok: false, message: 'Fehler beim Anlegen der Transaktion: ' + JSON.stringify(res) };

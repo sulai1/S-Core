@@ -92,7 +92,7 @@ const quantity = ref(0);
 const total = ref(0);
 const link = ref(true);
 
-const props = defineProps<{ items: Item[]; salesman: number|null}>();
+const props = defineProps<{ items: Item[]; salesman: number|null; selectedItemId?: number | null }>();
 
 const price = computed(() => quantity.value !=0 ? total.value / quantity.value : itemPrice.value);
 
@@ -121,6 +121,20 @@ watch(item, (newItem) => {
   if (!newItem) return;
   resetPrice();
 });
+
+watch(
+  () => [props.selectedItemId, props.items] as const,
+  ([selectedItemId, items]) => {
+    if (selectedItemId === null || selectedItemId === undefined) {
+      return;
+    }
+    const selected = items.find((entry) => entry.id === selectedItemId) ?? null;
+    if (selected) {
+      item.value = selected;
+    }
+  },
+  { immediate: true, deep: true }
+);
 
 function recalculateFromQuantity() {
     total.value = Math.round(itemPrice.value * (quantity.value - Math.floor(quantity.value / 11)) * 100) / 100;

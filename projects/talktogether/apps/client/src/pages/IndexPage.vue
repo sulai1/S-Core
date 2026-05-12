@@ -225,7 +225,6 @@ const validTo = ref<string>(new Date(new Date().setMonth(new Date().getMonth() +
     console.log("Current issue:", currentIssue);
     const timelineData: TimelineSeries[] = [];
     const newsPaperData: { name:string, pos:number, neg:number, diff:number}[] = [];
-    debugger;
     for (const item of currentIssue) {
       const transactionData = await getTransactionData(item.id, item.name, validFrom.value, validTo.value);
       timelineData.push(transactionData);
