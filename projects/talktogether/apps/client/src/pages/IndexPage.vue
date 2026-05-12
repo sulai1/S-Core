@@ -129,7 +129,10 @@
                   <span class="recent-id-number">#{{ entry.idNr }}</span>
                   <span class="recent-id-date">{{ entry.createdAt }}</span>
                 </div>
-                <div class="recent-id-salesman">{{ entry.salesman }}</div>
+                <div class="recent-id-top-row">
+                  <span class="recent-id-salesman">{{ entry.salesmanId }}</span>
+                  <span class="recent-id-salesman">{{ entry.salesman }}</span>
+                </div>
               </div>
             </div>
           </q-card-section>
@@ -146,11 +149,18 @@
               </div>
               <div v-for="entry in recentTransactions" :key="entry.id" class="recent-transaction-item">
                 <div class="recent-transaction-top-row">
-                  <span class="recent-transaction-salesman">{{ entry.salesman }}</span>
+                  <span class="recent-transaction-salesman">{{ entry.first + ' ' + entry.last }}</span>
                   <span class="recent-transaction-date">{{ entry.date }}</span>
                 </div>
-                <div class="recent-transaction-meta">{{ entry.item }}</div>
-                <div class="recent-transaction-total">{{ entry.total }}</div>
+                <div class="recent-transaction-top-row">
+                  <span class="recent-transaction-meta">{{ entry.item }}</span>
+                  <span class="recent-transaction-total">{{ entry.quantity }}</span>
+                </div>
+                <div class="recent-transaction-top-row">
+                  <span class="recent-transaction-meta"> Preis:{{ Number(entry.price).toFixed(2) }}</span>
+                  <span class="recent-transaction-total">{{ parseFloat(entry.total).toFixed(2) }}</span>
+                </div>
+
               </div>
             </div>
           </q-card-section>
@@ -182,6 +192,7 @@
 </template>
 
 <script setup lang="ts">
+import type { Invoice } from '@s-core/talktogether';
 import { datasource } from 'src/boot/di';
 import type { BarChartItem } from 'src/components/chart/ScrollableBarChart.vue';
 import ScrollableBarChart from 'src/components/chart/ScrollableBarChart.vue';
@@ -190,6 +201,12 @@ import TimelineChart from 'src/components/chart/TimelineChart.vue';
 import TableComponent from 'src/components/TableComponent.vue';
 import { ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
+
+type TransactionData = 
+  { id: number; first: string; last: string; item: string; total: string; date: string, price:number, quantity: number }
+
+type InvoiceData = 
+  { id: number; createdAt: string; description: string; total: string, price: number }
 
 const router = useRouter(); 
 
@@ -201,9 +218,9 @@ const salesmanStats = ref({
   locked: 0,
   active: 0,
 });
-const recentIds = ref<{ id: number; idNr: number; salesman: string; createdAt: string }[]>([]);
-const recentTransactions = ref<{ id: number; salesman: string; item: string; total: string; date: string }[]>([]);
-const recentInvoices = ref<{ id: number; createdAt: string; description: string; total: string }[]>([]);
+const recentIds = ref<{ id: number; idNr: number; salesmanId: number; salesman: string; createdAt: string }[]>([]);
+const recentTransactions = ref<TransactionData[]>([]);
+const recentInvoices = ref<InvoiceData[]>([]);
 const invoiceAmountSeries = ref<TimelineSeries[]>([]);
 
 const validFrom = ref<string>(new Date(new Date().setMonth(new Date().getMonth() - 3)).toISOString().substring(0, 10));
@@ -332,11 +349,12 @@ const validTo = ref<string>(new Date(new Date().setMonth(new Date().getMonth() +
     };
   }
 
-  async function getRecentIds(): Promise<{ id: number; idNr: number; salesman: string; createdAt: string }[]> {
+  async function getRecentIds(): Promise<{ id: number; idNr: number; salesmanId: number; salesman: string; createdAt: string }[]> {
     const result = await datasource.select({ Identification: 'Identification', Salesman: 'Salesman' }, {
       attributes: {
         id: 'Identification.id',
         idNr: 'Identification.id_nr',
+        salesman: 'Identification.salesman',
         first: 'Salesman.first',
         last: 'Salesman.last',
         createdAt: 'Identification.createdAt',
@@ -348,15 +366,16 @@ const validTo = ref<string>(new Date(new Date().setMonth(new Date().getMonth() +
       limit: 6,
     });
 
-    return result.map((entry: { id: number; idNr: number; first?: string; last?: string; createdAt?: string }) => ({
+    return result.map((entry: { id: number; idNr: number; salesman:number; first?: string; last?: string; createdAt?: string }) => ({
       id: entry.id,
       idNr: entry.idNr,
+      salesmanId: entry.salesman,
       salesman: `${entry.last ?? ''} ${entry.first ?? ''}`.trim() || 'Unbekannt',
       createdAt: entry.createdAt ? new Date(entry.createdAt).toLocaleDateString() : '-',
     }));
   }
 
-  async function getRecentTransactions(): Promise<{ id: number; salesman: string; item: string; total: string; date: string }[]> {
+  async function getRecentTransactions(): Promise<TransactionData[]> {
     const result = await datasource.select({ t: 'Transaction', s: 'Salesman', i: 'Item' }, {
       attributes: {
         id: 't.id',
@@ -365,6 +384,8 @@ const validTo = ref<string>(new Date(new Date().setMonth(new Date().getMonth() +
         item: 'i.name',
         total: 't.total',
         date: 't.date',
+        price: 't.price',
+        quantity: 't.quantity',
       },
       where: [
         { function: '=', params: ['s.id', 't.salesman'] },
@@ -374,29 +395,24 @@ const validTo = ref<string>(new Date(new Date().setMonth(new Date().getMonth() +
       limit: 6,
     });
 
-    return result.map((entry: { id: number; first?: string; last?: string; item?: string; total?: number; date?: string }) => ({
-      id: entry.id,
-      salesman: `${entry.last ?? ''} ${entry.first ?? ''}`.trim() || 'Unbekannt',
-      item: entry.item ?? 'Unbekannt',
-      total: `${Number(entry.total ?? 0).toFixed(2)} EUR`,
-      date: entry.date ? new Date(entry.date).toLocaleString() : '-',
-    }));
+    return result;
   }
 
-  async function getRecentInvoices(): Promise<{ id: number; createdAt: string; description: string; total: string }[]> {
-    const result = await datasource.find('Invoice', {
+  async function getRecentInvoices(): Promise<InvoiceData[]> {
+    const result:Invoice[]  = await datasource.find('Invoice', {
       where: [
         { function: '>=', params: ['id', { value: 1 }] },
       ],
       orderBy: [['created_at', 'desc'], ['id', 'desc']],
       limit: 6,
-    });
+    }) ;
 
-    return (result as Array<{ id: number; created_at?: string; description?: string; total?: number }>).map((entry) => ({
+    return result.map((entry:Invoice) => ({
       id: entry.id,
       createdAt: entry.created_at ? new Date(entry.created_at).toLocaleString() : '-',
       description: entry.description?.trim() || 'Keine Beschreibung',
       total: `${Number(entry.total ?? 0).toFixed(2)} EUR`,
+      price: entry.total ?? 0,
     }));
   }
 
