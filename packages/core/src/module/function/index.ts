@@ -34,7 +34,7 @@ export const aggregateFunctionDefinitions = {
 } as const;
 
 export const utilityFunctions = {
-    cast: [[() => "" as any, String, () => "" as any]] as const,
+    cast: [[() => "", String, () => ""]] as const,
     coalesce: [[String, String, String] as const, [Number, Number, Number] as const, [Boolean, Boolean, Boolean] as const, [Date, Date, Date] as const] as const,
 } as const;
 
@@ -60,13 +60,9 @@ export type AggregateFunctionDefinitions = InferFunctionTypes<typeof aggregateFu
 export type UtilityFunctions = InferFunctionTypes<typeof utilityFunctions>;
 export type BooleanFunctionDefinitions = InferFunctionTypes<typeof booleanFunctionDefinitions>;
 // Combined function definitions
-export type StandardFunctionDefinitions = MathFunctionDefinitions
-    & StringFunctionDefinitions
-    & DateFunctionDefinitions
-    & BooleanFunctionDefinitions
-    & UtilityFunctions;
+export type StandardFunctionDefinitions = InferFunctionTypes<typeof standardFunctionDefinitions>;
 
-export type SelectFunctionDefinitions = StandardFunctionDefinitions & AggregateFunctionDefinitions;
+export type SelectFunctionDefinitions = InferFunctionTypes<typeof selectFunctionDefinitions>;
 
 export const standardFunctionDefinitions = {
     ...mathFunctionDefinitions,

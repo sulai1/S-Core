@@ -20,21 +20,25 @@ describe("SalesmanView", () => {
         const db = app.getModule("db");
         const qs = new QuerySerializer(tables, selectFunctionDefinitions);
 
-        const identificationSubQuery: SerializedQuery = qs.from({
-            i: "Identification",
-        }).select({
-            id: "i.id_nr",
-            name: "i.salesman",
-            createdAt: "i.createdAt"
-        }).where(e => { e.fn("=", "i.salesman", "i.id_nr") }).build();
-
         const query = qs.from({
-            s: "Salesman",
-            i: {
-                lateral: true,
-                query: identificationSubQuery,
-            }
-        }).build();
+            s: "Salesman"
+        }).lateralFrom("i", { ident: "Identification" }, (from) =>
+            from
+                .select({
+                    id: "ident.id_nr",
+                    name: "ident.salesman",
+                    createdAt: "ident.createdAt"
+                })
+                .where(e => e.fn("=", e.col("ident.salesman"), e.col("ident.id_nr")))
+        ).select({
+            id: "s.id"
+        }).orderBy("s.id")
+            .limit(1).build();
+
+        const res = await db.query(query);
+        const id: number = res[0].id;
+
+        expect(id).toBe(1);
 
         expect(query).toBeDefined();
     })

@@ -44,7 +44,7 @@ export class SerializedFromBuilder<
     select<S extends SelectShape<Ctx, Defs>>(shape: S): SelectBuilder<Tables, Defs, Sources, Ctx, RowFromSelect<Ctx, Defs, S>, readonly []> {
         return new SerializedSelectBuilder<Tables, Defs, Sources, Ctx, RowFromSelect<Ctx, Defs, S>, readonly []>({
             from: this.sources as unknown as SerializedFromFor<Tables, Sources>,
-            select: shape,
+            select: shape as unknown as SerializedQuery<SerializedFrom, RowFromSelect<Ctx, Defs, S>, readonly []>["select"],
         });
     }
 }

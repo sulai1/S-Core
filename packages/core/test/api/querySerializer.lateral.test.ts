@@ -13,9 +13,6 @@ type Identifications = TableSchema<{
     salesman: number;
 }>;
 
-type MinimalDefs = {
-    "=": readonly [unknown, unknown, boolean];
-};
 
 describe("QuerySerializer lateralFrom", () => {
     test("builds a correlated lateral nested source", () => {
@@ -35,14 +32,7 @@ describe("QuerySerializer lateralFrom", () => {
                     id_nr: "ident.id_nr",
                     validTo: "ident.validTo",
                 })
-                .where({
-                    kind: "call",
-                    function: "=",
-                    params: [
-                        { kind: "column", name: "ident.salesman" },
-                        { kind: "column", name: "s.id" },
-                    ],
-                })
+                .where(e => e.fn("=", e.col("ident.salesman"), e.col("s.id")))
                 .orderBy("ident.validTo", true)
                 .orderBy("ident.id", true)
                 .limit(1)
@@ -51,14 +41,8 @@ describe("QuerySerializer lateralFrom", () => {
             id: "s.id",
             idNr: "i.id_nr",
             validTo: "i.validTo",
-        }).where({
-            kind: "call",
-            function: "=",
-            params: [
-                { kind: "column", name: "s.last" },
-                { kind: "value", value: "TINCA" },
-            ],
-        }).build();
+        }).where(e => e.fn("=", e.col("s.last"), e.val("TINCA")))
+            .build();
 
         expect(query.from.i).toMatchObject({
             lateral: true,

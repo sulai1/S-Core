@@ -2,7 +2,7 @@ import { FunctionsType } from "../../module/index.js";
 import { fn } from "./Function.js";
 import { col } from "./Column.js";
 import { val } from "./Value.js";
-import { Depth, ExprFactory, ParamsExprTuple, Expr, ReturnForArgs } from "./index.js";
+import { CallExpr, Depth, ExprFactory, ParamsExprTuple, ReturnForArgs } from "./index.js";
 
 
 export function createExprFactory<
@@ -13,6 +13,6 @@ export function createExprFactory<
     return {
         col: (name) => col<Ctx, typeof name>(name),
         val,
-        fn: (name, ...params) => fn<Ctx, Defs, typeof name>(name, ...(params as ParamsExprTuple<Ctx, Defs, typeof name, 5>)) as unknown as Expr<Ctx, Defs, ReturnForArgs<Defs, typeof name, ParamsExprTuple<Ctx, Defs, typeof name, D>>, D>,
+        fn: (name, ...params) => fn<Ctx, Defs, typeof name>(name, ...(params as ParamsExprTuple<Ctx, Defs, typeof name, 5>)) as unknown as CallExpr<ReturnForArgs<Defs, typeof name, ParamsExprTuple<Ctx, Defs, typeof name, D>>, Defs>,
     };
 }

@@ -29,15 +29,6 @@ type BindsOf<T> =
 
 export type Depth = 0 | 1 | 2 | 3 | 4 | 5 | 6;
 
-type PrevDepth<D extends Depth> =
-    D extends 6 ? 5 :
-    D extends 5 ? 4 :
-    D extends 4 ? 3 :
-    D extends 3 ? 2 :
-    D extends 2 ? 1 :
-    D extends 1 ? 0 :
-    0;
-
 type ParamTuple<F extends readonly unknown[]> =
     F extends readonly [...infer P, unknown]
     ? readonly [...P]
@@ -75,13 +66,6 @@ export type ReturnForArgs<
     Name extends keyof Defs & string,
     P extends readonly unknown[]
 > = FunctionReturnType<MatchingOverloads<OverloadsForName<Defs, Name>, ParamOutTuple<P>>>;
-
-type FunctionNamesReturning<
-    Defs extends FunctionsType,
-    Out
-> = {
-    [K in keyof Defs & string]: FunctionReturnType<Defs[K]> extends Out ? K : never;
-}[keyof Defs & string];
 
 export type ParamsExprTuple<
     Ctx extends Record<string, unknown>,
@@ -147,14 +131,13 @@ export type FunctionExpr<
     BindsFromTuple<P>
 >;
 
-type FunctionExprReturning<
-    Ctx extends Record<string, unknown>,
-    Defs extends FunctionsType,
-    Out,
-    D extends Depth
-> = {
-    [N in FunctionNamesReturning<Defs, Out> & string]: FunctionExpr<Ctx, Defs, N, PrevDepth<D>>;
-}[FunctionNamesReturning<Defs, Out> & string];
+export type CallExpr<Out = unknown, Defs extends FunctionsType = FunctionsType> = {
+    kind: "call";
+    function: string;
+    params: readonly SerializedExpression[];
+} & ExprBase<Out, readonly unknown[]> & {
+    readonly __defs?: Defs;
+};
 
 export type Expr<
     Ctx extends Record<string, unknown>,
@@ -164,7 +147,7 @@ export type Expr<
 > =
     | ColumnExpr<Ctx, Out>
     | ValueExpr<Out>
-    | (D extends 0 ? never : FunctionExprReturning<Ctx, Defs, Out, D>);
+    | (D extends 0 ? never : CallExpr<Out, Defs>);
 
 export type NestedSource<
     Row extends Record<string, unknown> = Record<string, unknown>,
@@ -218,7 +201,7 @@ export type ExprFactory<
     fn<Name extends keyof Defs & string>(
         name: Name,
         ...params: ParamsExprTuple<Ctx, Defs, Name, D>
-    ): Expr<Ctx, Defs, ReturnForArgs<Defs, Name, ParamsExprTuple<Ctx, Defs, Name, D>>, D>;
+    ): CallExpr<ReturnForArgs<Defs, Name, ParamsExprTuple<Ctx, Defs, Name, D>>, Defs>;
 };
 
 type SelectOut<

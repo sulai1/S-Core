@@ -1,4 +1,4 @@
-import { FunctionsType } from "../../module/index.js";
+import { FunctionDefinitions, FunctionsType, SelectFunctionDefinitions } from "../../module/index.js";
 import { DataSourceSchema } from "../schema/datasource/DatasourceSchema.js";
 import { SerializedFromBuilder } from "./SerializedFromBuilder.js";
 import { ContextFrom, FromBuilder, FromMap, NestedSource, SelectBuilder, SerializedFrom, SerializedQuery } from "./index.js";
@@ -6,10 +6,10 @@ import { ContextFrom, FromBuilder, FromMap, NestedSource, SelectBuilder, Seriali
 
 export class QuerySerializer<
     Tables extends DataSourceSchema,
-    Defs extends FunctionsType = FunctionsType
+    Defs extends FunctionsType = SelectFunctionDefinitions
 > {
 
-    constructor(private tables: Tables, private defs?: Defs) { }
+    constructor(private tables: Tables, private defs?: FunctionDefinitions) { }
 
     from<Sources extends FromMap<Tables>>(
         sources: Sources
