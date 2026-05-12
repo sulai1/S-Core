@@ -1,0 +1,33 @@
+{
+  "name": "@s-core/audiograbber-api",
+  "version": "0.0.1",
+  "description": "AudioGrabber API service",
+  "type": "module",
+  "main": "dist/cjs/index.js",
+  "types": "dist/cjs/index.d.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc --noEmit",
+    "create-api": "ts-node -r tsconfig-paths/register src/scripts/buildApiTypes.ts",
+    "test": "vitest",
+    "test:watch": "vitest --watch",
+    "dev": "ts-node -r tsconfig-paths/register src/index.ts",
+    "start": "node dist/cjs/index.js"
+  },
+  "dependencies": {
+    "@s-core/core": "^0.0.1",
+    "@s-core/server": "^0.0.1",
+    "reflect-metadata": "^0.2.2"
+  },
+  "devDependencies": {
+    "@apidevtools/json-schema-ref-parser": "^15.3.1",
+    "@types/node": "^22.15.30",
+    "@types/supertest": "^6.0.3",
+    "openapi-typescript": "^7.9.1",
+    "supertest": "^7.1.4",
+    "ts-node": "^10.9.2",
+    "tsconfig-paths": "^4.2.0",
+    "typescript": "^5.8.2",
+    "vitest": "^4.0.7"
+  }
+}

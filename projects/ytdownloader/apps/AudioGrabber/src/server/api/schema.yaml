@@ -1,0 +1,168 @@
+openapi: 3.1.0
+info:
+  title: AudioGrabber API
+  version: 0.0.1
+  description: Phase 1 API contract for job orchestration and media library access.
+servers:
+  - url: http://localhost:3800
+paths:
+  /health:
+    get:
+      summary: Health status
+      responses:
+        "200":
+          description: Service healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status]
+                properties:
+                  status:
+                    type: string
+                    enum: [ok]
+
+  /jobs/download:
+    post:
+      summary: Queue a download job
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [videoId]
+              properties:
+                videoId:
+                  type: string
+                playlistId:
+                  type: string
+                priority:
+                  type: integer
+                  minimum: 1
+                  maximum: 10
+      responses:
+        "202":
+          description: Job accepted
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [jobId, state]
+                properties:
+                  jobId:
+                    type: string
+                  state:
+                    type: string
+                    enum: [queued]
+
+  /jobs/{jobId}:
+    get:
+      summary: Fetch job status
+      parameters:
+        - name: jobId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Job status
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [jobId, state]
+                properties:
+                  jobId:
+                    type: string
+                  state:
+                    type: string
+                    enum: [queued, running, success, failed]
+                  progress:
+                    type: integer
+                    minimum: 0
+                    maximum: 100
+                  error:
+                    type: string
+        "404":
+          description: Job not found
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [error]
+                properties:
+                  error:
+                    type: string
+
+  /sync/channels/{channelId}:
+    post:
+      summary: Queue channel sync
+      parameters:
+        - name: channelId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                maxResults:
+                  type: integer
+                  minimum: 1
+                  maximum: 1000
+      responses:
+        "202":
+          description: Sync accepted
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [jobId, state, channelId]
+                properties:
+                  jobId:
+                    type: string
+                  channelId:
+                    type: string
+                  state:
+                    type: string
+                    enum: [queued]
+
+  /library/videos:
+    get:
+      summary: List videos in media library
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+      responses:
+        "200":
+          description: Video list
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items:
+                      type: object
+                      required: [id, title, status]
+                      properties:
+                        id:
+                          type: string
+                        title:
+                          type: string
+                        status:
+                          type: string
+                          enum: [ready, processing, failed]
