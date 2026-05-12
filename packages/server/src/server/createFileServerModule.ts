@@ -84,6 +84,19 @@ export function createFileServerModule<Path extends string>(
 
                 await fs.access(filePath);
                 return filePath;
+            },
+            head: async (options?: Request & { params?: { filename?: string } }) => {
+                const filename = options?.params?.filename;
+
+                if (!filename) {
+                    throw new Error("Filename is required");
+                }
+
+                const safeFilename = normalizeFilename(filename);
+                const filePath = path.join(uploadDir, safeFilename);
+
+                await fs.access(filePath);
+                return filePath;
             }
         }
     } as unknown as OpenApiModule<FilePaths<Path>, Request>;

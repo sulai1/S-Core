@@ -50,8 +50,8 @@ import { useQuasar } from 'quasar';
 import { baseUrl } from 'src/boot/di';
 
 export type SalesmanView = {
-  image:string,
-  message:string,
+  image?:string | undefined,
+  message?:string | undefined,
   validTo:string,
   id_nr:number,
   first:string,

@@ -20,7 +20,7 @@ export type InferTableSchema<T extends TableSchema<any>> = {
     [K in keyof T["columns"]as T["columns"][K] extends { nullable?: true } ? K : never]?:
     T["columns"][K] extends { type: infer Type }
     ? Type extends AnyCallable<infer U>
-    ? U
+    ? U | undefined
     : never
     : never;
 } & {
@@ -86,9 +86,9 @@ export type InferCreationSchema<T extends TableSchema<any>> = {
     : Nullable extends true ? K
     : Default extends true ? K
     : never : never]?:
-    T["columns"][K] extends { type: infer Type }
+    T["columns"][K] extends { type: infer Type; nullable?: infer Nullable }
     ? Type extends AnyCallable<infer U>
-    ? U
+    ? Nullable extends true ? U | undefined : U
     : never
     : never;
 };

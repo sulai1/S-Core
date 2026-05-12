@@ -1,8 +1,8 @@
 import { defineBoot } from '#q-app/wrappers';
-import type { Client, OpenApiModule, QuerySerializer, SelectFunctionDefinitions } from "@s-core/client";
+import { type Client, type OpenApiModule, QuerySerializer, selectFunctionDefinitions, type SelectFunctionDefinitions } from "@s-core/client";
 import { createDatasourceClient, createFileClient, createOpenApiClient } from "@s-core/client";
 import type { paths } from '@s-core/talktogether';
-import { type tables } from '@s-core/talktogether';
+import { tables } from '@s-core/talktogether';
 import { apiSchema } from '@s-core/talktogether';
 import axios from 'axios';
 import { Buffer } from 'buffer';
@@ -47,6 +47,7 @@ export const api = axios.create({
 export default defineBoot(async ({ app }) => {
   routes = await createOpenApiClient<paths>(baseUrl, apiSchema, { client: api as unknown as Client });
   datasource = createDatasourceClient(baseUrl + "/data");
+  querySerializer = new QuerySerializer(tables, selectFunctionDefinitions);
   uploads = createFileClient(baseUrl, { basePath: "/images", client: api as unknown as Client });
 
   app.provide('datasource', datasource);

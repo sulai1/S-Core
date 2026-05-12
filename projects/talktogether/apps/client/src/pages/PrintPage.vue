@@ -30,7 +30,7 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
 import { useQuasar } from 'quasar';
-import { datasource } from 'src/boot/di';
+import { datasource, querySerializer } from 'src/boot/di';
 import FindSalesman from 'src/components/FindSalesman.vue';
 import PrintComponent from 'src/components/PrintComponent.vue';
 
@@ -39,13 +39,13 @@ type PrintableSalesman = {
   id_nr: number;
   first: string;
   last: string;
-  phone?: string;
-  image: string;
-  message: string;
+  phone?: string | undefined;
+  image?: string |undefined;
+  message?: string | undefined;
   createdAt: string;
   updatedAt: string;
   validTo: string;
-  locked?: boolean;
+  locked?: boolean | undefined;
 };
 
 const emptySalesman: PrintableSalesman = {
@@ -68,8 +68,21 @@ const selectedSalesman = ref<PrintableSalesman>(emptySalesman);
 const printList = ref<PrintableSalesman[]>([]);
 
 onMounted(async () => {
-  const resSalesman = await datasource.select({ s: 'Salesman', i: 'Identification' }, {
-    attributes: {
+  const resSalesman = await datasource.query(
+    querySerializer.from({
+      s: 'Salesman',
+    }).lateralFrom('i', { ident: 'Identification' }, (from) =>
+      from
+        .select({
+          id_nr: 'ident.id_nr',
+          name: 'ident.salesman',
+          createdAt: 'ident.createdAt',
+          validTo: 'ident.validTo',
+        })
+        .where(e => e.fn('=', e.col('ident.salesman'), e.col('s.id')))
+        .orderBy('ident.validTo', true)
+        .limit(1)
+    ).select({
       id: 's.id',
       id_nr: 'i.id_nr',
       first: 's.first',
@@ -81,14 +94,9 @@ onMounted(async () => {
       updatedAt: 's.updatedAt',
       validTo: 'i.validTo',
       locked: 's.locked',
-    },
-    orderBy: [['i.id_nr', 'asc']],
-    where: [
-      { function: '>=', params: ['i.validTo', { value: new Date().toISOString() }] },
-      { function: '=', params: [{function:"coalesce", params: ['i.salesman', 's.id']}, 's.id'] },
-    ],
-  });
- 
+    }).orderBy('i.validTo',true).build()
+  )
+
   salesmen.value = resSalesman;
   if (!selectedSalesman.value.id && salesmen.value.length > 0) {
     selectedSalesman.value = salesmen.value[0] as PrintableSalesman;
