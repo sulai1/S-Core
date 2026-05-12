@@ -7,6 +7,7 @@ export type DataSourcePaths<T extends DataSource<any, any>> = {
     "/delete": Delete<T>;
     "/find": Find<T>;
     "/select": Select<T>;
+    "/query": Query<T>;
 };
 
 export type Get<T extends DataSource> = {
@@ -147,6 +148,29 @@ export type Select<T extends DataSource> = {
                 };
                 content: {
                     "application/json": Awaited<ReturnType<T["select"]>>;
+                }
+            }
+        }
+    }
+}
+
+export type Query<T extends DataSource> = {
+    post: {
+        requestBody: {
+            content: {
+                "application/json": {
+                    query: Parameters<T["query"]>[0]
+                }
+            }
+        },
+        responses: {
+            /** @description Query result rows */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": Awaited<ReturnType<T["query"]>>;
                 }
             }
         }

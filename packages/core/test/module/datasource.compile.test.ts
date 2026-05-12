@@ -18,6 +18,9 @@ const ds: DataSource<{ a: A, b: B }, SelectFunctionDefinitions> = {
     insert: async (table, data) => {
         return [] as any;
     },
+    query: async (query) => {
+        return [] as any;
+    },
     select: async (tables, query) => {
         return {} as any;
     },

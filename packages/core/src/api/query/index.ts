@@ -266,6 +266,16 @@ export type FromBuilder<
     Ctx extends Record<string, unknown>
 > = {
     expr: ExprFactory<Ctx, Defs>;
+    lateralFrom<
+        Alias extends string,
+        NestedSources extends FromMap<Tables>,
+        Row extends Record<string, unknown>,
+        Binds extends readonly unknown[]
+    >(
+        alias: Alias,
+        sources: NestedSources,
+        build: (from: FromBuilder<Tables, Defs, NestedSources, Ctx & ContextFrom<Tables, NestedSources>>) => SelectBuilder<Tables, Defs, NestedSources, Ctx & ContextFrom<Tables, NestedSources>, Row, Binds>,
+    ): FromBuilder<Tables, Defs, Sources & Record<Alias, NestedSource<Row, Binds>>, ContextFrom<Tables, Sources & Record<Alias, NestedSource<Row, Binds>>>>;
     select<S extends SelectShape<Ctx, Defs>>(shape: S): SelectBuilder<Tables, Defs, Sources, Ctx, RowFromSelect<Ctx, Defs, S>, readonly []>;
 };
 

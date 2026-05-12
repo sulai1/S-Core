@@ -1,3 +1,4 @@
+import { SerializedFrom, SerializedQuery } from "../../api/index.js";
 import { DataSourceSchema, InferCreationSchema, InferPrimaryKey, InferTableSchema, TableInstanceTypes } from "../../api/schema/datasource/index.js";
 import { Join } from "../../generic.js";
 import { Condition, FilterRequest, FunctionsType, Repository, SelectAttributes, SelectResult } from "../index.js";
@@ -28,4 +29,11 @@ export type DataSource<
         query: FilterRequest<Join<TableInstanceTypes<Tables>, T>, Functions, S>,
     ): Promise<SelectResult<Join<TableInstanceTypes<Tables>, T>, Functions, S>>;
     createRepository: <T extends keyof Tables>(table: T) => Repository<Tables[T], Functions>;
+    query: <T extends Record<string, unknown>, From extends SerializedFrom>(
+        query: SerializedQuery<From, T>
+    ) => Promise<T[]>;
+    /**
+     * @deprecated Suggestion: prefer query(serializedQuery) for type-safe queries.
+     */
+    queryRaw?: <T = unknown>(sql: string, options?: { bind?: unknown[] }) => Promise<T>;
 }

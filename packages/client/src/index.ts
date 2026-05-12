@@ -71,6 +71,13 @@ export function createDatasourceClient<
             }
             return res.data as any;
         },
+        async query(query) {
+            const res = await client.post(`/query`, { query });
+            if (res.status !== 200) {
+                throw new Error(`Failed to query: ${res.status} ${res.statusText}`);
+            }
+            return res.data as any[];
+        },
         createRepository<T extends keyof Tables>(table: T): Repository<Tables[T], InferFunctionTypes<F>> {
             return {
                 get: (pk) => this.get(table, pk),

@@ -63,6 +63,53 @@ describe("AbstractQueryBuilder", () => {
         expect(result.bind).toEqual(["A", 1]);
     });
 
+    test("build serialized query with correlated lateral source", () => {
+        const query: SerializedQuery = {
+            from: {
+                s: "Salesmans",
+                i: {
+                    query: {
+                        from: { ident: "Identifications" },
+                        select: {
+                            id_nr: { kind: "column", name: "ident.id_nr" },
+                            validTo: { kind: "column", name: "ident.validTo" },
+                        },
+                        where: [
+                            {
+                                kind: "call",
+                                function: "=",
+                                params: [
+                                    { kind: "column", name: "ident.salesman" },
+                                    { kind: "column", name: "s.id" },
+                                ],
+                            },
+                        ],
+                        orderBy: [
+                            { exp: { kind: "column", name: "ident.validTo" }, desc: true },
+                            { exp: { kind: "column", name: "ident.id" }, desc: true },
+                        ],
+                    },
+                    lateral: true,
+                },
+            },
+            select: {
+                id: { kind: "column", name: "s.id" },
+                idNr: { kind: "column", name: "i.id_nr" },
+                validTo: { kind: "column", name: "i.validTo" },
+            },
+            where: [
+                { kind: "call", function: "like", params: [{ kind: "column", name: "s.last" }, { kind: "value", value: "TINCA" }] },
+            ],
+        };
+
+        const result = builder.build(query);
+
+        expect(result.query).toEqual(
+            'SELECT "s"."id" AS "id",\n"i"."id_nr" AS "idNr",\n"i"."validTo" AS "validTo" FROM "Salesmans" AS "s", LATERAL (SELECT "ident"."id_nr" AS "id_nr",\n"ident"."validTo" AS "validTo" FROM "Identifications" AS "ident" WHERE ("ident"."salesman" = "s"."id") ORDER BY "ident"."validTo" DESC, "ident"."id" DESC) AS "i" WHERE ("s"."last" like $1)'
+        );
+        expect(result.bind).toEqual(["TINCA"]);
+    });
+
     test("ignore udefined parameters in select", () => {
         const result = builder.buildSelect({
             attributes: { a: "table1.column1" },

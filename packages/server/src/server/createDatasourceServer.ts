@@ -102,6 +102,18 @@ export function createDatasourceServer<
                     throw error;
                 }
             }
+        },
+        "/query": {
+            post: async (req: {
+                query: Parameters<DataSource<Tables, Functions>["query"]>[0]
+            }) => {
+                try {
+                    return await datasource.query(req.query);
+                } catch (error) {
+                    console.error(`[QUERY] Error executing serialized query:`, error);
+                    throw error;
+                }
+            }
         }
     } as OpenApiModule<DataSourcePaths<DataSource<Tables, Functions>>>;
 }

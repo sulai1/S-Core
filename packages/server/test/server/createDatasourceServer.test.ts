@@ -31,6 +31,7 @@ describe("createDatasourceServer", () => {
             delete: vi.fn(),
             find: vi.fn(),
             select: vi.fn(),
+            query: vi.fn(),
             createRepository: vi.fn(),
         };
 
@@ -235,6 +236,24 @@ describe("createDatasourceServer", () => {
             });
 
             expect(mockDataSource.select).toHaveBeenCalledWith(tables, query);
+            expect(result).toEqual(expectedResults);
+        });
+    });
+
+    describe("/query endpoint", () => {
+        test("should call datasource.query with correct parameters", async () => {
+            const query = {
+                from: { t: "test" },
+                select: {
+                    id: { kind: "column", name: "t.id" }
+                }
+            };
+            const expectedResults = [{ id: 1 }];
+            (mockDataSource.query as any).mockResolvedValue(expectedResults);
+
+            const result = await serverModule["/query"].post({ query: query as any });
+
+            expect(mockDataSource.query).toHaveBeenCalledWith(query);
             expect(result).toEqual(expectedResults);
         });
     });

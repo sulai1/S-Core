@@ -1,5 +1,5 @@
 import { DataSource, DefaultNamingStrategy, EntitySchema, QueryRunner } from "typeorm";
-import { Condition, DataSource as DS, DataSourceSchema, FilterRequest, FunctionDefinitions, InferCreationSchema, InferFunctionTypes, Join, normalizeFilterRequest, Repository, SelectAttributes, SelectResult, TableCreationTypes, TableInstanceTypes, TablePrimaryKeyTypes, TableSchema, InferTableSchema, FilterRequestNormalized } from "@s-core/core";
+import { Condition, DataSource as DS, DataSourceSchema, FilterRequest, FunctionDefinitions, InferCreationSchema, InferFunctionTypes, Join, normalizeFilterRequest, Repository, SelectAttributes, SelectResult, TableCreationTypes, TableInstanceTypes, TablePrimaryKeyTypes, TableSchema, InferTableSchema, FilterRequestNormalized, SerializedFrom, SerializedQuery } from "@s-core/core";
 import { SQLDialect } from "./SQLDialect.js";
 import { SQLQueryBuilder } from "./SQLQueryBuilder.js";
 
@@ -210,9 +210,18 @@ export class Database<
         };
     }
 
-    async query<T>(sql: string, options?: { bind?: unknown[] }): Promise<T> {
-        const res = await this.source.query<T>(sql, options?.bind);
-        return res;
+    async query<T>(sql: string, options?: { bind?: unknown[] }): Promise<T>;
+    async query<T extends Record<string, unknown>, From extends SerializedFrom>(query: SerializedQuery<From, T>): Promise<T[]>;
+    async query<T extends Record<string, unknown>>(arg: string | SerializedQuery<SerializedFrom, T>, options?: { bind?: unknown[] }): Promise<T | T[]> {
+        if (typeof arg === "string") {
+            return this.source.query<T>(arg, options?.bind);
+        }
+        const built = this.queryBuilder.build(arg);
+        return this.source.query<T>(built.query, built.bind);
+    }
+
+    async queryRaw<T>(sql: string, options?: { bind?: unknown[] }): Promise<T> {
+        return this.query<T>(sql, options);
     }
 
     async update<T extends keyof Tables>(

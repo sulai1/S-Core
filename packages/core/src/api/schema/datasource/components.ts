@@ -1,4 +1,4 @@
-import type { OpenAPIV3_1  } from "openapi-types";
+import type { OpenAPIV3_1 } from "openapi-types";
 import { DataSourceSchema } from "./DatasourceSchema.js";
 
 
@@ -129,6 +129,116 @@ export function createComponents<Tables extends DataSourceSchema>(
         required: ["function", "params"],
     };
 
+    const serializedValue: OpenAPIV3_1.SchemaObject = {
+        type: "object",
+        properties: {
+            kind: { type: "string", enum: ["value"] },
+            value: {},
+        },
+        required: ["kind", "value"],
+    };
+
+    const serializedColumn: OpenAPIV3_1.SchemaObject = {
+        type: "object",
+        properties: {
+            kind: { type: "string", enum: ["column"] },
+            name: { type: "string" },
+        },
+        required: ["kind", "name"],
+    };
+
+    const serializedCall: OpenAPIV3_1.SchemaObject = {
+        type: "object",
+        properties: {
+            kind: { type: "string", enum: ["call"] },
+            function: { type: "string" },
+            params: {
+                type: "array",
+                items: {
+                    anyOf: [
+                        { $ref: "#/components/schemas/serializedValue" },
+                        { $ref: "#/components/schemas/serializedColumn" },
+                        { $ref: "#/components/schemas/serializedCall" },
+                    ],
+                },
+            },
+        },
+        required: ["kind", "function", "params"],
+    };
+
+    const serializedExpression: OpenAPIV3_1.SchemaObject = {
+        anyOf: [
+            { $ref: "#/components/schemas/serializedValue" },
+            { $ref: "#/components/schemas/serializedColumn" },
+            { $ref: "#/components/schemas/serializedCall" },
+        ],
+    };
+
+    const serializedNestedSource: OpenAPIV3_1.SchemaObject = {
+        type: "object",
+        properties: {
+            query: { $ref: "#/components/schemas/serializedQuery" },
+            lateral: { type: "boolean" },
+        },
+        required: ["query"],
+    };
+
+    const serializedFrom: OpenAPIV3_1.SchemaObject = {
+        type: "object",
+        additionalProperties: {
+            anyOf: [
+                { type: "string" },
+                { $ref: "#/components/schemas/serializedNestedSource" },
+            ],
+        },
+    };
+
+    const serializedQuery: OpenAPIV3_1.SchemaObject = {
+        type: "object",
+        properties: {
+            from: { $ref: "#/components/schemas/serializedFrom" },
+            select: {
+                type: "object",
+                additionalProperties: {
+                    anyOf: [
+                        { $ref: "#/components/schemas/serializedExpression" },
+                        { type: "string" },
+                    ],
+                },
+            },
+            where: {
+                type: "array",
+                items: { $ref: "#/components/schemas/serializedExpression" },
+            },
+            orderBy: {
+                type: "array",
+                items: {
+                    type: "object",
+                    properties: {
+                        exp: {
+                            anyOf: [
+                                { $ref: "#/components/schemas/serializedExpression" },
+                                { type: "string" },
+                            ],
+                        },
+                        desc: { type: "boolean" },
+                    },
+                    required: ["exp"],
+                },
+            },
+            groupBy: {
+                type: "array",
+                items: {
+                    anyOf: [
+                        { $ref: "#/components/schemas/serializedExpression" },
+                        { type: "string" },
+                    ],
+                },
+            },
+        },
+        required: ["from"],
+    };
+
 
     const tableExpression: OpenAPIV3_1.SchemaObject = {
         anyOf: [
@@ -224,6 +334,13 @@ export function createComponents<Tables extends DataSourceSchema>(
             tableFunction,
             tableExpression,
             queryRequest,
+            serializedValue,
+            serializedColumn,
+            serializedCall,
+            serializedExpression,
+            serializedNestedSource,
+            serializedFrom,
+            serializedQuery,
             ...tables,
             ...partialTables,
             ...creationTables,

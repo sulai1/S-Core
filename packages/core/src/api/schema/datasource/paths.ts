@@ -257,6 +257,44 @@ const select: OpenAPIV3_1.PathItemObject = {
     },
 } as const satisfies OpenAPIV3_1.PathItemObject;
 
+const query: OpenAPIV3_1.PathItemObject = {
+    post: {
+        summary: "Execute serialized query",
+        requestBody: {
+            required: true,
+            content: {
+                "application/json": {
+                    schema: {
+                        type: "object",
+                        properties: {
+                            query: {
+                                $ref: "#/components/schemas/serializedQuery",
+                            },
+                        },
+                        required: ["query"],
+                    },
+                },
+            },
+        },
+        responses: {
+            "200": {
+                description: "Query result rows",
+                content: {
+                    "application/json": {
+                        schema: {
+                            type: "array",
+                            items: {
+                                type: "object",
+                                additionalProperties: true,
+                            },
+                        },
+                    },
+                },
+            },
+        },
+    },
+} as const satisfies OpenAPIV3_1.PathItemObject;
+
 export const paths = {
     "/get": get,
     "/insert": insert,
@@ -264,4 +302,5 @@ export const paths = {
     "/delete": del,
     "/find": find,
     "/select": select,
+    "/query": query,
 } as const satisfies Record<string, OpenAPIV3_1.PathItemObject>;

@@ -1,5 +1,5 @@
 import { defineBoot } from '#q-app/wrappers';
-import type { Client, OpenApiModule } from "@s-core/client";
+import type { Client, OpenApiModule, QuerySerializer, SelectFunctionDefinitions } from "@s-core/client";
 import { createDatasourceClient, createFileClient, createOpenApiClient } from "@s-core/client";
 import type { paths } from '@s-core/talktogether';
 import { type tables } from '@s-core/talktogether';
@@ -12,6 +12,7 @@ if (typeof window !== 'undefined') {
   window.Buffer = window.Buffer || Buffer;
 }
 
+export let querySerializer: QuerySerializer<typeof tables, SelectFunctionDefinitions>;
 export let datasource: ReturnType<typeof createDatasourceClient<typeof tables>>;
 export let routes: OpenApiModule<paths>;
 export let uploads: ReturnType<typeof createFileClient>;
