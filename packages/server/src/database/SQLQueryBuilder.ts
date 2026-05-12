@@ -61,6 +61,14 @@ export class SQLQueryBuilder<Functions extends FunctionsType> implements QueryBu
             parts.push("ORDER BY " + orders.join(", "));
         }
 
+        if (query.limit !== undefined) {
+            parts.push(`LIMIT ${query.limit}`);
+        }
+
+        if (query.offset !== undefined) {
+            parts.push(`OFFSET ${query.offset}`);
+        }
+
         return parts.filter(p => p.trim() !== "").join(" ").trimEnd();
     }
 

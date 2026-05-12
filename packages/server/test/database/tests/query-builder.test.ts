@@ -110,6 +110,25 @@ describe("AbstractQueryBuilder", () => {
         expect(result.bind).toEqual(["TINCA"]);
     });
 
+    test("build serialized query with limit and offset", () => {
+        const query = {
+            from: { t1: "table1" },
+            select: {
+                id: { kind: "column", name: "t1.id" },
+            },
+            orderBy: [{ exp: { kind: "column", name: "t1.id" }, desc: true }],
+            limit: 5,
+            offset: 10,
+        } as SerializedQuery;
+
+        const result = builder.build(query);
+
+        expect(result.query).toEqual(
+            'SELECT "t1"."id" AS "id" FROM "table1" AS "t1" ORDER BY "t1"."id" DESC LIMIT 5 OFFSET 10'
+        );
+        expect(result.bind).toEqual([]);
+    });
+
     test("ignore udefined parameters in select", () => {
         const result = builder.buildSelect({
             attributes: { a: "table1.column1" },

@@ -293,6 +293,8 @@ export type SelectBuilder<
     ): SelectBuilder<Tables, Defs, Sources, Ctx, Row, [...Binds, ...WhereBinds<C>]>;
     orderBy<E extends Expr<Ctx, Defs, unknown> | (keyof Ctx & string)>(exp: E, desc?: boolean): SelectBuilder<Tables, Defs, Sources, Ctx, Row, E extends ExprBase<unknown, infer EB extends readonly unknown[]> ? [...Binds, ...EB] : Binds>;
     groupBy<E extends Expr<Ctx, Defs, unknown> | (keyof Ctx & string)>(...exps: readonly E[]): SelectBuilder<Tables, Defs, Sources, Ctx, Row, Binds>;
+    limit(limit: number): SelectBuilder<Tables, Defs, Sources, Ctx, Row, Binds>;
+    offset(offset: number): SelectBuilder<Tables, Defs, Sources, Ctx, Row, Binds>;
     build(): SerializedQuery<SerializedFromFor<Tables, Sources>, Row, Binds>;
 };
 

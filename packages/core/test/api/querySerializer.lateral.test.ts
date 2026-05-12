@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { QuerySerializer, TableSchema } from "../../src/index.js";
+import { QuerySerializer, SelectFunctionDefinitions, TableSchema } from "../../src/index.js";
 
 type Salesmans = TableSchema<{
     id: number;
@@ -22,45 +22,43 @@ describe("QuerySerializer lateralFrom", () => {
         const serializer = new QuerySerializer<{
             Salesmans: Salesmans;
             Identifications: Identifications;
-        }, MinimalDefs>({} as {
+        }, SelectFunctionDefinitions>({} as {
             Salesmans: Salesmans;
             Identifications: Identifications;
         });
 
         const query = serializer.from({
             s: "Salesmans",
-        })
-            .lateralFrom("i", { ident: "Identifications" }, (from) =>
-                from
-                    .select({
-                        id_nr: "ident.id_nr",
-                        validTo: "ident.validTo",
-                    })
-                    .where({
-                        kind: "call",
-                        function: "=",
-                        params: [
-                            { kind: "column", name: "ident.salesman" },
-                            { kind: "column", name: "s.id" },
-                        ],
-                    })
-                    .orderBy("ident.validTo", true)
-                    .orderBy("ident.id", true)
-            )
-            .select({
-                id: "s.id",
-                idNr: "i.id_nr",
-                validTo: "i.validTo",
-            })
-            .where({
-                kind: "call",
-                function: "=",
-                params: [
-                    { kind: "column", name: "s.last" },
-                    { kind: "value", value: "TINCA" },
-                ],
-            })
-            .build();
+        }).lateralFrom("i", { ident: "Identifications" }, (from) =>
+            from
+                .select({
+                    id_nr: "ident.id_nr",
+                    validTo: "ident.validTo",
+                })
+                .where({
+                    kind: "call",
+                    function: "=",
+                    params: [
+                        { kind: "column", name: "ident.salesman" },
+                        { kind: "column", name: "s.id" },
+                    ],
+                })
+                .orderBy("ident.validTo", true)
+                .orderBy("ident.id", true)
+                .limit(1)
+                .offset(0)
+        ).select({
+            id: "s.id",
+            idNr: "i.id_nr",
+            validTo: "i.validTo",
+        }).where({
+            kind: "call",
+            function: "=",
+            params: [
+                { kind: "column", name: "s.last" },
+                { kind: "value", value: "TINCA" },
+            ],
+        }).build();
 
         expect(query.from.i).toMatchObject({
             lateral: true,
@@ -80,5 +78,7 @@ describe("QuerySerializer lateralFrom", () => {
                 ],
             },
         ]);
+        expect(query.from.i.query.limit).toBe(1);
+        expect(query.from.i.query.offset).toBe(0);
     });
 });

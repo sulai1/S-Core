@@ -11,6 +11,8 @@ export type SerializedQuery<
     where?: SerializedExpression[];
     orderBy?: { exp: SerializedExpression | string; desc?: boolean; }[];
     groupBy?: (SerializedExpression | string)[];
+    limit?: number;
+    offset?: number;
     readonly __row?: Row;
     readonly __binds?: Binds;
 };

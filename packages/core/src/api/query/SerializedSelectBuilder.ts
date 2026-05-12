@@ -47,6 +47,16 @@ export class SerializedSelectBuilder<
         return this;
     }
 
+    limit(limit: number): SelectBuilder<Tables, Defs, Sources, Ctx, Row, Binds> {
+        this.query.limit = limit;
+        return this;
+    }
+
+    offset(offset: number): SelectBuilder<Tables, Defs, Sources, Ctx, Row, Binds> {
+        this.query.offset = offset;
+        return this;
+    }
+
     build(): SerializedQuery<SerializedFromFor<Tables, Sources>, Row, Binds> {
         return this.query;
     }
