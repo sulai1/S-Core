@@ -52,5 +52,995 @@
     "createdAt": "2026-05-12T16:44:55.669Z",
     "updatedAt": "2026-05-12T16:44:55.672Z",
     "externalJobId": "b6470c5b-253c-407d-94ce-817a80a83d71"
+  },
+  {
+    "jobId": "015cea1d-b510-443f-a101-4499c728bf8b",
+    "state": "success",
+    "progress": 100,
+    "kind": "download",
+    "createdAt": "2026-05-12T18:00:44.757Z",
+    "updatedAt": "2026-05-12T18:00:44.760Z",
+    "externalJobId": "4147812e-3708-443b-af3c-3ce6d0fc0dc9"
+  },
+  {
+    "jobId": "75fe9f2e-8f94-46fa-b544-50030899a074",
+    "state": "success",
+    "progress": 100,
+    "kind": "sync",
+    "createdAt": "2026-05-12T18:00:44.795Z",
+    "updatedAt": "2026-05-12T18:00:44.798Z",
+    "externalJobId": "836b40b1-0e13-48e2-b886-0a6e8709c34c"
+  },
+  {
+    "jobId": "fa4e7ab8-ded2-47ae-96e4-59d081d9fb28",
+    "state": "success",
+    "progress": 100,
+    "kind": "download",
+    "createdAt": "2026-05-12T19:03:38.281Z",
+    "updatedAt": "2026-05-12T19:03:38.339Z",
+    "externalJobId": "846d0a02-28ca-4784-972e-2f549b0788d4"
+  },
+  {
+    "jobId": "2ff35c42-f0e8-4fa1-8a82-0a2550937aa3",
+    "state": "success",
+    "progress": 100,
+    "kind": "sync",
+    "createdAt": "2026-05-12T19:03:38.379Z",
+    "updatedAt": "2026-05-12T19:03:38.383Z",
+    "externalJobId": "bfcc669d-2255-4f60-8c89-b70aa8da8952"
+  },
+  {
+    "jobId": "a7b20b4d-ae37-4dd8-8b90-9aab73d7ad8a",
+    "state": "success",
+    "progress": 100,
+    "kind": "download",
+    "createdAt": "2026-05-12T20:37:46.365Z",
+    "updatedAt": "2026-05-12T20:37:46.371Z",
+    "externalJobId": "e087a29b-d141-4d68-891c-6d50a48aa90c"
+  },
+  {
+    "jobId": "90d7b416-d098-4b8d-b6f6-2f2eed889b4b",
+    "state": "success",
+    "progress": 100,
+    "kind": "download",
+    "createdAt": "2026-05-12T20:38:14.616Z",
+    "updatedAt": "2026-05-12T20:38:14.619Z",
+    "externalJobId": "f9e1e0ec-0f6b-436f-8dc4-b57489fe0da6"
+  },
+  {
+    "jobId": "3d3ee236-1dec-4cbb-b478-e5eb9f50adce",
+    "state": "success",
+    "progress": 100,
+    "kind": "download",
+    "createdAt": "2026-05-12T20:40:35.577Z",
+    "updatedAt": "2026-05-12T20:40:35.580Z",
+    "externalJobId": "fc4a9556-98f6-4ebf-8ae3-973f9e85b7ba"
+  },
+  {
+    "jobId": "5a6efd35-a5a5-40d9-935f-6a7ef67e206d",
+    "state": "success",
+    "progress": 100,
+    "kind": "download",
+    "createdAt": "2026-05-12T20:45:19.570Z",
+    "updatedAt": "2026-05-12T20:45:19.574Z",
+    "externalJobId": "778ce3f8-d32b-492b-91ae-52f11ef06796"
+  },
+  {
+    "jobId": "f65c4e08-c22b-4d86-9c07-a5753b946174",
+    "state": "success",
+    "progress": 100,
+    "kind": "sync",
+    "createdAt": "2026-05-12T20:45:19.609Z",
+    "updatedAt": "2026-05-12T20:45:19.611Z",
+    "externalJobId": "8541f0dc-ed90-43a9-b08d-d9010a35e90a"
+  },
+  {
+    "jobId": "078f8bc9-3acc-496f-bfb1-45e4f06ac05c",
+    "state": "failed",
+    "progress": 15,
+    "kind": "download",
+    "createdAt": "2026-05-12T20:46:46.691Z",
+    "updatedAt": "2026-05-12T20:46:53.712Z",
+    "error": "python-worker-timeout-7000ms"
+  },
+  {
+    "jobId": "d431108d-14c5-4e39-8bc0-85ac38fe5a3a",
+    "state": "failed",
+    "progress": 15,
+    "kind": "download",
+    "createdAt": "2026-05-12T20:47:01.651Z",
+    "updatedAt": "2026-05-12T20:47:08.665Z",
+    "error": "python-worker-timeout-7000ms"
+  },
+  {
+    "jobId": "2b3d35cc-6f8f-4e83-b411-33b602c06875",
+    "state": "success",
+    "progress": 100,
+    "kind": "download",
+    "createdAt": "2026-05-12T20:50:29.410Z",
+    "updatedAt": "2026-05-12T20:50:29.413Z",
+    "externalJobId": "38dd35b8-c604-4507-9fdc-9d5c8eab70d3"
+  },
+  {
+    "jobId": "ae511746-bafb-4da2-b85e-1ba67496b7bf",
+    "state": "success",
+    "progress": 100,
+    "kind": "sync",
+    "createdAt": "2026-05-12T20:50:29.452Z",
+    "updatedAt": "2026-05-12T20:50:29.455Z",
+    "externalJobId": "cfd5ffc0-0fbc-4e47-b87c-00f06c4ca056"
+  },
+  {
+    "jobId": "71baeca8-cf27-434c-a78c-7c6b8d6d7f9d",
+    "state": "failed",
+    "progress": 15,
+    "kind": "download",
+    "createdAt": "2026-05-12T20:51:15.747Z",
+    "updatedAt": "2026-05-12T20:51:20.585Z",
+    "error": "python-worker-json-parse-failed:SyntaxError: Unexpected token 'C', \"Cache is d\"... is not valid JSON"
+  },
+  {
+    "jobId": "f308e205-70af-4143-9e4f-0ccd21b2a462",
+    "state": "failed",
+    "progress": 15,
+    "kind": "download",
+    "createdAt": "2026-05-12T20:52:11.356Z",
+    "updatedAt": "2026-05-12T20:52:15.789Z",
+    "error": "python-worker-json-parse-failed:SyntaxError: Unexpected token 'C', \"Cache is d\"... is not valid JSON"
+  },
+  {
+    "jobId": "9c7903e1-759f-46d0-bf22-31127e34a74d",
+    "state": "success",
+    "progress": 100,
+    "kind": "download",
+    "createdAt": "2026-05-12T21:03:07.445Z",
+    "updatedAt": "2026-05-12T21:03:12.381Z",
+    "externalJobId": "7216101a-dbb2-45ad-8622-8d275f49d1cb"
+  },
+  {
+    "jobId": "bcfe7120-5e77-4e09-9878-48ae1bad6f8a",
+    "state": "success",
+    "progress": 100,
+    "kind": "download",
+    "createdAt": "2026-05-12T21:10:32.080Z",
+    "updatedAt": "2026-05-12T21:10:32.084Z",
+    "externalJobId": "7e7ca6aa-a3ee-4fb5-acb9-ffa1f0668a9b"
+  },
+  {
+    "jobId": "b538c822-f8de-42eb-aaa4-af1062a466e3",
+    "state": "success",
+    "progress": 100,
+    "kind": "sync",
+    "createdAt": "2026-05-12T21:10:32.126Z",
+    "updatedAt": "2026-05-12T21:10:32.131Z",
+    "externalJobId": "232a62be-015d-4419-8785-76e60163608a"
+  },
+  {
+    "jobId": "b45755f4-f0e7-4191-897d-c638ffc6103f",
+    "state": "success",
+    "progress": 100,
+    "kind": "download",
+    "createdAt": "2026-05-12T21:11:29.920Z",
+    "updatedAt": "2026-05-12T21:11:29.923Z",
+    "externalJobId": "4d456d8a-c33c-4177-bc90-1ddf6194e69c"
+  },
+  {
+    "jobId": "56700b0f-38e7-4d6b-8ffb-5d67bd73970d",
+    "state": "success",
+    "progress": 100,
+    "kind": "sync",
+    "createdAt": "2026-05-12T21:11:29.957Z",
+    "updatedAt": "2026-05-12T21:11:29.959Z",
+    "externalJobId": "c4244caf-62cb-4fd4-9424-33e1df73d9fe"
+  },
+  {
+    "jobId": "28a41e34-f33b-4a28-ab50-5973522a9cd0",
+    "state": "success",
+    "progress": 100,
+    "kind": "download",
+    "createdAt": "2026-05-12T21:12:13.369Z",
+    "updatedAt": "2026-05-12T21:12:13.374Z",
+    "externalJobId": "7b2ce45d-6abe-4e40-8bed-66dc6c2e11cf"
+  },
+  {
+    "jobId": "07c4ff2d-8286-400b-9772-e64d24385e71",
+    "state": "success",
+    "progress": 100,
+    "kind": "sync",
+    "createdAt": "2026-05-12T21:12:13.409Z",
+    "updatedAt": "2026-05-12T21:12:13.412Z",
+    "externalJobId": "bca824c3-4e14-40b8-9fbd-ce4729a47b06"
+  },
+  {
+    "jobId": "62395a02-6179-48e6-9356-b6025a0d035f",
+    "state": "success",
+    "progress": 100,
+    "kind": "download",
+    "createdAt": "2026-05-12T21:13:08.996Z",
+    "updatedAt": "2026-05-12T21:13:09.000Z",
+    "externalJobId": "b3315bc2-5874-4a5a-9384-709342df8e8f"
+  },
+  {
+    "jobId": "1b4acc00-068c-4431-90ee-37881b54209c",
+    "state": "success",
+    "progress": 100,
+    "kind": "sync",
+    "createdAt": "2026-05-12T21:13:09.035Z",
+    "updatedAt": "2026-05-12T21:13:09.039Z",
+    "externalJobId": "ff6de339-a325-44e3-9e3f-721543aa4b76"
+  },
+  {
+    "jobId": "6002a158-5523-4a5b-81a5-eb77f0d985f5",
+    "state": "success",
+    "progress": 100,
+    "kind": "download",
+    "createdAt": "2026-05-12T21:14:49.623Z",
+    "updatedAt": "2026-05-12T21:14:49.626Z",
+    "externalJobId": "28d0a2d5-7029-4784-b4c1-3a4c0232d03e"
+  },
+  {
+    "jobId": "be697075-9b74-4a93-aaa0-ae20e5f50527",
+    "state": "success",
+    "progress": 100,
+    "kind": "sync",
+    "createdAt": "2026-05-12T21:14:49.671Z",
+    "updatedAt": "2026-05-12T21:14:49.674Z",
+    "externalJobId": "0a72028b-c10b-4ba1-96c3-55db3218bb80"
+  },
+  {
+    "jobId": "572409bd-0720-4bc4-9233-31c9b13357d2",
+    "state": "success",
+    "progress": 100,
+    "kind": "download",
+    "createdAt": "2026-05-12T21:18:32.048Z",
+    "updatedAt": "2026-05-12T21:19:07.957Z",
+    "externalJobId": "b2046f18-28a5-413f-8f26-1f96a2018c33"
+  },
+  {
+    "jobId": "3f216f46-c4e5-402e-91c8-e577dc773886",
+    "state": "success",
+    "progress": 100,
+    "kind": "download",
+    "createdAt": "2026-05-12T21:21:12.407Z",
+    "updatedAt": "2026-05-12T21:21:12.412Z",
+    "externalJobId": "4861ee4f-8e21-4381-b836-0f076f231f1a"
+  },
+  {
+    "jobId": "e7d11ef6-2f83-4f19-8896-11d0edb1cc95",
+    "state": "success",
+    "progress": 100,
+    "kind": "sync",
+    "createdAt": "2026-05-12T21:21:12.453Z",
+    "updatedAt": "2026-05-12T21:21:12.457Z",
+    "externalJobId": "16d639fb-b3c1-4bfa-8409-7bab9d735c2e"
+  },
+  {
+    "jobId": "7bc2dfd9-3f69-44ab-8e71-bb67b88ac5fa",
+    "state": "success",
+    "progress": 100,
+    "kind": "download",
+    "createdAt": "2026-05-12T21:22:55.195Z",
+    "updatedAt": "2026-05-12T21:22:56.814Z",
+    "externalJobId": "47ed511c-658e-48e7-9afa-64b91de0ea79"
+  },
+  {
+    "jobId": "887f32cf-5b6d-4449-9509-4f1652eceaf4",
+    "state": "success",
+    "progress": 100,
+    "kind": "download",
+    "createdAt": "2026-05-12T21:27:08.279Z",
+    "updatedAt": "2026-05-12T21:27:08.283Z",
+    "externalJobId": "1ec78d4d-953d-4efa-9489-9e54843f6f13"
+  },
+  {
+    "jobId": "c7a9b6c9-48b9-49f8-b725-8712d9fcc191",
+    "state": "success",
+    "progress": 100,
+    "kind": "sync",
+    "createdAt": "2026-05-12T21:27:08.323Z",
+    "updatedAt": "2026-05-12T21:27:08.326Z",
+    "externalJobId": "62a7acfc-33fa-4962-8c56-30199a57b6bd"
+  },
+  {
+    "jobId": "8dc5ef24-526e-4b98-a6ef-6a8361849c4e",
+    "state": "failed",
+    "progress": 20,
+    "kind": "sync",
+    "createdAt": "2026-05-12T21:30:55.699Z",
+    "updatedAt": "2026-05-12T21:30:57.177Z",
+    "error": "missing-api-key"
+  },
+  {
+    "jobId": "99dc46e3-94da-4e8b-b757-4060db81e597",
+    "state": "failed",
+    "progress": 20,
+    "kind": "sync",
+    "createdAt": "2026-05-12T21:37:06.072Z",
+    "updatedAt": "2026-05-12T21:37:07.289Z",
+    "error": "missing-api-key"
+  },
+  {
+    "jobId": "48b964ef-a025-4326-8e23-28a02551dc47",
+    "state": "success",
+    "progress": 100,
+    "kind": "download",
+    "createdAt": "2026-05-12T21:39:26.657Z",
+    "updatedAt": "2026-05-12T21:39:26.661Z",
+    "externalJobId": "38cf0a9a-0549-4151-ad17-7bd0c54eff90"
+  },
+  {
+    "jobId": "5ea76071-3aec-4a22-affd-1982d81f2c38",
+    "state": "success",
+    "progress": 100,
+    "kind": "sync",
+    "createdAt": "2026-05-12T21:39:26.707Z",
+    "updatedAt": "2026-05-12T21:39:26.710Z",
+    "externalJobId": "e1060603-ec8a-4f4a-b790-e954d274edb6"
+  },
+  {
+    "jobId": "52010f18-d220-43db-b312-69ed4a729fd6",
+    "state": "failed",
+    "progress": 20,
+    "kind": "sync",
+    "createdAt": "2026-05-12T21:41:10.472Z",
+    "updatedAt": "2026-05-12T21:41:12.249Z",
+    "error": "worker-bridge-error:'items'"
+  },
+  {
+    "jobId": "778c6b22-758c-4d3a-a8af-314f218a573b",
+    "state": "success",
+    "progress": 100,
+    "kind": "download",
+    "createdAt": "2026-05-12T21:41:38.440Z",
+    "updatedAt": "2026-05-12T21:41:40.038Z",
+    "externalJobId": "7594ae84-69c5-4b47-8c32-549d26450627"
+  },
+  {
+    "jobId": "584261c0-4478-4c83-a9f8-d15749795756",
+    "state": "failed",
+    "progress": 20,
+    "kind": "sync",
+    "createdAt": "2026-05-12T21:46:04.150Z",
+    "updatedAt": "2026-05-12T21:46:06.080Z",
+    "error": "youtube-api-request-failed:channels"
+  },
+  {
+    "jobId": "a3580457-b61a-47af-b988-6b9c91c6fda2",
+    "state": "failed",
+    "progress": 20,
+    "kind": "sync",
+    "createdAt": "2026-05-12T21:46:33.367Z",
+    "updatedAt": "2026-05-12T21:46:35.132Z",
+    "error": "youtube-api-request-failed:channels"
+  },
+  {
+    "jobId": "61f5515b-b581-4b2d-9b02-3bb63da60ef7",
+    "state": "success",
+    "progress": 100,
+    "kind": "download",
+    "createdAt": "2026-05-13T09:02:10.639Z",
+    "updatedAt": "2026-05-13T09:02:10.648Z",
+    "externalJobId": "c6682a82-4c08-4f9c-9848-b8982d013e14"
+  },
+  {
+    "jobId": "a59a3b13-56bc-4fa1-9ac0-fd2c3172fcc6",
+    "state": "success",
+    "progress": 100,
+    "kind": "sync",
+    "createdAt": "2026-05-13T09:02:10.728Z",
+    "updatedAt": "2026-05-13T09:02:10.731Z",
+    "externalJobId": "f6c86bde-66a9-44b7-98db-cb51f3703100"
+  },
+  {
+    "jobId": "7c2614a8-0a15-4f1a-9cf7-817dc9431513",
+    "state": "success",
+    "progress": 100,
+    "kind": "download",
+    "createdAt": "2026-05-13T09:05:37.824Z",
+    "updatedAt": "2026-05-13T09:05:37.828Z",
+    "externalJobId": "c92bb2e0-bcbf-4361-978f-85c24884af28"
+  },
+  {
+    "jobId": "1a0b5028-01c6-413c-93eb-223af4c5ba9a",
+    "state": "success",
+    "progress": 100,
+    "kind": "sync",
+    "createdAt": "2026-05-13T09:05:37.864Z",
+    "updatedAt": "2026-05-13T09:05:37.868Z",
+    "externalJobId": "c702c604-c0e4-428a-8375-ca6676b2f930"
+  },
+  {
+    "jobId": "5f4568ad-dfaa-4253-8320-4286a2805175",
+    "state": "success",
+    "progress": 100,
+    "kind": "download",
+    "createdAt": "2026-05-13T09:10:38.308Z",
+    "updatedAt": "2026-05-13T09:10:38.314Z",
+    "externalJobId": "ba28593a-d580-440b-acfc-b5ca42ee4f4d"
+  },
+  {
+    "jobId": "22f166d8-72c7-4c43-ab5a-b126cc2b4c76",
+    "state": "success",
+    "progress": 100,
+    "kind": "sync",
+    "createdAt": "2026-05-13T09:10:38.357Z",
+    "updatedAt": "2026-05-13T09:10:38.361Z",
+    "externalJobId": "e8f3a3e5-ce91-4625-bd16-0b5cc843eeb3"
+  },
+  {
+    "jobId": "8d1f3787-7b84-47f0-9248-d9d6f05fabc0",
+    "state": "success",
+    "progress": 100,
+    "kind": "download",
+    "createdAt": "2026-05-13T09:15:16.378Z",
+    "updatedAt": "2026-05-13T09:15:16.381Z",
+    "externalJobId": "610b3b93-57e6-4e72-87bf-b143938a75b4"
+  },
+  {
+    "jobId": "660889b1-cb38-4723-9d85-f77304315fc5",
+    "state": "success",
+    "progress": 100,
+    "kind": "sync",
+    "createdAt": "2026-05-13T09:15:16.417Z",
+    "updatedAt": "2026-05-13T09:15:16.420Z",
+    "externalJobId": "a03d0d34-371e-4c14-8dea-8c62754dd800"
+  },
+  {
+    "jobId": "9b9a1dad-e5df-44d7-be39-a49b3e006d8d",
+    "state": "success",
+    "progress": 100,
+    "kind": "download",
+    "createdAt": "2026-05-13T09:19:08.847Z",
+    "updatedAt": "2026-05-13T09:19:08.852Z",
+    "externalJobId": "4f695781-2f19-4bc7-afd4-cd0786524b6f"
+  },
+  {
+    "jobId": "5865b1ea-09b6-4ca8-b1cd-66f77135f2e8",
+    "state": "success",
+    "progress": 100,
+    "kind": "sync",
+    "createdAt": "2026-05-13T09:19:08.914Z",
+    "updatedAt": "2026-05-13T09:19:08.918Z",
+    "externalJobId": "ff394ce3-a4cb-4280-93c2-fae0f7bbd7b2"
+  },
+  {
+    "jobId": "630c31e7-fe09-408c-9935-a9cdbcd57fa3",
+    "state": "success",
+    "progress": 100,
+    "kind": "download",
+    "createdAt": "2026-05-13T09:31:00.608Z",
+    "updatedAt": "2026-05-13T09:31:00.639Z",
+    "externalJobId": "58a2bc3a-543f-46c9-9b0c-238798b2cf2e"
+  },
+  {
+    "jobId": "d2f78319-e2a1-4c0e-b563-529465ee7774",
+    "state": "success",
+    "progress": 100,
+    "kind": "sync",
+    "createdAt": "2026-05-13T09:31:00.694Z",
+    "updatedAt": "2026-05-13T09:31:00.699Z",
+    "externalJobId": "379eb097-07e0-4281-a391-a9a977a59dcb"
+  },
+  {
+    "jobId": "f5af46c7-1d7b-425c-9cd3-db220604bb70",
+    "state": "success",
+    "progress": 100,
+    "kind": "download",
+    "createdAt": "2026-05-13T09:33:04.230Z",
+    "updatedAt": "2026-05-13T09:33:04.234Z",
+    "externalJobId": "275a4b7b-e5aa-4be5-8d6b-0e336cf4e19e"
+  },
+  {
+    "jobId": "f8eb9f10-6023-48cb-b26e-55e68d80eab3",
+    "state": "success",
+    "progress": 100,
+    "kind": "sync",
+    "createdAt": "2026-05-13T09:33:04.279Z",
+    "updatedAt": "2026-05-13T09:33:04.282Z",
+    "externalJobId": "feb19a18-6492-4343-b1be-811f3f212c4c"
+  },
+  {
+    "jobId": "b21dfa86-315e-4f7b-bc2b-2e92149262f4",
+    "state": "success",
+    "progress": 100,
+    "kind": "download",
+    "createdAt": "2026-05-13T09:39:49.652Z",
+    "updatedAt": "2026-05-13T09:39:49.661Z",
+    "externalJobId": "fa388545-4e71-45b1-8a5d-c6c57e720da3"
+  },
+  {
+    "jobId": "d646a0a8-554f-462b-a6a4-eb6e8d479e6d",
+    "state": "success",
+    "progress": 100,
+    "kind": "sync",
+    "createdAt": "2026-05-13T09:39:49.724Z",
+    "updatedAt": "2026-05-13T09:39:49.727Z",
+    "externalJobId": "55fdfb53-e7dc-420d-b64e-3833e765f554"
+  },
+  {
+    "jobId": "6bb2f4d0-c64b-42ab-b8c8-cd8162fb4f89",
+    "state": "success",
+    "progress": 100,
+    "kind": "download",
+    "createdAt": "2026-05-13T09:43:31.406Z",
+    "updatedAt": "2026-05-13T09:43:31.411Z",
+    "externalJobId": "b740d044-e6a3-4b85-8c5e-0f1cae042adb"
+  },
+  {
+    "jobId": "c708e9bc-899c-4722-9785-679de60bebc1",
+    "state": "success",
+    "progress": 100,
+    "kind": "sync",
+    "createdAt": "2026-05-13T09:43:31.454Z",
+    "updatedAt": "2026-05-13T09:43:31.458Z",
+    "externalJobId": "0ff56550-2423-4d61-a891-494f75f9ae9b"
+  },
+  {
+    "jobId": "70e40c2c-2b4e-435f-8dfd-8bc75b6e3ce5",
+    "state": "success",
+    "progress": 100,
+    "kind": "download",
+    "createdAt": "2026-05-13T09:43:54.127Z",
+    "updatedAt": "2026-05-13T09:43:54.133Z",
+    "externalJobId": "c56f573d-2119-4c44-83f2-d041a74de329"
+  },
+  {
+    "jobId": "eaaef80c-dbf1-4417-aceb-dcf5e40f1f73",
+    "state": "success",
+    "progress": 100,
+    "kind": "sync",
+    "createdAt": "2026-05-13T09:43:54.176Z",
+    "updatedAt": "2026-05-13T09:43:54.180Z",
+    "externalJobId": "f7339401-6729-4df3-b621-e81ce78efe49"
+  },
+  {
+    "jobId": "b9cdebb0-eb16-45c1-827f-ffd731c650a5",
+    "state": "success",
+    "progress": 100,
+    "kind": "download",
+    "createdAt": "2026-05-13T09:47:32.676Z",
+    "updatedAt": "2026-05-13T09:47:32.690Z",
+    "externalJobId": "5fae9d8c-f7af-4dc0-8f94-e0026aab874f"
+  },
+  {
+    "jobId": "54f1eb3e-3fa0-4f89-956c-f7ab57933477",
+    "state": "success",
+    "progress": 100,
+    "kind": "sync",
+    "createdAt": "2026-05-13T09:47:32.728Z",
+    "updatedAt": "2026-05-13T09:47:32.732Z",
+    "externalJobId": "3a3a7a5e-2a65-44d9-8c48-37e546e5ebcc"
+  },
+  {
+    "jobId": "e590237f-5053-44e9-bcaa-8815a0f8909f",
+    "state": "success",
+    "progress": 100,
+    "kind": "download",
+    "createdAt": "2026-05-13T09:47:58.455Z",
+    "updatedAt": "2026-05-13T09:47:58.460Z",
+    "externalJobId": "53fb362c-f4b9-4927-9198-daebfc984f98"
+  },
+  {
+    "jobId": "248f7eb1-6c0f-4452-a020-69567e6de62b",
+    "state": "success",
+    "progress": 100,
+    "kind": "sync",
+    "createdAt": "2026-05-13T09:47:58.504Z",
+    "updatedAt": "2026-05-13T09:47:58.507Z",
+    "externalJobId": "b7ea8d9b-900d-4f32-be3c-5e649d9dd0fe"
+  },
+  {
+    "jobId": "7fedd525-4d2a-4a6b-a1b9-b528b1327cc0",
+    "state": "success",
+    "progress": 100,
+    "kind": "download",
+    "createdAt": "2026-05-13T09:51:21.579Z",
+    "updatedAt": "2026-05-13T09:51:21.586Z",
+    "externalJobId": "5afe9cab-350f-43ac-bbf4-92cf7b1dff11"
+  },
+  {
+    "jobId": "d5d01c7d-fec3-4505-8c6c-b037c2ae7bb0",
+    "state": "success",
+    "progress": 100,
+    "kind": "sync",
+    "createdAt": "2026-05-13T09:51:21.624Z",
+    "updatedAt": "2026-05-13T09:51:21.627Z",
+    "externalJobId": "24313e47-2919-4587-a4bb-6982f6ac4c75"
+  },
+  {
+    "jobId": "f76a3f1f-6a58-4da0-9c8b-9ea723b99194",
+    "state": "success",
+    "progress": 100,
+    "kind": "download",
+    "createdAt": "2026-05-13T09:51:42.511Z",
+    "updatedAt": "2026-05-13T09:51:42.515Z",
+    "externalJobId": "6287b8ea-f40c-434f-9789-0bef33f2e32f"
+  },
+  {
+    "jobId": "01a3908e-a66c-42d2-834f-643f474532ae",
+    "state": "success",
+    "progress": 100,
+    "kind": "sync",
+    "createdAt": "2026-05-13T09:51:42.550Z",
+    "updatedAt": "2026-05-13T09:51:42.553Z",
+    "externalJobId": "f355d076-232d-439b-9bcc-3b9675e0ef3f"
+  },
+  {
+    "jobId": "ec2b8e16-6bd9-4d92-8b39-aa9c5da8208d",
+    "state": "success",
+    "progress": 100,
+    "kind": "download",
+    "createdAt": "2026-05-13T09:56:48.929Z",
+    "updatedAt": "2026-05-13T09:56:48.935Z",
+    "externalJobId": "e587a726-ff19-4e41-a389-d7b6c62b1bf7"
+  },
+  {
+    "jobId": "a2ebe67c-0afd-4cea-b2c4-623f473db16e",
+    "state": "success",
+    "progress": 100,
+    "kind": "sync",
+    "createdAt": "2026-05-13T09:56:48.978Z",
+    "updatedAt": "2026-05-13T09:56:48.981Z",
+    "externalJobId": "dd18ca15-e0f8-4415-ba48-dfab0434984b"
+  },
+  {
+    "jobId": "b835a85f-55ca-4493-bf05-ba2d12fd79ca",
+    "state": "success",
+    "progress": 100,
+    "kind": "download",
+    "createdAt": "2026-05-13T09:57:27.986Z",
+    "updatedAt": "2026-05-13T09:57:27.992Z",
+    "externalJobId": "b407113f-4344-4ca8-9b28-7ff8fb484421"
+  },
+  {
+    "jobId": "9c701e6f-c42b-410f-8d81-f90578b2a36c",
+    "state": "success",
+    "progress": 100,
+    "kind": "sync",
+    "createdAt": "2026-05-13T09:57:28.029Z",
+    "updatedAt": "2026-05-13T09:57:28.033Z",
+    "externalJobId": "7c91701b-a1c5-4e76-bd18-0fa0bafc1ad5"
+  },
+  {
+    "jobId": "4b09bc69-a15a-400c-9c01-ca71d9d8bf1c",
+    "state": "success",
+    "progress": 100,
+    "kind": "download",
+    "createdAt": "2026-05-13T09:57:55.698Z",
+    "updatedAt": "2026-05-13T09:57:55.703Z",
+    "externalJobId": "52d2f541-0e17-4e8d-8b47-8ce191c5a4da"
+  },
+  {
+    "jobId": "f16f5217-a7d4-4c8b-a3ca-5aaa28f795b0",
+    "state": "success",
+    "progress": 100,
+    "kind": "sync",
+    "createdAt": "2026-05-13T09:57:55.742Z",
+    "updatedAt": "2026-05-13T09:57:55.746Z",
+    "externalJobId": "715516eb-c8af-43b8-8149-1bd37fb4d47c"
+  },
+  {
+    "jobId": "349b64f1-88d8-47d6-bd44-bd300b3bef14",
+    "state": "success",
+    "progress": 100,
+    "kind": "download",
+    "createdAt": "2026-05-13T10:02:42.639Z",
+    "updatedAt": "2026-05-13T10:02:42.643Z",
+    "externalJobId": "a9322eb7-d275-4f2c-939d-68d12da6222d"
+  },
+  {
+    "jobId": "c778630f-7e91-45ff-aed5-31369c6be8e4",
+    "state": "success",
+    "progress": 100,
+    "kind": "sync",
+    "createdAt": "2026-05-13T10:02:42.683Z",
+    "updatedAt": "2026-05-13T10:02:42.687Z",
+    "externalJobId": "e8a9b769-d43d-4708-b84d-5cd1a0f95acb"
+  },
+  {
+    "jobId": "a8b36e7e-0392-4159-ba6f-c61577a77402",
+    "state": "success",
+    "progress": 100,
+    "kind": "download",
+    "createdAt": "2026-05-13T10:04:55.350Z",
+    "updatedAt": "2026-05-13T10:04:55.353Z",
+    "externalJobId": "b8ed6d42-36ae-4165-a407-9222c7083867"
+  },
+  {
+    "jobId": "c41d40e3-6b38-4323-afc0-dd76acd508e9",
+    "state": "success",
+    "progress": 100,
+    "kind": "sync",
+    "createdAt": "2026-05-13T10:04:55.394Z",
+    "updatedAt": "2026-05-13T10:04:55.397Z",
+    "externalJobId": "361717c3-d995-47a4-9ea2-a0a6932d4b09"
+  },
+  {
+    "jobId": "785eb4f7-5364-48de-9c07-d027e413e98e",
+    "state": "success",
+    "progress": 100,
+    "kind": "download",
+    "createdAt": "2026-05-13T10:17:28.125Z",
+    "updatedAt": "2026-05-13T10:17:28.129Z",
+    "externalJobId": "8fc17161-1645-4f23-b2ba-4f8fdba6cec8"
+  },
+  {
+    "jobId": "3384ae19-ddde-4613-9532-8b439ddb866f",
+    "state": "success",
+    "progress": 100,
+    "kind": "sync",
+    "createdAt": "2026-05-13T10:17:28.170Z",
+    "updatedAt": "2026-05-13T10:17:28.173Z",
+    "externalJobId": "183667b9-5c6d-4ba6-baf2-851fbdd14119"
+  },
+  {
+    "jobId": "73426521-dc59-4207-ba41-f605f6343348",
+    "state": "success",
+    "progress": 100,
+    "kind": "download",
+    "createdAt": "2026-05-13T10:17:54.815Z",
+    "updatedAt": "2026-05-13T10:17:54.819Z",
+    "externalJobId": "a3c09d10-9335-4356-a4ef-14d026e5c9fc"
+  },
+  {
+    "jobId": "8a67a4df-e78d-4ebf-9266-f7d351cfbfeb",
+    "state": "success",
+    "progress": 100,
+    "kind": "sync",
+    "createdAt": "2026-05-13T10:17:54.861Z",
+    "updatedAt": "2026-05-13T10:17:54.864Z",
+    "externalJobId": "7e7b0865-2a10-47c8-8070-e12aae180556"
+  },
+  {
+    "jobId": "80a0cc01-659a-4d3a-af9d-3c8237124f18",
+    "state": "success",
+    "progress": 100,
+    "kind": "download",
+    "createdAt": "2026-05-13T10:52:12.085Z",
+    "updatedAt": "2026-05-13T10:52:30.797Z",
+    "externalJobId": "8dd965a3-e8c3-4b26-bb0d-e0997b1dc835"
+  },
+  {
+    "jobId": "fa4ccad2-c83f-4fa9-b9bf-da28961d072e",
+    "state": "success",
+    "progress": 100,
+    "kind": "download",
+    "createdAt": "2026-05-13T10:52:12.158Z",
+    "updatedAt": "2026-05-13T10:52:33.481Z",
+    "externalJobId": "1748c7af-4a92-4bea-b25c-75b552c5381a"
+  },
+  {
+    "jobId": "5464bd6c-1199-4aa3-914d-e636a0450c85",
+    "state": "success",
+    "progress": 100,
+    "kind": "download",
+    "createdAt": "2026-05-13T10:52:12.647Z",
+    "updatedAt": "2026-05-13T10:52:34.163Z",
+    "externalJobId": "d05f1421-ed34-4189-8f5e-6b8ad245586c"
+  },
+  {
+    "jobId": "efb9a708-a1e7-4d6f-8dc4-ad673f606e2e",
+    "state": "success",
+    "progress": 100,
+    "kind": "download",
+    "createdAt": "2026-05-13T10:52:12.677Z",
+    "updatedAt": "2026-05-13T10:52:31.483Z",
+    "externalJobId": "4c4138cf-a0e4-4e5f-b4bf-9c8dac2a2bb6"
+  },
+  {
+    "jobId": "54da6a58-493d-419f-b505-7a1ccbd308eb",
+    "state": "success",
+    "progress": 100,
+    "kind": "download",
+    "createdAt": "2026-05-13T10:52:12.701Z",
+    "updatedAt": "2026-05-13T10:52:31.245Z",
+    "externalJobId": "27aa612f-e407-4693-b764-14ebaebea59b"
+  },
+  {
+    "jobId": "899c8c7d-fadb-4261-b4ab-111db00851fb",
+    "state": "success",
+    "progress": 100,
+    "kind": "download",
+    "createdAt": "2026-05-13T10:52:12.725Z",
+    "updatedAt": "2026-05-13T10:52:33.354Z",
+    "externalJobId": "50774c99-aada-42d1-8bee-97a3035a29c5"
+  },
+  {
+    "jobId": "de39b6f5-3aea-4e39-b13c-38a349697253",
+    "state": "success",
+    "progress": 100,
+    "kind": "download",
+    "createdAt": "2026-05-13T10:52:12.745Z",
+    "updatedAt": "2026-05-13T10:52:27.808Z",
+    "externalJobId": "1b50d2f2-246c-4a07-941c-ac07f5632666"
+  },
+  {
+    "jobId": "d1bf4ebe-8f25-4e5b-974b-c21edfa8c7cb",
+    "state": "success",
+    "progress": 100,
+    "kind": "download",
+    "createdAt": "2026-05-13T10:52:12.767Z",
+    "updatedAt": "2026-05-13T10:52:31.533Z",
+    "externalJobId": "809126a4-1ca9-4899-9af2-973276d13738"
+  },
+  {
+    "jobId": "b423ff29-4acb-4f99-8173-403f43fe9dfb",
+    "state": "success",
+    "progress": 100,
+    "kind": "download",
+    "createdAt": "2026-05-13T10:52:12.793Z",
+    "updatedAt": "2026-05-13T10:52:30.804Z",
+    "externalJobId": "be8d4bd1-6ecd-4f22-b83f-9b9f0f6001df"
+  },
+  {
+    "jobId": "c7653d45-cd95-43a3-960d-47cad7c3362a",
+    "state": "success",
+    "progress": 100,
+    "kind": "download",
+    "createdAt": "2026-05-13T10:52:12.818Z",
+    "updatedAt": "2026-05-13T10:52:31.304Z",
+    "externalJobId": "c93a2176-3c81-4e9a-9c52-83391546505d"
+  },
+  {
+    "jobId": "3afd98a9-4a2e-4b97-9b9c-f34899fa16a0",
+    "state": "success",
+    "progress": 100,
+    "kind": "download",
+    "createdAt": "2026-05-13T10:52:12.849Z",
+    "updatedAt": "2026-05-13T10:52:31.677Z",
+    "externalJobId": "ce09a338-fd32-4964-9dde-61a8b3b5c516"
+  },
+  {
+    "jobId": "96d91dfd-5914-4a94-91e4-9a50eb3559fb",
+    "state": "success",
+    "progress": 100,
+    "kind": "download",
+    "createdAt": "2026-05-13T10:52:12.878Z",
+    "updatedAt": "2026-05-13T10:52:32.875Z",
+    "externalJobId": "c1acffef-3df4-4ae4-b8e3-bfc96a8a2615"
+  },
+  {
+    "jobId": "b9e460c9-f8e9-4e56-bf65-801d48fcf735",
+    "state": "success",
+    "progress": 100,
+    "kind": "download",
+    "createdAt": "2026-05-13T10:52:12.912Z",
+    "updatedAt": "2026-05-13T10:52:31.669Z",
+    "externalJobId": "a06dfd46-6b35-4ccc-85d1-149bc9fb7186"
+  },
+  {
+    "jobId": "c9a3d7be-82a0-424f-b7c9-cdd24148d9a6",
+    "state": "success",
+    "progress": 100,
+    "kind": "download",
+    "createdAt": "2026-05-13T10:52:12.942Z",
+    "updatedAt": "2026-05-13T10:52:30.953Z",
+    "externalJobId": "19d156b5-5094-4b47-bf75-8b03aa91000b"
+  },
+  {
+    "jobId": "3519619c-4ba0-4b88-a039-a3dd7c1f7571",
+    "state": "success",
+    "progress": 100,
+    "kind": "download",
+    "createdAt": "2026-05-13T10:52:12.968Z",
+    "updatedAt": "2026-05-13T10:52:35.009Z",
+    "externalJobId": "e636e0a5-1e68-4bc7-a4f3-c1e3836f855a"
+  },
+  {
+    "jobId": "dfae397b-8f5e-4869-962f-54d13217d87e",
+    "state": "success",
+    "progress": 100,
+    "kind": "download",
+    "createdAt": "2026-05-13T12:42:33.689Z",
+    "updatedAt": "2026-05-13T12:43:15.998Z",
+    "externalJobId": "ef1e4212-3313-427f-a64d-bcca1711c75e"
+  },
+  {
+    "jobId": "43adad15-9539-4017-81d6-aff3feec0010",
+    "state": "success",
+    "progress": 100,
+    "kind": "download",
+    "createdAt": "2026-05-13T12:54:04.985Z",
+    "updatedAt": "2026-05-13T12:54:37.057Z",
+    "externalJobId": "08d16bad-69f7-4b73-bd26-94ed9784ff5b"
+  },
+  {
+    "jobId": "177c29b7-b52a-4517-8dbe-af9a15e56a47",
+    "state": "success",
+    "progress": 100,
+    "kind": "download",
+    "createdAt": "2026-05-13T13:15:45.735Z",
+    "updatedAt": "2026-05-13T13:15:45.741Z",
+    "externalJobId": "d829f615-9eb7-4e1b-958c-15ea3feef091"
+  },
+  {
+    "jobId": "5d133ba1-5df1-425d-a8ac-7bdd2262b8de",
+    "state": "success",
+    "progress": 100,
+    "kind": "sync",
+    "createdAt": "2026-05-13T13:15:45.786Z",
+    "updatedAt": "2026-05-13T13:15:45.790Z",
+    "externalJobId": "f9ed93d8-cf26-4112-b94d-a0a7c1cd741e"
+  },
+  {
+    "jobId": "f93de72c-f6b7-4b01-a587-b2f71bcc0f53",
+    "state": "success",
+    "progress": 100,
+    "kind": "download",
+    "createdAt": "2026-05-13T13:16:32.952Z",
+    "updatedAt": "2026-05-13T13:16:32.958Z",
+    "externalJobId": "f96afc9e-54ce-4a76-b9e2-f0857f943a80"
+  },
+  {
+    "jobId": "a73c8548-3655-4927-8eaf-99ae6dee555f",
+    "state": "success",
+    "progress": 100,
+    "kind": "sync",
+    "createdAt": "2026-05-13T13:16:33.006Z",
+    "updatedAt": "2026-05-13T13:16:33.012Z",
+    "externalJobId": "2133a3f9-6095-4796-a494-1ac18eaa0317"
+  },
+  {
+    "jobId": "3eb69e2c-cd98-40cf-8312-6f0605df3506",
+    "state": "success",
+    "progress": 100,
+    "kind": "download",
+    "createdAt": "2026-05-13T13:16:52.186Z",
+    "updatedAt": "2026-05-13T13:16:52.190Z",
+    "externalJobId": "679a8e9a-7432-4a64-8d9f-4bba717565da"
+  },
+  {
+    "jobId": "bc145fae-be13-43a4-acb1-77c41eb92a64",
+    "state": "success",
+    "progress": 100,
+    "kind": "sync",
+    "createdAt": "2026-05-13T13:16:52.231Z",
+    "updatedAt": "2026-05-13T13:16:52.235Z",
+    "externalJobId": "51b63977-c693-4a14-b1ab-dd9fbcaa4277"
+  },
+  {
+    "jobId": "d35aa412-022a-42ff-b03c-c63a71d67ff3",
+    "state": "success",
+    "progress": 100,
+    "kind": "download",
+    "createdAt": "2026-05-13T13:17:13.924Z",
+    "updatedAt": "2026-05-13T13:17:13.930Z",
+    "externalJobId": "99d1f3a9-fd07-4ca8-bc84-08e8ba7e5026"
+  },
+  {
+    "jobId": "da37d96b-6185-44e1-8f5a-1791a0286f9a",
+    "state": "success",
+    "progress": 100,
+    "kind": "sync",
+    "createdAt": "2026-05-13T13:17:13.974Z",
+    "updatedAt": "2026-05-13T13:17:13.979Z",
+    "externalJobId": "ad4092c2-db03-4d23-a419-9ec9239aa910"
+  },
+  {
+    "jobId": "2a2e325f-ab52-4489-9b7e-39a5677f20f0",
+    "state": "success",
+    "progress": 100,
+    "kind": "download",
+    "createdAt": "2026-05-13T13:41:34.207Z",
+    "updatedAt": "2026-05-13T13:41:34.212Z",
+    "externalJobId": "8286e1c3-432e-4b00-972d-5d8a24356411"
+  },
+  {
+    "jobId": "d092f704-5ac2-4211-b737-12d6b43f375b",
+    "state": "success",
+    "progress": 100,
+    "kind": "sync",
+    "createdAt": "2026-05-13T13:41:34.255Z",
+    "updatedAt": "2026-05-13T13:41:34.259Z",
+    "externalJobId": "4aa08ca2-2f6f-484a-a0c4-e28c95f1a875"
+  },
+  {
+    "jobId": "c2fe6a6c-dd26-486f-9126-95ba961837cb",
+    "state": "success",
+    "progress": 100,
+    "kind": "download",
+    "createdAt": "2026-05-13T13:43:59.081Z",
+    "updatedAt": "2026-05-13T13:44:47.802Z",
+    "externalJobId": "ee43fea2-25d5-4f98-9d5a-5b1622268253"
   }
 ]

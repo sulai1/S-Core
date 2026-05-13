@@ -17,6 +17,11 @@ export type DownloadRequest = {
     videoId: string;
     playlistId?: string;
     priority?: number;
+    outputFormat?: "mp3" | "source";
+    embedMetadata?: boolean;
+    songTitle?: string;
+    artist?: string;
+    album?: string;
 };
 
 export type SyncRequest = {
@@ -30,8 +35,18 @@ export type WorkerSubmission = {
     message?: string;
 };
 
+export type LibraryVideoMetadata = {
+    fileName: string;
+    extension: string;
+    mediaType: "audio" | "video";
+    sizeBytes: number;
+    createdAt: string;
+    modifiedAt: string;
+};
+
 export type LibraryVideo = {
     id: string;
     title: string;
     status: "ready" | "processing" | "failed";
+    metadata: LibraryVideoMetadata;
 };

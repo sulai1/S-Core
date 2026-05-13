@@ -11,11 +11,40 @@ const __dirname = path.dirname(__filename);
 const apiSchema = path.resolve(__dirname, "./server/api/schema.yaml");
 const port = Number(process.env.PORT || 3800);
 
+function validateStartupEnv(): void {
+    const workerMode = (process.env.AUDIOGRABBER_WORKER_MODE ?? "stub").toLowerCase();
+    if (!["ytdlp", "python"].includes(workerMode)) {
+        return;
+    }
+
+    const apiKey = (process.env.AUDIOGRABBER_YT_API_KEY ?? "").trim();
+    if (!apiKey) {
+        throw new Error("Missing required AUDIOGRABBER_YT_API_KEY for ytdlp worker mode.");
+    }
+}
+
 async function bootstrap(): Promise<void> {
+    validateStartupEnv();
+
     const server = createServer();
     server.add<paths>("/api", apiSchema, audioGrabberModule, {
         validateRequests: true,
         validateResponses: false,
+    });
+
+    server.useErrorHandler((err, req, res) => {
+        const status = typeof err?.status === "number" ? err.status : 500;
+        const error = typeof err?.error === "string" ? err.error : "Internal Server Error";
+        const details = typeof err?.details === "string"
+            ? err.details
+            : err instanceof Error
+                ? err.message
+                : "Unexpected error";
+
+        console.error(`[${new Date().toISOString()}] ERROR ${status} ${req.method} ${req.url}`);
+        console.error(`  Error: ${error}`);
+        console.error(`  Details: ${details}`);
+        res.status(status).json({ error, details });
     });
 
     await server.listen(port);

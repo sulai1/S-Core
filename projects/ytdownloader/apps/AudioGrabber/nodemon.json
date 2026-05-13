@@ -1,0 +1,17 @@
+{
+  "watch": [
+    "src",
+    "youtube"
+  ],
+  "ext": "ts,js,yaml,json",
+  "ignore": [
+    "node_modules",
+    "dist",
+    "test",
+    ".venv",
+    "**/*.test.ts"
+  ],
+  "delay": 500,
+  "restartable": "rs",
+  "verbose": true
+}

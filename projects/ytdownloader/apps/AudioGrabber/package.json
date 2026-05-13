@@ -11,18 +11,25 @@
     "create-api": "ts-node -r tsconfig-paths/register src/scripts/buildApiTypes.ts",
     "test": "vitest",
     "test:watch": "vitest --watch",
-    "dev": "ts-node -r tsconfig-paths/register src/index.ts",
-    "start": "node dist/cjs/index.js"
+    "dev": "AUDIOGRABBER_WORKER_MODE=ytdlp AUDIOGRABBER_WORKER_TIMEOUT_MS=600000 nodemon --exec 'node --loader ts-node/esm' src/index.ts",
+    "start": "node dist/cjs/index.js",
+    "test:live-download": "AUDIOGRABBER_RUN_LIVE_DOWNLOAD_TEST=1 vitest --run test/live-download.integration.test.ts",
+    "canary": ".venv/bin/python3 python/canary.py",
+    "canary:live": ".venv/bin/python3 python/canary.py --live",
+    "check-deps": "bash scripts/check-deps.sh"
   },
   "dependencies": {
     "@s-core/core": "^0.0.1",
     "@s-core/server": "^0.0.1",
+    "ffmpeg-static": "^5.3.0",
+    "node-id3": "^0.2.9",
     "reflect-metadata": "^0.2.2"
   },
   "devDependencies": {
     "@apidevtools/json-schema-ref-parser": "^15.3.1",
     "@types/node": "^22.15.30",
     "@types/supertest": "^6.0.3",
+    "nodemon": "^3.1.14",
     "openapi-typescript": "^7.9.1",
     "supertest": "^7.1.4",
     "ts-node": "^10.9.2",

@@ -1,0 +1,80 @@
+:root {
+  --ag-bg: #f5f0e7;
+  --ag-surface: #fffdf7;
+  --ag-ink: #101418;
+  --ag-accent: #ff5f00;
+  --ag-accent-2: #00a7a7;
+  --ag-muted: #607080;
+}
+
+body {
+  font-family: 'Space Grotesk', sans-serif;
+  color: var(--ag-ink);
+  background:
+    radial-gradient(circle at 12% 10%, rgba(255, 95, 0, 0.16), transparent 34%),
+    radial-gradient(circle at 88% 20%, rgba(0, 167, 167, 0.18), transparent 42%),
+    linear-gradient(140deg, #f8f4ec 0%, #eef5f3 100%);
+}
+
+.brand-title {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 1.05rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.drawer-header {
+  font-family: 'IBM Plex Mono', monospace;
+  color: var(--ag-muted);
+  letter-spacing: 0.04em;
+}
+
+.ag-layout .q-page {
+  animation: ag-page-in 250ms ease;
+}
+
+@keyframes ag-page-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.ag-header {
+  background: linear-gradient(90deg, #171c1f 0%, #0f2a2f 100%);
+  color: #fef8ed;
+}
+
+.ag-drawer {
+  background: var(--ag-surface);
+}
+
+.ag-page {
+  max-width: 1040px;
+  margin: 0 auto;
+  padding: 20px 18px 28px;
+}
+
+.ag-card {
+  background: var(--ag-surface);
+  border: 1px solid rgba(16, 20, 24, 0.08);
+  box-shadow: 0 8px 20px rgba(16, 20, 24, 0.08);
+}
+
+.ag-label {
+  font-family: 'IBM Plex Mono', monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 0.78rem;
+  color: var(--ag-muted);
+}
+
+@media (max-width: 780px) {
+  .ag-page {
+    padding: 14px 12px 20px;
+  }
+}

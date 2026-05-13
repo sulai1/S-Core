@@ -61,6 +61,11 @@ export interface paths {
                         videoId: string;
                         playlistId?: string;
                         priority?: number;
+                        outputFormat?: "mp3" | "source";
+                        embedMetadata?: boolean;
+                        songTitle?: string;
+                        artist?: string;
+                        album?: string;
                     };
                 };
             };
@@ -184,6 +189,83 @@ export interface paths {
                 };
             };
         };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/channels/overview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Fetch channel overview and videos */
+        get: {
+            parameters: {
+                query: {
+                    channel: string;
+                    channelId?: string;
+                    handle?: string;
+                    maxResults?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Channel overview */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            channel: {
+                                id: string;
+                                title: string;
+                                description?: string;
+                                customUrl?: string;
+                                videoCount?: number;
+                            };
+                            videos?: {
+                                videoId: string;
+                                title: string;
+                                publishedAt: string;
+                                thumbnailUrl?: string;
+                            }[];
+                        };
+                    };
+                };
+                /** @description Invalid input */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            error: string;
+                        };
+                    };
+                };
+                /** @description Upstream API error */
+                502: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            error: string;
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;

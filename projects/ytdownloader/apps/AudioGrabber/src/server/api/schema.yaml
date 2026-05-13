@@ -41,6 +41,24 @@ paths:
                   type: integer
                   minimum: 1
                   maximum: 10
+                outputFormat:
+                  type: string
+                  enum: [mp3, source]
+                  default: mp3
+                  description: mp3 converts/extracts audio as MP3, source keeps original downloaded format.
+                embedMetadata:
+                  type: boolean
+                  default: true
+                  description: Embed available metadata tags into the output media file.
+                  songTitle:
+                    type: string
+                    description: Optional parsed song title to embed in the download.
+                  artist:
+                    type: string
+                    description: Optional parsed artist to embed in the download.
+                  album:
+                    type: string
+                    description: Optional parsed album to embed in the download.
       responses:
         "202":
           description: Job accepted
@@ -133,6 +151,121 @@ paths:
                     type: string
                     enum: [queued]
 
+  /channels/overview:
+    get:
+      summary: Fetch channel overview and videos
+      parameters:
+        - name: channel
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Channel reference, either @channel_name or channel ID (UC...).
+        - name: channelId
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Optional alias for channel using channel ID (UC...).
+        - name: handle
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Optional alias for channel using @channel_name.
+        - name: maxResults
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 200
+            default: 100
+          description: Max number of videos to return.
+      responses:
+        "200":
+          description: Channel overview
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [channel]
+                properties:
+                  channel:
+                    type: object
+                    required: [id, title]
+                    properties:
+                      id:
+                        type: string
+                      title:
+                        type: string
+                      description:
+                        type: string
+                      customUrl:
+                        type: string
+                      videoCount:
+                        type: integer
+                        minimum: 0
+                  videos:
+                    type: array
+                    items:
+                      type: object
+                      required: [videoId, title, publishedAt]
+                      properties:
+                        videoId:
+                          type: string
+                        title:
+                          type: string
+                        publishedAt:
+                          type: string
+                          format: date-time
+                        thumbnailUrl:
+                          type: string
+                        duration:
+                          type: string
+                          description: ISO 8601 duration format (e.g., PT5M30S)
+                        viewCount:
+                          type: integer
+                          minimum: 0
+                        likeCount:
+                          type: integer
+                          minimum: 0
+                        description:
+                          type: string
+                        tags:
+                          type: array
+                          items:
+                            type: string
+                        artist:
+                          type: string
+                          description: Extracted artist name from YouTube Music metadata
+                        songTitle:
+                          type: string
+                          description: Extracted song title from YouTube Music metadata
+                        album:
+                          type: string
+                          description: Extracted album name from YouTube Music metadata
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [error]
+                properties:
+                  error:
+                    type: string
+        "502":
+          description: Upstream API error
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [error]
+                properties:
+                  error:
+                    type: string
+
   /library/videos:
     get:
       summary: List videos in media library
@@ -144,6 +277,21 @@ paths:
             type: integer
             minimum: 1
             maximum: 100
+        - name: keyword
+          in: query
+          required: false
+          schema:
+            type: string
+            minLength: 1
+          description: Case-insensitive match against downloaded file names.
+        - name: mediaType
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [all, audio, video]
+            default: all
+          description: Filter library entries by media type.
       responses:
         "200":
           description: Video list
@@ -157,7 +305,7 @@ paths:
                     type: array
                     items:
                       type: object
-                      required: [id, title, status]
+                      required: [id, title, status, metadata]
                       properties:
                         id:
                           type: string
@@ -166,3 +314,23 @@ paths:
                         status:
                           type: string
                           enum: [ready, processing, failed]
+                        metadata:
+                          type: object
+                          required: [fileName, extension, mediaType, sizeBytes, createdAt, modifiedAt]
+                          properties:
+                            fileName:
+                              type: string
+                            extension:
+                              type: string
+                            mediaType:
+                              type: string
+                              enum: [audio, video]
+                            sizeBytes:
+                              type: integer
+                              minimum: 0
+                            createdAt:
+                              type: string
+                              format: date-time
+                            modifiedAt:
+                              type: string
+                              format: date-time

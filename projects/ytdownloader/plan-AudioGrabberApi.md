@@ -9,10 +9,10 @@ Define stable module boundaries from the current prototype (YouTube fetch, downl
 Write OpenAPI YAML first, generate typed API contracts, scaffold API server handlers, add persistence models for jobs/library entities, and wire non-blocking worker dispatch.
 3. Phase 2: Test pyramid and CI quality gates (parallel with late Phase 1 endpoint implementation)  
 Add unit tests (mappers/worker adapter/validation), integration tests (OpenAPI routes/status transitions), contract tests (schema-client compatibility), and e2e flow tests (sync/download lifecycle).
-4. Phase 3: Dependency deprecation/update mechanism (depends on 3)  
-Set up automated dependency PRs for npm + Python, add pin/range policy for high-risk libs, add scheduled canary flows (metadata fetch + download dry run), and alert on failures.
-5. Phase 4: Full frontend app (depends on 2 and 3)  
-Build user-facing UI for auth session, channels/playlists, media library, job control/monitoring, retry/cancel, and failure diagnostics using generated typed client.
+4. Phase 3: Dependency deprecation/update mechanism (depends on 3) ✅  
+   `requirements.txt` pins all Python deps (yt-dlp, requests, isodate, pandas). `.venv` at `AudioGrabber/.venv`. `worker_bridge.py` supports `dry_run` mode. `python/canary.py` validates package versions + bridge dry-run + optional live metadata fetch. `scripts/check-deps.sh` reports outdated npm + pip packages. New npm scripts: `canary`, `canary:live`, `check-deps`.
+5. Phase 4: Full frontend app (depends on 2 and 3) ✅  
+   New Quasar frontend workspace at `projects/ytdownloader/apps/client` with typed OpenAPI client bootstrapping, pages for Download, Sync, Jobs monitor (polling tracked jobs), Library list, and API Settings. Build and typecheck are passing.
 6. Phase 5: Keycloak OpenID Connect (can start after core API contracts are stable; finalization depends on 5)  
 Add token validation middleware, map Keycloak roles/scopes to endpoint permissions, and update frontend auth/token refresh/logout flow.
 7. Phase 6: Automatic sync jobs (depends on 2, 3, and scheduler infra)  
