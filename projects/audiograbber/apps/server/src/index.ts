@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url";
 import { createServer } from "@s-core/server";
 import { createAudioGrabberModule } from "./server/module.js";
 import { AppDataSource } from "./data-source.js";
+import { createAuthMiddleware } from "./server/auth.js";
 import type { paths } from "./server/api/index.js";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -33,6 +34,7 @@ async function bootstrap(): Promise<void> {
     const audioGrabberModule = createAudioGrabberModule(AppDataSource);
 
     const server = createServer();
+    server.use("/api", createAuthMiddleware(AppDataSource));
     server.add<paths>("/api", apiSchema, audioGrabberModule, {
         validateRequests: true,
         validateResponses: false,

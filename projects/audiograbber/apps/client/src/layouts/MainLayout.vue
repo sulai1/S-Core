@@ -4,6 +4,22 @@
       <q-toolbar>
         <q-btn dense flat round icon="menu" @click="leftDrawerOpen = !leftDrawerOpen" />
         <q-toolbar-title class="brand-title">AudioGrabber Control Room</q-toolbar-title>
+        <q-chip
+          v-if="authState.required && authState.authenticated"
+          color="teal-9"
+          text-color="white"
+          icon="verified_user"
+        >
+          {{ authState.username ?? 'signed-in' }}
+        </q-chip>
+        <q-btn
+          v-if="authState.required && authState.authenticated"
+          flat
+          dense
+          icon="logout"
+          label="Logout"
+          @click="onLogout"
+        />
         <q-chip color="black" text-color="amber-4" icon="podcasts">Phase 4 MVP</q-chip>
       </q-toolbar>
     </q-header>
@@ -33,8 +49,13 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
+import { authState, logoutWithKeycloak } from 'src/auth/keycloak';
 
 const leftDrawerOpen = ref(true);
+
+const onLogout = async (): Promise<void> => {
+  await logoutWithKeycloak();
+};
 
 const navItems = [
   { to: '/download', label: 'Download', icon: 'download' },

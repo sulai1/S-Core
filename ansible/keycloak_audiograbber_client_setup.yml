@@ -1,0 +1,130 @@
+- name: Configure AudioGrabber client in Keycloak
+  hosts: worker
+  become: false
+  vars:
+    keycloak_local_secrets_file: "{{ lookup('env', 'HOME') }}/.ansible/secrets.yml"
+    # Keycloak admin API endpoint
+    keycloak_host_http_port: 8087
+    keycloak_realm: auth
+
+    # Permanent admin credentials (override via vault or -e)
+    keycloak_admin_user: admin
+    keycloak_admin_password: "{{ vault_keycloak_admin_password | default('changeme', true) }}"
+
+    # AudioGrabber OIDC client settings
+    audiograbber_client_id: audiograbber-client
+    audiograbber_client_name: AudioGrabber Frontend
+    audiograbber_frontend_origin: "http://localhost:9000"
+    audiograbber_redirect_uris:
+      - "{{ audiograbber_frontend_origin }}/*"
+    audiograbber_web_origins:
+      - "{{ audiograbber_frontend_origin }}"
+
+  pre_tasks:
+    - name: Check optional local secrets vault file
+      delegate_to: localhost
+      become: false
+      ansible.builtin.stat:
+        path: "{{ keycloak_local_secrets_file }}"
+      register: keycloak_local_secrets_stat
+
+    - name: Load optional local secrets vault file
+      ansible.builtin.include_vars:
+        file: "{{ keycloak_local_secrets_file }}"
+      when: keycloak_local_secrets_stat.stat.exists
+
+  tasks:
+    - name: Obtain admin token
+      ansible.builtin.uri:
+        url: "http://localhost:{{ keycloak_host_http_port }}/realms/master/protocol/openid-connect/token"
+        method: POST
+        body_format: form-urlencoded
+        body:
+          grant_type: password
+          client_id: admin-cli
+          username: "{{ keycloak_admin_user }}"
+          password: "{{ keycloak_admin_password }}"
+        status_code: 200
+      register: keycloak_token_response
+      no_log: true
+
+    - name: Set admin token fact
+      ansible.builtin.set_fact:
+        keycloak_token: "{{ keycloak_token_response.json.access_token }}"
+      no_log: true
+
+    - name: Check if AudioGrabber client already exists
+      ansible.builtin.uri:
+        url: "http://localhost:{{ keycloak_host_http_port }}/admin/realms/{{ keycloak_realm }}/clients?clientId={{ audiograbber_client_id | urlencode }}"
+        method: GET
+        headers:
+          Authorization: "Bearer {{ keycloak_token }}"
+        status_code: 200
+      register: keycloak_existing_clients
+
+    - name: Create AudioGrabber OIDC client
+      ansible.builtin.uri:
+        url: "http://localhost:{{ keycloak_host_http_port }}/admin/realms/{{ keycloak_realm }}/clients"
+        method: POST
+        headers:
+          Authorization: "Bearer {{ keycloak_token }}"
+          Content-Type: application/json
+        body_format: json
+        body:
+          clientId: "{{ audiograbber_client_id }}"
+          name: "{{ audiograbber_client_name }}"
+          enabled: true
+          protocol: openid-connect
+          publicClient: true
+          bearerOnly: false
+          standardFlowEnabled: true
+          implicitFlowEnabled: false
+          directAccessGrantsEnabled: false
+          serviceAccountsEnabled: false
+          redirectUris: "{{ audiograbber_redirect_uris }}"
+          webOrigins: "{{ audiograbber_web_origins }}"
+          attributes:
+            pkce.code.challenge.method: S256
+            post.logout.redirect.uris: "+"
+        status_code: 201
+      when: keycloak_existing_clients.json | length == 0
+
+    - name: Fetch AudioGrabber client details
+      ansible.builtin.uri:
+        url: "http://localhost:{{ keycloak_host_http_port }}/admin/realms/{{ keycloak_realm }}/clients?clientId={{ audiograbber_client_id | urlencode }}"
+        method: GET
+        headers:
+          Authorization: "Bearer {{ keycloak_token }}"
+        status_code: 200
+      register: keycloak_client_lookup
+
+    - name: Set AudioGrabber client id fact
+      ansible.builtin.set_fact:
+        audiograbber_client_internal_id: "{{ keycloak_client_lookup.json[0].id }}"
+
+    - name: Update AudioGrabber OIDC client settings
+      ansible.builtin.uri:
+        url: "http://localhost:{{ keycloak_host_http_port }}/admin/realms/{{ keycloak_realm }}/clients/{{ audiograbber_client_internal_id }}"
+        method: PUT
+        headers:
+          Authorization: "Bearer {{ keycloak_token }}"
+          Content-Type: application/json
+        body_format: json
+        body:
+          id: "{{ audiograbber_client_internal_id }}"
+          clientId: "{{ audiograbber_client_id }}"
+          name: "{{ audiograbber_client_name }}"
+          enabled: true
+          protocol: openid-connect
+          publicClient: true
+          bearerOnly: false
+          standardFlowEnabled: true
+          implicitFlowEnabled: false
+          directAccessGrantsEnabled: false
+          serviceAccountsEnabled: false
+          redirectUris: "{{ audiograbber_redirect_uris }}"
+          webOrigins: "{{ audiograbber_web_origins }}"
+          attributes:
+            pkce.code.challenge.method: S256
+            post.logout.redirect.uris: "+"
+        status_code: 204

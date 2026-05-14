@@ -5,3 +5,15 @@ declare namespace NodeJS {
         VUE_ROUTER_BASE: string | undefined;
     }
 }
+
+interface ImportMetaEnv {
+    readonly VITE_NODE_ENV?: string;
+    readonly VITE_REQUIRE_AUTH?: string;
+    readonly VITE_KEYCLOAK_URL?: string;
+    readonly VITE_KEYCLOAK_REALM?: string;
+    readonly VITE_KEYCLOAK_CLIENT_ID?: string;
+}
+
+interface ImportMeta {
+    readonly env: ImportMetaEnv;
+}

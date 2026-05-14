@@ -5,6 +5,7 @@ import axios from 'axios';
 import { Buffer } from 'buffer';
 import type { paths } from '../../../server/src/server/api/index.js';
 import { apiSchema } from 'src/api/schema';
+import { getValidAccessToken } from 'src/auth/keycloak';
 
 if (typeof window !== 'undefined') {
     const browserWindow = window as unknown as { Buffer?: typeof Buffer };
@@ -49,6 +50,15 @@ const api = axios.create({
     headers: {
         'Content-Type': 'application/json',
     },
+});
+
+api.interceptors.request.use(async (config) => {
+    const token = await getValidAccessToken();
+    if (token) {
+        config.headers = config.headers ?? {};
+        (config.headers as Record<string, string>).Authorization = `Bearer ${token}`;
+    }
+    return config;
 });
 
 export const apiClient = api;

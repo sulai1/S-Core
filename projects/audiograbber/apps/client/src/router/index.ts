@@ -1,6 +1,7 @@
 import { defineRouter } from '#q-app/wrappers';
 import { createMemoryHistory, createRouter, createWebHashHistory, createWebHistory } from 'vue-router';
 import routes from './routes';
+import { handleAuthNavigation } from 'src/auth/keycloak';
 
 export default defineRouter(function () {
     const createHistory = process.env.SERVER
@@ -9,9 +10,15 @@ export default defineRouter(function () {
             ? createWebHistory
             : createWebHashHistory;
 
-    return createRouter({
+    const router = createRouter({
         scrollBehavior: () => ({ left: 0, top: 0 }),
         routes,
         history: createHistory(process.env.VUE_ROUTER_BASE),
     });
+
+    router.beforeEach(async (to) => {
+        return handleAuthNavigation(to);
+    });
+
+    return router;
 });

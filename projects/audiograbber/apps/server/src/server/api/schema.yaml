@@ -5,10 +5,13 @@ info:
   description: Phase 1 API contract for job orchestration and media library access.
 servers:
   - url: http://localhost:3800
+security:
+  - bearerAuth: []
 paths:
   /health:
     get:
       summary: Health status
+      security: []
       responses:
         "200":
           description: Service healthy
@@ -334,3 +337,10 @@ paths:
                             modifiedAt:
                               type: string
                               format: date-time
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

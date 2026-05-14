@@ -1,7 +1,10 @@
 - name: Install and run Keycloak in Docker
-  hosts: all
+  hosts: worker
   become: true
   vars:
+    keycloak_local_secrets_file: "{{ lookup('env', 'HOME') }}/.ansible/secrets.yml"
+    keycloak_debug_auth: false
+    keycloak_debug_show_password: false
     keycloak_version: "26.0.7"
     keycloak_image: "quay.io/keycloak/keycloak:{{ keycloak_version }}"
     keycloak_container_name: "keycloak"
@@ -17,28 +20,31 @@
     keycloak_compose_file: "{{ keycloak_base_dir }}/docker-compose.yml"
     # Permanent admin account — override these before running in production
     keycloak_perm_admin_user: "admin"
-    keycloak_perm_admin_password: "changeme"
+    keycloak_perm_admin_password: "{{ vault_keycloak_admin_password | default('changeme', true) }}"
     keycloak_perm_admin_email: "admin@example.com"
     keycloak_perm_admin_firstname: "Admin"
     keycloak_perm_admin_lastname: "User"
-    keycloak_app_realm_name: "apps"
-    keycloak_app_realm_display_name: "Applications"
-    keycloak_app_realm_enabled: true
-    keycloak_create_portainer_client: false
-    keycloak_portainer_client_id: "portainer"
-    keycloak_portainer_client_name: "Portainer"
-    keycloak_portainer_client_secret: "changeme-portainer-secret"
-    keycloak_portainer_base_url: "http://localhost:9000"
-    keycloak_portainer_redirect_uris:
-      - "http://localhost:9000/*"
-    keycloak_portainer_web_origins:
-      - "http://localhost:9000"
+    keycloak_bootstrap_admin_user: "dummy-admin"
+    keycloak_bootstrap_admin_password: "dummy-password"
     keycloak_host_http_port: 8087
     keycloak_host_management_port: 9007
     keycloak_http_host: "0.0.0.0"
     keycloak_bind_address: "0.0.0.0"
     keycloak_host_owner: "{{ ansible_user | default('root') }}"
     keycloak_host_group: "{{ ansible_user | default('root') }}"
+
+  pre_tasks:
+    - name: Check optional local secrets vault file
+      delegate_to: localhost
+      become: false
+      ansible.builtin.stat:
+        path: "{{ keycloak_local_secrets_file }}"
+      register: keycloak_local_secrets_stat
+
+    - name: Load optional local secrets vault file
+      ansible.builtin.include_vars:
+        file: "{{ keycloak_local_secrets_file }}"
+      when: keycloak_local_secrets_stat.stat.exists
 
   tasks:
     - name: Install Docker runtime dependencies
@@ -88,8 +94,8 @@
                 - --http-host={{ keycloak_http_host }}
                 - --health-enabled=true
               environment:
-                KEYCLOAK_ADMIN: dummy-admin
-                KEYCLOAK_ADMIN_PASSWORD: dummy-password
+                KEYCLOAK_ADMIN: {{ keycloak_bootstrap_admin_user }}
+                KEYCLOAK_ADMIN_PASSWORD: {{ keycloak_bootstrap_admin_password }}
                 KC_DB: dev-file
               ports:
                 - "{{ keycloak_bind_address }}:{{ keycloak_host_http_port }}:8080"
@@ -119,56 +125,62 @@
       retries: 30
       delay: 5
 
-    - name: Obtain admin token from bootstrap credentials
-      ansible.builtin.uri:
-        url: "http://localhost:{{ keycloak_host_http_port }}/realms/master/protocol/openid-connect/token"
-        method: POST
-        body_format: form-urlencoded
-        body:
-          grant_type: password
-          client_id: admin-cli
-          username: "dummy-admin"
-          password: "dummy-password"
-        status_code: 200
-      register: keycloak_token_response
-      no_log: true
+    - name: Obtain admin token (prefer permanent admin, fallback to bootstrap)
+      block:
+        - name: Obtain admin token from permanent admin credentials
+          ansible.builtin.uri:
+            url: "http://localhost:{{ keycloak_host_http_port }}/realms/master/protocol/openid-connect/token"
+            method: POST
+            body_format: form-urlencoded
+            body:
+              grant_type: password
+              client_id: admin-cli
+              username: "{{ keycloak_perm_admin_user }}"
+              password: "{{ keycloak_perm_admin_password }}"
+            status_code: 200
+          register: keycloak_token_response
+          no_log: true
+
+        - name: Set token auth source to permanent admin
+          ansible.builtin.set_fact:
+            keycloak_token_auth_user: "{{ keycloak_perm_admin_user }}"
+            keycloak_token_auth_password: "{{ keycloak_perm_admin_password }}"
+          no_log: true
+      rescue:
+        - name: Obtain admin token from bootstrap credentials
+          ansible.builtin.uri:
+            url: "http://localhost:{{ keycloak_host_http_port }}/realms/master/protocol/openid-connect/token"
+            method: POST
+            body_format: form-urlencoded
+            body:
+              grant_type: password
+              client_id: admin-cli
+              username: "{{ keycloak_bootstrap_admin_user }}"
+              password: "{{ keycloak_bootstrap_admin_password }}"
+            status_code: 200
+          register: keycloak_token_response
+          no_log: true
+
+        - name: Set token auth source to bootstrap admin
+          ansible.builtin.set_fact:
+            keycloak_token_auth_user: "{{ keycloak_bootstrap_admin_user }}"
+            keycloak_token_auth_password: "{{ keycloak_bootstrap_admin_password }}"
+          no_log: true
+
+    - name: Debug token credential source
+      ansible.builtin.debug:
+        msg:
+          - "Keycloak token username: {{ keycloak_token_auth_user }}"
+          - "Password source: {{ 'vault_keycloak_admin_password' if (keycloak_token_auth_user == keycloak_perm_admin_user and (vault_keycloak_admin_password is defined) and ((vault_keycloak_admin_password | string | length) > 0)) else ('permanent admin default/override' if keycloak_token_auth_user == keycloak_perm_admin_user else 'bootstrap default') }}"
+          - "Password length: {{ keycloak_token_auth_password | length }}"
+          - "Password sha256 prefix: {{ (keycloak_token_auth_password | hash('sha256'))[0:12] }}"
+          - "Token password: {{ keycloak_token_auth_password if (keycloak_debug_show_password | bool) else '[hidden]' }}"
+      when: keycloak_debug_auth | bool
 
     - name: Set admin token fact
       ansible.builtin.set_fact:
         keycloak_token: "{{ keycloak_token_response.json.access_token }}"
       no_log: true
-
-    - name: Check if application realm already exists
-      ansible.builtin.uri:
-        url: "http://localhost:{{ keycloak_host_http_port }}/admin/realms/{{ keycloak_app_realm_name | urlencode }}"
-        method: GET
-        headers:
-          Authorization: "Bearer {{ keycloak_token }}"
-        status_code:
-          - 200
-          - 404
-      register: keycloak_app_realm_check
-
-    - name: Create application realm
-      ansible.builtin.uri:
-        url: "http://localhost:{{ keycloak_host_http_port }}/admin/realms"
-        method: POST
-        headers:
-          Authorization: "Bearer {{ keycloak_token }}"
-          Content-Type: application/json
-        body_format: json
-        body:
-          realm: "{{ keycloak_app_realm_name }}"
-          displayName: "{{ keycloak_app_realm_display_name }}"
-          enabled: "{{ keycloak_app_realm_enabled }}"
-          registrationAllowed: false
-          resetPasswordAllowed: true
-          rememberMe: true
-          loginWithEmailAllowed: true
-          duplicateEmailsAllowed: false
-          sslRequired: "external"
-        status_code: 201
-      when: keycloak_app_realm_check.status == 404
 
     - name: Check if permanent admin already exists
       ansible.builtin.uri:
@@ -242,7 +254,7 @@
 
     - name: Fetch bootstrap admin user ID
       ansible.builtin.uri:
-        url: "http://localhost:{{ keycloak_host_http_port }}/admin/realms/master/users?username=dummy-admin&exact=true"
+        url: "http://localhost:{{ keycloak_host_http_port }}/admin/realms/master/users?username={{ keycloak_bootstrap_admin_user | urlencode }}&exact=true"
         method: GET
         headers:
           Authorization: "Bearer {{ keycloak_token }}"

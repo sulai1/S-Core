@@ -1,0 +1,151 @@
+- name: Create or update Keycloak realm
+  hosts: worker
+  become: false
+  vars:
+    keycloak_local_secrets_file: "{{ lookup('env', 'HOME') }}/.ansible/secrets.yml"
+
+    # Keycloak admin API endpoint
+    keycloak_host_http_port: 8087
+
+    # Admin credentials (override via vault, inventory, or -e)
+    keycloak_admin_user: admin
+    keycloak_admin_password: "{{ vault_keycloak_admin_password | default('changeme', true) }}"
+
+    # Realm to create/manage
+    keycloak_realm: auth
+    keycloak_realm_display_name: Authentication Realm
+    keycloak_realm_enabled: true
+    keycloak_realm_user_username: "{{ ansible_user | default(ansible_user_id) }}"
+    keycloak_realm_user_password: "{{ vault_keycloak_realm_user_password | default(ansible_become_password | default(vault_keycloak_admin_password | default('changeme', true), true), true) }}"
+    keycloak_realm_user_email: "{{ keycloak_realm_user_username }}@local.invalid"
+
+  pre_tasks:
+    - name: Check optional local secrets vault file
+      delegate_to: localhost
+      become: false
+      ansible.builtin.stat:
+        path: "{{ keycloak_local_secrets_file }}"
+      register: keycloak_local_secrets_stat
+
+    - name: Load optional local secrets vault file
+      ansible.builtin.include_vars:
+        file: "{{ keycloak_local_secrets_file }}"
+      when: keycloak_local_secrets_stat.stat.exists
+
+  tasks:
+    - name: Obtain admin token from master realm
+      ansible.builtin.uri:
+        url: "http://localhost:{{ keycloak_host_http_port }}/realms/master/protocol/openid-connect/token"
+        method: POST
+        body_format: form-urlencoded
+        body:
+          grant_type: password
+          client_id: admin-cli
+          username: "{{ keycloak_admin_user }}"
+          password: "{{ keycloak_admin_password }}"
+        status_code: 200
+      register: keycloak_token_response
+      no_log: true
+
+    - name: Set admin token fact
+      ansible.builtin.set_fact:
+        keycloak_token: "{{ keycloak_token_response.json.access_token }}"
+      no_log: true
+
+    - name: Check whether target realm exists
+      ansible.builtin.uri:
+        url: "http://localhost:{{ keycloak_host_http_port }}/admin/realms/{{ keycloak_realm }}"
+        method: GET
+        headers:
+          Authorization: "Bearer {{ keycloak_token }}"
+        status_code:
+          - 200
+          - 404
+      register: keycloak_realm_lookup
+
+    - name: Create target realm when missing
+      ansible.builtin.uri:
+        url: "http://localhost:{{ keycloak_host_http_port }}/admin/realms"
+        method: POST
+        headers:
+          Authorization: "Bearer {{ keycloak_token }}"
+          Content-Type: application/json
+        body_format: json
+        body:
+          realm: "{{ keycloak_realm }}"
+          displayName: "{{ keycloak_realm_display_name }}"
+          enabled: "{{ keycloak_realm_enabled }}"
+        status_code: 201
+      when: keycloak_realm_lookup.status == 404
+
+    - name: Update realm settings
+      ansible.builtin.uri:
+        url: "http://localhost:{{ keycloak_host_http_port }}/admin/realms/{{ keycloak_realm }}"
+        method: PUT
+        headers:
+          Authorization: "Bearer {{ keycloak_token }}"
+          Content-Type: application/json
+        body_format: json
+        body:
+          realm: "{{ keycloak_realm }}"
+          displayName: "{{ keycloak_realm_display_name }}"
+          enabled: "{{ keycloak_realm_enabled }}"
+        status_code: 204
+
+    - name: Check if realm user already exists
+      ansible.builtin.uri:
+        url: "http://localhost:{{ keycloak_host_http_port }}/admin/realms/{{ keycloak_realm }}/users?username={{ keycloak_realm_user_username | urlencode }}&exact=true"
+        method: GET
+        headers:
+          Authorization: "Bearer {{ keycloak_token }}"
+        status_code: 200
+      register: keycloak_realm_user_lookup
+
+    - name: Create realm user when missing
+      ansible.builtin.uri:
+        url: "http://localhost:{{ keycloak_host_http_port }}/admin/realms/{{ keycloak_realm }}/users"
+        method: POST
+        headers:
+          Authorization: "Bearer {{ keycloak_token }}"
+          Content-Type: application/json
+        body_format: json
+        body:
+          username: "{{ keycloak_realm_user_username }}"
+          email: "{{ keycloak_realm_user_email }}"
+          enabled: true
+          emailVerified: true
+          credentials:
+            - type: password
+              value: "{{ keycloak_realm_user_password }}"
+              temporary: false
+        status_code: 201
+      no_log: true
+      when: keycloak_realm_user_lookup.json | length == 0
+
+    - name: Fetch realm user after create or if already existing
+      ansible.builtin.uri:
+        url: "http://localhost:{{ keycloak_host_http_port }}/admin/realms/{{ keycloak_realm }}/users?username={{ keycloak_realm_user_username | urlencode }}&exact=true"
+        method: GET
+        headers:
+          Authorization: "Bearer {{ keycloak_token }}"
+        status_code: 200
+      register: keycloak_realm_user_lookup_final
+
+    - name: Set realm user id fact
+      ansible.builtin.set_fact:
+        keycloak_realm_user_id: "{{ keycloak_realm_user_lookup_final.json[0].id }}"
+
+    - name: Ensure realm user password is set
+      ansible.builtin.uri:
+        url: "http://localhost:{{ keycloak_host_http_port }}/admin/realms/{{ keycloak_realm }}/users/{{ keycloak_realm_user_id }}/reset-password"
+        method: PUT
+        headers:
+          Authorization: "Bearer {{ keycloak_token }}"
+          Content-Type: application/json
+        body_format: json
+        body:
+          type: password
+          value: "{{ keycloak_realm_user_password }}"
+          temporary: false
+        status_code: 204
+      no_log: true
