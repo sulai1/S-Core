@@ -6,6 +6,7 @@ import { fileURLToPath } from "node:url";
 import ffmpegStatic from "ffmpeg-static";
 import nodeID3 from "node-id3";
 import { DownloadRequest, SyncRequest, WorkerSubmission } from "../types.js";
+import { AUDIOGRABBER_DOWNLOAD_FOLDER } from "../storagePaths.js";
 
 const resolvedFfmpegPath = typeof ffmpegStatic === "string" ? ffmpegStatic : undefined;
 const __filename = fileURLToPath(import.meta.url);
@@ -216,10 +217,7 @@ export class YtDlpWorkerAdapter implements WorkerAdapter {
     }
 
     private resolveDownloadFolder(): string {
-        const configured = process.env.AUDIOGRABBER_DOWNLOAD_FOLDER ?? "download";
-        return path.isAbsolute(configured)
-            ? configured
-            : path.resolve(process.cwd(), configured);
+        return AUDIOGRABBER_DOWNLOAD_FOLDER;
     }
 
     private metadataFromRequest(request: DownloadRequest): MetadataFields {

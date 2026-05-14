@@ -1,11 +1,12 @@
 import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { JobRecord } from "../types.js";
+import { AUDIOGRABBER_JOB_STORE_PATH } from "../storagePaths.js";
 
 export class JobStore {
     private readonly storePath: string;
 
-    constructor(storePath: string = process.env.AUDIOGRABBER_JOB_STORE_PATH ?? ".data/audiograbber/jobs.json") {
+    constructor(storePath: string = AUDIOGRABBER_JOB_STORE_PATH) {
         this.storePath = path.isAbsolute(storePath) ? storePath : path.resolve(process.cwd(), storePath);
     }
 

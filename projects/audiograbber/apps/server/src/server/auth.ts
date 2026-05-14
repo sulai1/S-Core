@@ -49,6 +49,26 @@ function resolveUserSub(payload: JWTPayload): string | null {
     return sub.trim();
 }
 
+function matchesExpectedAudience(payload: JWTPayload, expectedAudience: string): boolean {
+    if (expectedAudience.trim().length === 0) {
+        return true;
+    }
+
+    const aud = payload.aud;
+    const audMatches = typeof aud === "string"
+        ? aud === expectedAudience
+        : Array.isArray(aud)
+            ? aud.some((value) => value === expectedAudience)
+            : false;
+
+    if (audMatches) {
+        return true;
+    }
+
+    const azp = payload.azp;
+    return typeof azp === "string" && azp === expectedAudience;
+}
+
 function unauthorized(res: Response, details: string): void {
     res.status(401).json({
         error: "Unauthorized",
@@ -110,11 +130,13 @@ export function createAuthMiddleware(dataSource: DataSource): RequestHandler {
         }
 
         try {
-            const verifyOptions = audience.length > 0
-                ? { issuer, audience }
-                : { issuer };
+            const { payload } = await jwtVerify(token, keyResolver, { issuer });
 
-            const { payload } = await jwtVerify(token, keyResolver, verifyOptions);
+            if (!matchesExpectedAudience(payload, audience)) {
+                unauthorized(res, `Token audience mismatch. Expected '${audience}'.`);
+                return;
+            }
+
             const keycloakSub = resolveUserSub(payload);
             if (!keycloakSub) {
                 unauthorized(res, "Token is missing sub claim.");

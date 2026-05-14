@@ -1,4 +1,4 @@
-import { existsSync, readFileSync, readdirSync, statSync, unlinkSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, readdirSync, statSync, unlinkSync } from "node:fs";
 import { spawnSync } from "node:child_process";
 import path from "node:path";
 import ffmpegPath from "ffmpeg-static";
@@ -9,6 +9,11 @@ import { AudioFingerprint, AudioFingerprintEntity } from "../../database/entitie
 import { MediaFile, MediaFileEntity } from "../../database/entities/media-file.entity.js";
 import { DownloadRequest, JobRecord, LibraryVideo, SyncRequest } from "../types.js";
 import { WorkerAdapter } from "../worker/PythonWorkerAdapter.js";
+import {
+    AUDIOGRABBER_DOWNLOAD_FAILED_FOLDER,
+    AUDIOGRABBER_DOWNLOAD_FOLDER,
+    AUDIOGRABBER_DOWNLOAD_TMP_FOLDER,
+} from "../storagePaths.js";
 
 function toJobRecord(job: DbJob): JobRecord {
     return {
@@ -41,9 +46,11 @@ export class JobService {
         this.jobRepo = new JobRepository(dataSource);
         this.mediaRepo = dataSource.getRepository(MediaFileEntity);
         this.fingerprintRepo = dataSource.getRepository(AudioFingerprintEntity);
-        this.downloadFolder = path.isAbsolute(process.env.AUDIOGRABBER_DOWNLOAD_FOLDER ?? "download")
-            ? (process.env.AUDIOGRABBER_DOWNLOAD_FOLDER ?? "download")
-            : path.resolve(process.cwd(), process.env.AUDIOGRABBER_DOWNLOAD_FOLDER ?? "download");
+        this.downloadFolder = AUDIOGRABBER_DOWNLOAD_FOLDER;
+
+        mkdirSync(AUDIOGRABBER_DOWNLOAD_FOLDER, { recursive: true });
+        mkdirSync(AUDIOGRABBER_DOWNLOAD_TMP_FOLDER, { recursive: true });
+        mkdirSync(AUDIOGRABBER_DOWNLOAD_FAILED_FOLDER, { recursive: true });
 
         this.ensureFpcalcAvailable();
     }
