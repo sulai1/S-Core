@@ -74,17 +74,17 @@ export class JobService {
         this.ensureFpcalcAvailable();
     }
 
-    async queueDownload(request: DownloadRequest): Promise<JobRecord> {
-        const job = await this.jobRepo.create({ kind: "download" });
+    async queueDownload(request: DownloadRequest, ownerId?: string): Promise<JobRecord> {
+        const job = await this.jobRepo.create({ kind: "download", ownerId: ownerId ?? null });
 
         if (this.hasExistingDownload(request.videoId)) {
-            const media = await this.persistMediaFile(request.videoId, request);
+            const media = await this.persistMediaFile(request.videoId, request, ownerId);
             await this.processFingerprint(media);
             await this.jobRepo.patch(job.id, { state: "success", progress: 100 });
             return toJobRecord({ ...job, state: "success", progress: 100 });
         }
 
-        this.dispatchDownload(job.id, request).catch((error: unknown) => {
+        this.dispatchDownload(job.id, request, ownerId).catch((error: unknown) => {
             this.failJob(job.id, error);
         });
 
@@ -259,7 +259,7 @@ export class JobService {
         return `/library/thumbnail/${encodeURIComponent(videoId)}`;
     }
 
-    private async dispatchDownload(jobId: string, request: DownloadRequest): Promise<void> {
+    private async dispatchDownload(jobId: string, request: DownloadRequest, ownerId?: string): Promise<void> {
         await this.jobRepo.patch(jobId, { state: "running", progress: 15 });
 
         let lastProgress = 15;
@@ -280,7 +280,7 @@ export class JobService {
 
         await this.jobRepo.patch(jobId, { state: "running", progress: Math.max(lastProgress, 95) });
 
-        const media = await this.persistMediaFile(request.videoId, request);
+        const media = await this.persistMediaFile(request.videoId, request, ownerId);
         await this.processFingerprint(media);
 
         await this.jobRepo.patch(jobId, {
@@ -318,7 +318,7 @@ export class JobService {
             .some((fileName) => this.libraryExtensions.has(path.extname(fileName).toLowerCase()) && fileName.includes(videoId));
     }
 
-    private async persistMediaFile(videoId: string, request: DownloadRequest): Promise<MediaFile> {
+    private async persistMediaFile(videoId: string, request: DownloadRequest, ownerId?: string): Promise<MediaFile> {
         const output = this.findPrimaryOutput(videoId);
         if (!output) {
             throw new Error(`downloaded-output-missing:${videoId}`);
@@ -375,11 +375,13 @@ export class JobService {
         const existing = await this.mediaRepo.findOneBy({ youtubeVideoId: videoId });
 
         if (existing) {
+            const nextOwnerId = existing.ownerId ?? ownerId ?? null;
             await this.mediaRepo.update(existing.id, {
                 filePath: outputPath,
                 mimeType,
                 durationSecs,
                 title,
+                ownerId: nextOwnerId,
                 year,
                 estimatedBpm,
                 estimatedKey,
@@ -397,10 +399,10 @@ export class JobService {
             filePath: outputPath,
             mimeType,
             durationSecs,
-            ownerId: null,
             visibility: "owner",
             allowedGroups: null,
             title,
+            ownerId: ownerId ?? null,
             year,
             estimatedBpm,
             estimatedKey,

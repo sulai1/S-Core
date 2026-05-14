@@ -36,8 +36,8 @@ A self-hosted media manager that downloads audio/video from YouTube via yt-dlp, 
 
 | Variable | Default | Description |
 |---|---|---|
-| `AUDIOGRABBER_WORKER_MODE` | `stub` | Worker implementation: `stub` (no-op), `ytdlp` (yt-dlp subprocess), `python` (legacy) |
-| `AUDIOGRABBER_WORKER_TIMEOUT_MS` | `300000` | Inactivity timeout in milliseconds; job is killed if no output is received for this duration |
+| `AUDIOGRABBER_WORKER_MODE` | `ytdlp` | Worker implementation: `stub` (no-op), `ytdlp` (yt-dlp subprocess), `python` (legacy) |
+| `AUDIOGRABBER_WORKER_TIMEOUT_MS` | `600000` | Inactivity timeout in milliseconds; job is killed if no output is received for this duration |
 
 ### yt-dlp
 

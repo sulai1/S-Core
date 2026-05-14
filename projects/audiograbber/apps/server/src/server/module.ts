@@ -5,6 +5,7 @@ import { existsSync } from "node:fs";
 import path from "node:path";
 import { promisify } from "node:util";
 import { paths } from "./api/index.js";
+import type { AuthContext } from "./auth.js";
 import { JobService } from "./services/JobService.js";
 import { YtDlpWorkerAdapter } from "./worker/PythonWorkerAdapter.js";
 
@@ -199,8 +200,9 @@ export function createAudioGrabberModule(dataSource: DataSource): OpenApiModule<
             },
         },
         "/jobs/download": {
-            post: async (request) => {
-                const job = await jobService.queueDownload(request);
+            post: async (request, options) => {
+                const authContext = (options as { authContext?: AuthContext } | undefined)?.authContext;
+                const job = await jobService.queueDownload(request, authContext?.userId);
                 return { jobId: job.jobId, state: "queued" as const };
             },
         },

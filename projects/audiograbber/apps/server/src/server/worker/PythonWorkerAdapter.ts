@@ -64,7 +64,7 @@ export class YtDlpWorkerAdapter implements WorkerAdapter {
     private readonly runMode: "stub" | "ytdlp";
 
     constructor(
-        private readonly mode: WorkerMode = (process.env.AUDIOGRABBER_WORKER_MODE as WorkerMode | undefined) ?? "stub",
+        private readonly mode: WorkerMode = (process.env.AUDIOGRABBER_WORKER_MODE as WorkerMode | undefined) ?? "ytdlp",
         private readonly timeoutMs: number = Number(process.env.AUDIOGRABBER_WORKER_TIMEOUT_MS ?? 300000),
     ) {
         this.runMode = this.mode === "python" ? "ytdlp" : this.mode;

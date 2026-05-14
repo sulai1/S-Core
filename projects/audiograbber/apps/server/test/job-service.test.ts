@@ -44,7 +44,7 @@ describe("JobService", () => {
                 songTitle: "Glitchosaurus Rex",
                 artist: "Jhesha, Cocodrilo",
                 album: "Auryn",
-            });
+            }, "user-123");
 
             expect(job.state).toBe("success");
             expect(job.progress).toBe(100);
@@ -56,6 +56,7 @@ describe("JobService", () => {
                 relations: { artists: true },
             });
             expect(media).toBeTruthy();
+            expect(media?.ownerId).toBe("user-123");
             expect(media?.artists?.map((artist) => artist.name)).toEqual(["Jhesha", "Cocodrilo"]);
         } finally {
             rmSync(tempDir, { recursive: true, force: true });

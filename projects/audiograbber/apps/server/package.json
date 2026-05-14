@@ -11,7 +11,7 @@
     "create-api": "ts-node -r tsconfig-paths/register src/scripts/buildApiTypes.ts",
     "test": "vitest",
     "test:watch": "vitest --watch",
-    "dev": "AUDIOGRABBER_WORKER_MODE=ytdlp AUDIOGRABBER_WORKER_TIMEOUT_MS=600000 nodemon --exec 'node --loader ts-node/esm' src/index.ts",
+    "dev": " nodemon --exec 'node --loader ts-node/esm' src/index.ts",
     "start": "node dist/cjs/index.js",
     "test:live-download": "AUDIOGRABBER_RUN_LIVE_DOWNLOAD_TEST=1 vitest --run test/live-download.integration.test.ts",
     "canary": ".venv/bin/python3 python/canary.py",

@@ -64,7 +64,7 @@ function toImageMimeFromExtension(filePath: string): string {
 }
 
 function validateStartupEnv(): void {
-    const workerMode = (process.env.AUDIOGRABBER_WORKER_MODE ?? "stub").toLowerCase();
+    const workerMode = (process.env.AUDIOGRABBER_WORKER_MODE ?? "ytdlp").toLowerCase();
     if (workerMode !== "python") {
         return;
     }
