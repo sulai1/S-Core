@@ -1,8 +1,11 @@
-import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync, statSync, unlinkSync } from "node:fs";
+import { spawnSync } from "node:child_process";
 import path from "node:path";
+import ffmpegPath from "ffmpeg-static";
 import { DataSource, Repository } from "typeorm";
 import { JobRepository } from "../../database/repositories/job.repository.js";
 import { DbJob } from "../../database/entities/job.entity.js";
+import { AudioFingerprint, AudioFingerprintEntity } from "../../database/entities/audio-fingerprint.entity.js";
 import { MediaFile, MediaFileEntity } from "../../database/entities/media-file.entity.js";
 import { DownloadRequest, JobRecord, LibraryVideo, SyncRequest } from "../types.js";
 import { WorkerAdapter } from "../worker/PythonWorkerAdapter.js";
@@ -23,10 +26,13 @@ function toJobRecord(job: DbJob): JobRecord {
 export class JobService {
     private readonly jobRepo: JobRepository;
     private readonly mediaRepo: Repository<MediaFile>;
+    private readonly fingerprintRepo: Repository<AudioFingerprint>;
     private readonly downloadFolder: string;
     private readonly libraryExtensions = new Set([".mp3", ".m4a", ".webm", ".mp4"]);
     private readonly audioExtensions = new Set([".mp3", ".m4a"]);
     private readonly videoExtensions = new Set([".mp4", ".webm"]);
+    private fpcalcAvailable: boolean | undefined;
+    private ffmpegAvailable: boolean | undefined;
 
     constructor(
         private readonly worker: WorkerAdapter,
@@ -34,16 +40,20 @@ export class JobService {
     ) {
         this.jobRepo = new JobRepository(dataSource);
         this.mediaRepo = dataSource.getRepository(MediaFileEntity);
+        this.fingerprintRepo = dataSource.getRepository(AudioFingerprintEntity);
         this.downloadFolder = path.isAbsolute(process.env.AUDIOGRABBER_DOWNLOAD_FOLDER ?? "download")
             ? (process.env.AUDIOGRABBER_DOWNLOAD_FOLDER ?? "download")
             : path.resolve(process.cwd(), process.env.AUDIOGRABBER_DOWNLOAD_FOLDER ?? "download");
+
+        this.ensureFpcalcAvailable();
     }
 
     async queueDownload(request: DownloadRequest): Promise<JobRecord> {
         const job = await this.jobRepo.create({ kind: "download" });
 
         if (this.hasExistingDownload(request.videoId)) {
-            await this.persistMediaFile(request.videoId, request);
+            const media = await this.persistMediaFile(request.videoId, request);
+            await this.processFingerprint(media);
             await this.jobRepo.patch(job.id, { state: "success", progress: 100 });
             return toJobRecord({ ...job, state: "success", progress: 100 });
         }
@@ -138,7 +148,8 @@ export class JobService {
             throw new Error(result.message ?? "worker-rejected-download");
         }
 
-        await this.persistMediaFile(request.videoId, request);
+        const media = await this.persistMediaFile(request.videoId, request);
+        await this.processFingerprint(media);
 
         await this.jobRepo.patch(jobId, {
             state: "success",
@@ -175,7 +186,7 @@ export class JobService {
             .some((fileName) => this.libraryExtensions.has(path.extname(fileName).toLowerCase()) && fileName.includes(videoId));
     }
 
-    private async persistMediaFile(videoId: string, request: DownloadRequest): Promise<void> {
+    private async persistMediaFile(videoId: string, request: DownloadRequest): Promise<MediaFile> {
         const output = this.findPrimaryOutput(videoId);
         if (!output) {
             throw new Error(`downloaded-output-missing:${videoId}`);
@@ -194,6 +205,8 @@ export class JobService {
             ? info.tags.filter((value): value is string => typeof value === "string").map((value) => value.trim()).filter(Boolean)
             : [];
 
+        const features = this.estimateAudioFeatures(outputPath);
+
         const mimeType = this.inferMimeType(output.extension);
         const durationSecs = typeof info?.duration === "number" ? info.duration : null;
         const year = typeof info?.release_year === "number"
@@ -201,6 +214,14 @@ export class JobService {
             : typeof info?.upload_date === "string" && info.upload_date.length >= 4
                 ? parseInt(info.upload_date.slice(0, 4), 10)
                 : null;
+        const estimatedBpm = typeof info?.bpm === "number" ? info.bpm : features.estimatedBpm;
+        const estimatedKey = this.normalizeEstimatedKey(
+            typeof info?.key === "string"
+                ? info.key
+                : typeof info?.musical_key === "string"
+                    ? info.musical_key
+                    : features.estimatedKey,
+        );
         const existing = await this.mediaRepo.findOneBy({ youtubeVideoId: videoId });
 
         if (existing) {
@@ -213,8 +234,10 @@ export class JobService {
                 album,
                 videoTags: tags.length > 0 ? JSON.stringify(tags) : null,
                 year,
+                estimatedBpm,
+                estimatedKey,
             });
-            return;
+            return await this.mediaRepo.findOneByOrFail({ id: existing.id });
         }
 
         const entry = this.mediaRepo.create({
@@ -230,9 +253,283 @@ export class JobService {
             album,
             videoTags: tags.length > 0 ? JSON.stringify(tags) : null,
             year,
+            estimatedBpm,
+            estimatedKey,
             createdAt: stats.birthtime,
         });
-        await this.mediaRepo.save(entry);
+        return await this.mediaRepo.save(entry);
+    }
+
+    private async processFingerprint(media: MediaFile): Promise<void> {
+        const fingerprint = this.generateFingerprint(media.filePath);
+        if (!fingerprint) {
+            return;
+        }
+
+        const duplicate = await this.fingerprintRepo.findOneBy({ fingerprintData: fingerprint });
+        if (duplicate && duplicate.mediaFileId !== media.id) {
+            const existingMedia = await this.mediaRepo.findOneBy({ id: duplicate.mediaFileId });
+            if (existingMedia) {
+                const currentPath = media.filePath;
+                const canonicalPath = existingMedia.filePath;
+                if (currentPath !== canonicalPath && existsSync(currentPath)) {
+                    try {
+                        unlinkSync(currentPath);
+                    } catch {
+                        // best effort cleanup of duplicate file
+                    }
+                }
+
+                await this.mediaRepo.update(media.id, { filePath: canonicalPath });
+            }
+        }
+
+        const existingFingerprint = await this.fingerprintRepo.findOneBy({ mediaFileId: media.id });
+        if (existingFingerprint) {
+            await this.fingerprintRepo.update(existingFingerprint.id, { fingerprintData: fingerprint });
+            return;
+        }
+
+        const created = this.fingerprintRepo.create({
+            mediaFileId: media.id,
+            fingerprintData: fingerprint,
+            acoustIdRecordingId: null,
+            acoustIdScore: null,
+            enrichedAt: null,
+        });
+        await this.fingerprintRepo.save(created);
+    }
+
+    private generateFingerprint(filePath: string): string | null {
+        if (!this.ensureFpcalcAvailable()) {
+            return null;
+        }
+
+        const bin = this.resolveFpcalcBin();
+        const result = spawnSync(bin, ["-json", filePath], { encoding: "utf8" });
+        if (result.status !== 0 || typeof result.stdout !== "string") {
+            return null;
+        }
+
+        try {
+            const parsed = JSON.parse(result.stdout) as { fingerprint?: unknown };
+            return typeof parsed.fingerprint === "string" && parsed.fingerprint.trim().length > 0
+                ? parsed.fingerprint.trim()
+                : null;
+        } catch {
+            return null;
+        }
+    }
+
+    private ensureFpcalcAvailable(): boolean {
+        if (typeof this.fpcalcAvailable === "boolean") {
+            return this.fpcalcAvailable;
+        }
+
+        const bin = this.resolveFpcalcBin();
+        const result = spawnSync(bin, ["-version"], { encoding: "utf8" });
+        this.fpcalcAvailable = result.status === 0;
+
+        if (!this.fpcalcAvailable) {
+            console.warn("[AudioGrabber] Warning: fpcalc not available; fingerprint generation is disabled. Install libchromaprint-tools or set AUDIOGRABBER_FPCALC_BIN.");
+        }
+
+        return this.fpcalcAvailable;
+    }
+
+    private resolveFpcalcBin(): string {
+        const envBin = (process.env.AUDIOGRABBER_FPCALC_BIN ?? "").trim();
+        return envBin || "fpcalc";
+    }
+
+    private estimateAudioFeatures(filePath: string): { estimatedBpm: number | null; estimatedKey: string | null } {
+        if (!this.ensureFfmpegAvailable()) {
+            return { estimatedBpm: null, estimatedKey: null };
+        }
+
+        const ffmpegBin = this.resolveFfmpegBin();
+        const sampleRate = 11025;
+        const decode = spawnSync(
+            ffmpegBin,
+            ["-hide_banner", "-loglevel", "error", "-i", filePath, "-ac", "1", "-ar", String(sampleRate), "-t", "90", "-f", "s16le", "pipe:1"],
+            { encoding: null, maxBuffer: 1024 * 1024 * 64 },
+        );
+
+        if (decode.status !== 0 || !decode.stdout || !(decode.stdout instanceof Buffer) || decode.stdout.length < 4096) {
+            return { estimatedBpm: null, estimatedKey: null };
+        }
+
+        const int16 = new Int16Array(decode.stdout.buffer, decode.stdout.byteOffset, Math.floor(decode.stdout.length / 2));
+        const samples = new Float32Array(int16.length);
+        for (let i = 0; i < int16.length; i += 1) {
+            samples[i] = int16[i] / 32768;
+        }
+
+        return {
+            estimatedBpm: this.estimateBpm(samples, sampleRate),
+            estimatedKey: this.estimateKeyFromPitchClass(samples, sampleRate),
+        };
+    }
+
+    private estimateBpm(samples: Float32Array, sampleRate: number): number | null {
+        const frameSize = 1024;
+        const hopSize = 512;
+        const frameCount = Math.floor((samples.length - frameSize) / hopSize);
+        if (frameCount < 32) {
+            return null;
+        }
+
+        const energy = new Float32Array(frameCount);
+        for (let frame = 0; frame < frameCount; frame += 1) {
+            const start = frame * hopSize;
+            let sum = 0;
+            for (let i = 0; i < frameSize; i += 1) {
+                const v = samples[start + i];
+                sum += v * v;
+            }
+            energy[frame] = sum;
+        }
+
+        const onset = new Float32Array(frameCount);
+        for (let i = 1; i < frameCount; i += 1) {
+            const diff = energy[i] - energy[i - 1];
+            onset[i] = diff > 0 ? diff : 0;
+        }
+
+        const minBpm = 70;
+        const maxBpm = 190;
+        const minLag = Math.floor((60 * sampleRate) / (maxBpm * hopSize));
+        const maxLag = Math.ceil((60 * sampleRate) / (minBpm * hopSize));
+
+        let bestLag = 0;
+        let bestScore = Number.NEGATIVE_INFINITY;
+
+        for (let lag = minLag; lag <= maxLag; lag += 1) {
+            let score = 0;
+            for (let i = lag; i < onset.length; i += 1) {
+                score += onset[i] * onset[i - lag];
+            }
+
+            if (score > bestScore) {
+                bestScore = score;
+                bestLag = lag;
+            }
+        }
+
+        if (bestLag <= 0 || !Number.isFinite(bestScore) || bestScore <= 0) {
+            return null;
+        }
+
+        const bpm = (60 * sampleRate) / (bestLag * hopSize);
+        if (!Number.isFinite(bpm) || bpm < 50 || bpm > 220) {
+            return null;
+        }
+
+        return Math.round(bpm * 10) / 10;
+    }
+
+    private estimateKeyFromPitchClass(samples: Float32Array, sampleRate: number): string | null {
+        const windowSize = 2048;
+        const hop = 1024;
+        const minFreq = 80;
+        const maxFreq = 1000;
+        const minLag = Math.floor(sampleRate / maxFreq);
+        const maxLag = Math.ceil(sampleRate / minFreq);
+
+        const pitchClassVotes = new Array<number>(12).fill(0);
+        const availableFrames = Math.floor((samples.length - windowSize) / hop);
+        if (availableFrames < 8) {
+            return null;
+        }
+
+        const maxFrames = 120;
+        const step = Math.max(1, Math.floor(availableFrames / maxFrames));
+
+        for (let frame = 0; frame < availableFrames; frame += step) {
+            const start = frame * hop;
+            let bestLag = 0;
+            let bestScore = Number.NEGATIVE_INFINITY;
+
+            for (let lag = minLag; lag <= maxLag; lag += 1) {
+                let corr = 0;
+                for (let i = 0; i < windowSize - lag; i += 1) {
+                    corr += samples[start + i] * samples[start + i + lag];
+                }
+
+                if (corr > bestScore) {
+                    bestScore = corr;
+                    bestLag = lag;
+                }
+            }
+
+            if (bestLag <= 0 || bestScore <= 0) {
+                continue;
+            }
+
+            const freq = sampleRate / bestLag;
+            if (!Number.isFinite(freq) || freq < minFreq || freq > maxFreq) {
+                continue;
+            }
+
+            const midi = 69 + 12 * Math.log2(freq / 440);
+            const pitchClass = ((Math.round(midi) % 12) + 12) % 12;
+            pitchClassVotes[pitchClass] += 1;
+        }
+
+        let bestClass = -1;
+        let bestVotes = 0;
+        for (let i = 0; i < pitchClassVotes.length; i += 1) {
+            if (pitchClassVotes[i] > bestVotes) {
+                bestVotes = pitchClassVotes[i];
+                bestClass = i;
+            }
+        }
+
+        if (bestClass < 0 || bestVotes < 3) {
+            return null;
+        }
+
+        const notes = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+        return notes[bestClass] ?? null;
+    }
+
+    private normalizeEstimatedKey(value: string | null): string | null {
+        if (!value) {
+            return null;
+        }
+
+        const normalized = value.trim();
+        return normalized.length > 0 ? normalized : null;
+    }
+
+    private ensureFfmpegAvailable(): boolean {
+        if (typeof this.ffmpegAvailable === "boolean") {
+            return this.ffmpegAvailable;
+        }
+
+        const ffmpegBin = this.resolveFfmpegBin();
+        const result = spawnSync(ffmpegBin, ["-version"], { encoding: "utf8" });
+        this.ffmpegAvailable = result.status === 0;
+
+        if (!this.ffmpegAvailable) {
+            console.warn("[AudioGrabber] Warning: ffmpeg not available; estimated BPM/key generation is disabled. Install ffmpeg or set AUDIOGRABBER_FFMPEG_BIN.");
+        }
+
+        return this.ffmpegAvailable;
+    }
+
+    private resolveFfmpegBin(): string {
+        const envBin = (process.env.AUDIOGRABBER_FFMPEG_BIN ?? "").trim();
+        if (envBin) {
+            return envBin;
+        }
+
+        const bundledFfmpegPath = ffmpegPath as unknown;
+        if (typeof bundledFfmpegPath === "string" && bundledFfmpegPath.length > 0) {
+            return bundledFfmpegPath;
+        }
+
+        return "ffmpeg";
     }
 
     private findPrimaryOutput(videoId: string): { fileName: string; extension: string; baseName: string } | undefined {
@@ -264,7 +561,7 @@ export class JobService {
         };
     }
 
-    private readInfoJson(videoId: string): { title?: string; artist?: string; album?: string; tags?: unknown[]; duration?: number; release_year?: number; upload_date?: string } | undefined {
+    private readInfoJson(videoId: string): { title?: string; artist?: string; album?: string; tags?: unknown[]; duration?: number; release_year?: number; upload_date?: string; bpm?: number; key?: string; musical_key?: string } | undefined {
         if (!existsSync(this.downloadFolder)) {
             return undefined;
         }
@@ -294,6 +591,9 @@ export class JobService {
                 duration?: number;
                 release_year?: number;
                 upload_date?: string;
+                bpm?: number;
+                key?: string;
+                musical_key?: string;
             };
             return parsed;
         } catch {

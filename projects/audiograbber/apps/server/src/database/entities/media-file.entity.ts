@@ -16,6 +16,8 @@ export type MediaFile = {
     album: string | null;
     videoTags: string | null;
     year: number | null;
+    estimatedBpm: number | null;
+    estimatedKey: string | null;
     createdAt: Date;
 };
 
@@ -36,6 +38,8 @@ export const MediaFileEntity = new EntitySchema<MediaFile>({
         album: { type: "text", nullable: true },
         videoTags: { type: "text", nullable: true },
         year: { type: "int", nullable: true },
+        estimatedBpm: { type: "float", nullable: true },
+        estimatedKey: { type: "varchar", nullable: true },
         createdAt: { type: "timestamp", createDate: true },
     },
 });
