@@ -1,5 +1,5 @@
 - name: Install and run Portainer in Docker
-  hosts: all
+  hosts: worker
   become: true
   vars:
     portainer_version: "2.27.4"
