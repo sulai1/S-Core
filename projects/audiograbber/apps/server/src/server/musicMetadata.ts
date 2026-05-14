@@ -71,14 +71,16 @@ function looksLikeMetadataNoise(value: string): boolean {
 
 function splitTitleFallback(videoTitle: string): { artist?: string; songTitle?: string } {
     const cleanedTitle = stripTrailingVideoIdToken(cleanText(videoTitle) ?? videoTitle);
-    const separatorMatch = cleanedTitle.match(/^\s*(?:\d{1,2}\s*[.)-]?\s*)?(.+?)\s*[_\u002D\u2013\u2014]\s*(.+)$/);
+    const separatorMatch = cleanedTitle.match(/^\s*(?:\d{1,2}\s*[.)-]?\s*)?(.+?)\s*[-\u2010\u2011\u2012\u2013\u2014\u2212_]\s*(.+)$/);
 
     if (!separatorMatch) {
         return { songTitle: cleanedTitle };
     }
 
+    const normalizedArtist = cleanText(separatorMatch[1]?.replace(/\s*&\s*/g, ", ")?.replace(/[\s\-\u2010\u2011\u2012\u2013\u2014\u2212_]+$/, ""));
+
     return {
-        artist: cleanText(separatorMatch[1]?.replace(/\s*&\s*/g, ", ")),
+        artist: normalizedArtist,
         songTitle: cleanText(separatorMatch[2]),
     };
 }

@@ -162,8 +162,8 @@ export class YtDlpWorkerAdapter implements WorkerAdapter {
             }
 
             this.moveFileToFolder(finalOutputPath, this.downloadFolder);
+            this.moveInfoJsonToFolder(videoId, workDir, this.downloadFolder);
             this.removeNonMediaArtifacts(videoId, workDir);
-            this.removeNonMediaArtifacts(videoId, this.downloadFolder);
             rmSync(workDir, { recursive: true, force: true });
 
             onProgress?.({ percent: 98, phase: "postprocessing" });
@@ -514,6 +514,23 @@ export class YtDlpWorkerAdapter implements WorkerAdapter {
         rmSync(targetPath, { force: true });
         renameSync(sourcePath, targetPath);
         return targetPath;
+    }
+
+    private moveInfoJsonToFolder(videoId: string, sourceFolder: string, targetFolder: string): void {
+        if (!existsSync(sourceFolder)) {
+            return;
+        }
+
+        const infoFiles = readdirSync(sourceFolder)
+            .filter((fileName) => fileName.includes(videoId) && fileName.endsWith(".info.json"))
+            .sort((a, b) => a.localeCompare(b));
+
+        if (infoFiles.length === 0) {
+            return;
+        }
+
+        const selected = infoFiles[0];
+        this.moveFileToFolder(path.join(sourceFolder, selected), targetFolder);
     }
 
     private removeNonMediaArtifacts(videoId: string, folder: string): void {
