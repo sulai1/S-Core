@@ -7,7 +7,9 @@ import { JobRepository } from "../../database/repositories/job.repository.js";
 import { DbJob } from "../../database/entities/job.entity.js";
 import { AudioFingerprint, AudioFingerprintEntity } from "../../database/entities/audio-fingerprint.entity.js";
 import { MediaFile, MediaFileEntity } from "../../database/entities/media-file.entity.js";
-import { DownloadRequest, JobRecord, LibraryVideo, SyncRequest } from "../types.js";
+import { MediaTag, MediaTagEntity } from "../../database/entities/media-tag.entity.js";
+import { Tag, TagEntity } from "../../database/entities/tag.entity.js";
+import { DownloadRequest, JobRecord, LibraryTagUsage, LibraryVideo, SyncRequest, TagSearchMode } from "../types.js";
 import { parseMusicMetadata } from "../musicMetadata.js";
 import { WorkerAdapter } from "../worker/PythonWorkerAdapter.js";
 import {
@@ -33,6 +35,8 @@ export class JobService {
     private readonly jobRepo: JobRepository;
     private readonly mediaRepo: Repository<MediaFile>;
     private readonly fingerprintRepo: Repository<AudioFingerprint>;
+    private readonly tagRepo: Repository<Tag>;
+    private readonly mediaTagRepo: Repository<MediaTag>;
     private readonly downloadFolder: string;
     private readonly libraryExtensions = new Set([".mp3", ".m4a", ".webm", ".mp4"]);
     private readonly audioExtensions = new Set([".mp3", ".m4a"]);
@@ -47,6 +51,8 @@ export class JobService {
         this.jobRepo = new JobRepository(dataSource);
         this.mediaRepo = dataSource.getRepository(MediaFileEntity);
         this.fingerprintRepo = dataSource.getRepository(AudioFingerprintEntity);
+        this.tagRepo = dataSource.getRepository(TagEntity);
+        this.mediaTagRepo = dataSource.getRepository(MediaTagEntity);
         this.downloadFolder = AUDIOGRABBER_DOWNLOAD_FOLDER;
 
         mkdirSync(AUDIOGRABBER_DOWNLOAD_FOLDER, { recursive: true });
@@ -88,13 +94,20 @@ export class JobService {
         return job ? toJobRecord(job) : undefined;
     }
 
-    async listVideos(limit?: number, keyword?: string, mediaType: "all" | "audio" | "video" = "all"): Promise<{ items: LibraryVideo[] }> {
+    async listVideos(
+        limit?: number,
+        keyword?: string,
+        mediaType: "all" | "audio" | "video" = "all",
+        tags: string[] = [],
+        tagMode: TagSearchMode = "all",
+    ): Promise<{ items: LibraryVideo[] }> {
         if (!existsSync(this.downloadFolder)) {
             return { items: [] };
         }
 
         const normalizedKeyword = (keyword ?? "").trim().toLowerCase();
-        const items = readdirSync(this.downloadFolder)
+        const normalizedTagFilters = [...new Set(tags.map((value) => this.normalizeTagName(value)).filter(Boolean))];
+        const items: LibraryVideo[] = readdirSync(this.downloadFolder)
             .filter((fileName) => this.libraryExtensions.has(path.extname(fileName).toLowerCase()))
             .filter((fileName) => {
                 if (mediaType === "all") {
@@ -132,6 +145,7 @@ export class JobService {
                     status: "ready" as const,
                     artist: null as string | null,
                     album: null as string | null,
+                    tags: [] as string[],
                     year: null as number | null,
                     estimatedBpm: null as number | null,
                     estimatedKey: null as string | null,
@@ -149,26 +163,50 @@ export class JobService {
             .sort((a, b) => a.title.localeCompare(b.title));
 
         const videoIds = [...new Set(items.map((item) => item.id).filter((id) => /^[a-zA-Z0-9_-]{11}$/.test(id)))];
+        let allowedMediaIds: Set<string> | undefined;
         if (videoIds.length > 0) {
             const mediaRows = await this.mediaRepo.find({
                 where: {
                     youtubeVideoId: In(videoIds),
                 },
             });
+
+            const mediaIds = mediaRows.map((row) => row.id);
+            const tagsByMediaId = await this.getTagsByMediaId(mediaIds);
+
+            if (normalizedTagFilters.length > 0) {
+                allowedMediaIds = await this.filterMediaIdsByTags(mediaIds, normalizedTagFilters, tagMode);
+            }
+
             const mediaByVideoId = new Map(mediaRows.map((row) => [row.youtubeVideoId, row]));
 
+            const filtered: LibraryVideo[] = [];
             for (const item of items) {
                 const media = mediaByVideoId.get(item.id);
+                if (normalizedTagFilters.length > 0) {
+                    if (!media || !allowedMediaIds?.has(media.id)) {
+                        continue;
+                    }
+                }
+
                 if (!media) {
+                    filtered.push(item);
                     continue;
                 }
 
                 item.artist = media.artist;
                 item.album = media.album;
+                item.tags = tagsByMediaId.get(media.id) ?? [];
                 item.year = media.year;
                 item.estimatedBpm = media.estimatedBpm;
                 item.estimatedKey = media.estimatedKey;
+                filtered.push(item);
             }
+
+            items.length = 0;
+            items.push(...filtered);
+        } else if (normalizedTagFilters.length > 0) {
+            return { items: [] };
         }
 
         if (typeof limit === "number" && limit > 0) {
@@ -176,6 +214,25 @@ export class JobService {
         }
 
         return { items };
+    }
+
+    async listTags(): Promise<{ items: LibraryTagUsage[] }> {
+        const rows = await this.mediaTagRepo.createQueryBuilder("mt")
+            .innerJoin("tags", "tag", 'tag.id = mt."tagId"')
+            .select("tag.name", "tag")
+            .addSelect('COUNT(DISTINCT mt."mediaFileId")', "count")
+            .groupBy("tag.id")
+            .addGroupBy("tag.name")
+            .orderBy('COUNT(DISTINCT mt."mediaFileId")', "DESC")
+            .addOrderBy("tag.name", "ASC")
+            .getRawMany<{ tag: string; count: string }>();
+
+        return {
+            items: rows.map((row) => ({
+                tag: row.tag,
+                count: Number.parseInt(row.count, 10) || 0,
+            })),
+        };
     }
 
     private findThumbnailUrl(videoId: string): string | undefined {
@@ -261,8 +318,8 @@ export class JobService {
         const parsedMusicMetadata = parseMusicMetadata(infoTitle || titleFromFile || output.baseName, infoDescription);
 
         const title = (request.songTitle ?? "").trim()
-            || infoTitle
             || (parsedMusicMetadata.songTitle ?? "").trim()
+            || infoTitle
             || titleFromFile
             || output.baseName;
         const artist = (request.artist ?? "").trim()
@@ -305,12 +362,12 @@ export class JobService {
                 title,
                 artist,
                 album,
-                videoTags: tags.length > 0 ? JSON.stringify(tags) : null,
                 year,
                 estimatedBpm,
                 estimatedKey,
             });
             const updated = await this.mediaRepo.findOneByOrFail({ id: existing.id });
+            await this.replaceMediaTags(updated.id, tags);
             this.cleanupInfoJsonFiles(videoId);
             return updated;
         }
@@ -326,15 +383,109 @@ export class JobService {
             title,
             artist,
             album,
-            videoTags: tags.length > 0 ? JSON.stringify(tags) : null,
             year,
             estimatedBpm,
             estimatedKey,
             createdAt: stats.birthtime,
         });
         const saved = await this.mediaRepo.save(entry);
+        await this.replaceMediaTags(saved.id, tags);
         this.cleanupInfoJsonFiles(videoId);
         return saved;
+    }
+
+    private normalizeTagName(value: string): string {
+        return value.toLowerCase().replace(/\s+/g, " ").trim();
+    }
+
+    private async replaceMediaTags(mediaFileId: string, rawTags: string[]): Promise<void> {
+        const normalizedToDisplay = new Map<string, string>();
+        for (const rawTag of rawTags) {
+            const display = rawTag.trim();
+            const normalized = this.normalizeTagName(display);
+            if (!normalized || normalizedToDisplay.has(normalized)) {
+                continue;
+            }
+            normalizedToDisplay.set(normalized, display);
+        }
+
+        await this.mediaTagRepo.delete({ mediaFileId });
+        if (normalizedToDisplay.size === 0) {
+            return;
+        }
+
+        const normalizedNames = [...normalizedToDisplay.keys()];
+        await this.tagRepo.createQueryBuilder()
+            .insert()
+            .into(TagEntity)
+            .values(normalizedNames.map((normalizedName) => ({
+                name: normalizedToDisplay.get(normalizedName) ?? normalizedName,
+                normalizedName,
+            })))
+            .orIgnore()
+            .execute();
+
+        const tagRows = await this.tagRepo.find({
+            where: {
+                normalizedName: In(normalizedNames),
+            },
+        });
+
+        if (tagRows.length === 0) {
+            return;
+        }
+
+        await this.mediaTagRepo.createQueryBuilder()
+            .insert()
+            .into(MediaTagEntity)
+            .values(tagRows.map((row) => ({ mediaFileId, tagId: row.id })))
+            .orIgnore()
+            .execute();
+    }
+
+    private async getTagsByMediaId(mediaIds: string[]): Promise<Map<string, string[]>> {
+        const byMediaId = new Map<string, string[]>();
+        if (mediaIds.length === 0) {
+            return byMediaId;
+        }
+
+        const rows = await this.mediaTagRepo.createQueryBuilder("mt")
+            .innerJoin("tags", "tag", 'tag.id = mt."tagId"')
+            .select('mt."mediaFileId"', "mediaFileId")
+            .addSelect("tag.name", "tagName")
+            .where('mt."mediaFileId" IN (:...mediaIds)', { mediaIds })
+            .orderBy("tag.name", "ASC")
+            .getRawMany<{ mediaFileId: string; tagName: string }>();
+
+        for (const row of rows) {
+            const current = byMediaId.get(row.mediaFileId) ?? [];
+            current.push(row.tagName);
+            byMediaId.set(row.mediaFileId, current);
+        }
+
+        return byMediaId;
+    }
+
+    private async filterMediaIdsByTags(mediaIds: string[], normalizedTags: string[], mode: TagSearchMode): Promise<Set<string>> {
+        if (mediaIds.length === 0 || normalizedTags.length === 0) {
+            return new Set(mediaIds);
+        }
+
+        const query = this.mediaTagRepo.createQueryBuilder("mt")
+            .innerJoin("tags", "tag", 'tag.id = mt."tagId"')
+            .select('mt."mediaFileId"', "mediaFileId")
+            .where('mt."mediaFileId" IN (:...mediaIds)', { mediaIds })
+            .andWhere('tag."normalizedName" IN (:...normalizedTags)', { normalizedTags })
+            .groupBy('mt."mediaFileId"');
+
+        if (mode === "all") {
+            query.having('COUNT(DISTINCT tag."normalizedName") = :requiredTagCount', {
+                requiredTagCount: normalizedTags.length,
+            });
+        }
+
+        const rows = await query.getRawMany<{ mediaFileId: string }>();
+        return new Set(rows.map((row) => row.mediaFileId));
     }
 
     private async processFingerprint(media: MediaFile): Promise<void> {

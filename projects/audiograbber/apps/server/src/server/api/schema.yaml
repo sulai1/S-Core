@@ -295,6 +295,24 @@ paths:
             enum: [all, audio, video]
             default: all
           description: Filter library entries by media type.
+        - name: tags
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+          style: form
+          explode: true
+          description: Filter by tag names. Repeat query key for multiple tags.
+        - name: tagMode
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [all, any]
+            default: all
+          description: all = media must have all provided tags, any = media may have any provided tag.
       responses:
         "200":
           description: Video list
@@ -323,6 +341,10 @@ paths:
                         album:
                           type: string
                           nullable: true
+                        tags:
+                          type: array
+                          items:
+                            type: string
                         year:
                           type: integer
                           nullable: true
@@ -354,6 +376,30 @@ paths:
                             modifiedAt:
                               type: string
                               format: date-time
+
+  /library/tags:
+    get:
+      summary: List all tags used in media library
+      responses:
+        "200":
+          description: Distinct tags with usage counts
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items:
+                      type: object
+                      required: [tag, count]
+                      properties:
+                        tag:
+                          type: string
+                        count:
+                          type: integer
+                          minimum: 0
 
   /system/info:
     get:

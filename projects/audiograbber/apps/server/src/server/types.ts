@@ -50,9 +50,17 @@ export type LibraryVideo = {
     status: "ready" | "processing" | "failed";
     artist: string | null;
     album: string | null;
+    tags: string[];
     year: number | null;
     estimatedBpm: number | null;
     estimatedKey: string | null;
     thumbnailUrl?: string;
     metadata: LibraryVideoMetadata;
+};
+
+export type TagSearchMode = "all" | "any";
+
+export type LibraryTagUsage = {
+    tag: string;
+    count: number;
 };

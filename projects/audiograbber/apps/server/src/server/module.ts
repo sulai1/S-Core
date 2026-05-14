@@ -407,21 +407,38 @@ export function createAudioGrabberModule(dataSource: DataSource): OpenApiModule<
         "/library/videos": {
             get: async (options) => {
                 if (!options) {
-                    return await jobService.listVideos(undefined, undefined, "all");
+                    return await jobService.listVideos(undefined, undefined, "all", [], "all");
                 }
 
                 const queryLimit = (options as any).limit as string | number | undefined;
                 const queryKeyword = (options as any).keyword as string | undefined;
                 const queryMediaType = (options as any).mediaType as "all" | "audio" | "video" | undefined;
+                const queryTags = (options as any).tags as string | string[] | undefined;
+                const queryTagMode = (options as any).tagMode as "all" | "any" | undefined;
 
-                console.log("[library/videos] Query params:", { limit: queryLimit, keyword: queryKeyword, mediaType: queryMediaType });
+                console.log("[library/videos] Query params:", {
+                    limit: queryLimit,
+                    keyword: queryKeyword,
+                    mediaType: queryMediaType,
+                    tags: queryTags,
+                    tagMode: queryTagMode,
+                });
 
                 const parsedLimit = Number(queryLimit);
                 const limit = Number.isFinite(parsedLimit) && parsedLimit > 0 ? parsedLimit : undefined;
                 const mediaType = queryMediaType === "audio" || queryMediaType === "video" ? queryMediaType : "all";
+                const tags = Array.isArray(queryTags)
+                    ? queryTags
+                    : typeof queryTags === "string" && queryTags.trim().length > 0
+                        ? [queryTags]
+                        : [];
+                const tagMode = queryTagMode === "any" ? "any" : "all";
 
-                return await jobService.listVideos(limit, queryKeyword, mediaType);
+                return await jobService.listVideos(limit, queryKeyword, mediaType, tags, tagMode);
             },
+        },
+        "/library/tags": {
+            get: async () => await jobService.listTags(),
         },
     };
 }

@@ -183,6 +183,20 @@ export const apiSchema: OpenAPIV3_1.Document = {
                         required: false,
                         schema: { type: 'string', enum: ['all', 'audio', 'video'], default: 'all' },
                     },
+                    {
+                        name: 'tags',
+                        in: 'query',
+                        required: false,
+                        style: 'form',
+                        explode: true,
+                        schema: { type: 'array', items: { type: 'string' } },
+                    },
+                    {
+                        name: 'tagMode',
+                        in: 'query',
+                        required: false,
+                        schema: { type: 'string', enum: ['all', 'any'], default: 'all' },
+                    },
                 ],
                 responses: {
                     '200': {
@@ -200,6 +214,13 @@ export const apiSchema: OpenAPIV3_1.Document = {
                                                     id: { type: 'string' },
                                                     title: { type: 'string' },
                                                     status: { type: 'string', enum: ['ready', 'processing', 'failed'] },
+                                                    artist: { type: 'string', nullable: true },
+                                                    album: { type: 'string', nullable: true },
+                                                    tags: { type: 'array', items: { type: 'string' } },
+                                                    year: { type: 'integer', nullable: true },
+                                                    estimatedBpm: { type: 'number', nullable: true },
+                                                    estimatedKey: { type: 'string', nullable: true },
+                                                    thumbnailUrl: { type: 'string' },
                                                     metadata: {
                                                         type: 'object',
                                                         properties: {
@@ -213,11 +234,42 @@ export const apiSchema: OpenAPIV3_1.Document = {
                                                         required: ['fileName', 'extension', 'mediaType', 'sizeBytes', 'createdAt', 'modifiedAt'],
                                                     },
                                                 },
-                                                required: ['id', 'title', 'status', 'metadata'],
+                                                required: ['id', 'title', 'status', 'metadata', 'tags'],
                                             },
                                         },
                                     },
                                     required: ['items'],
+                                },
+                            },
+                        },
+                    },
+                },
+            },
+        },
+        '/library/tags': {
+            get: {
+                summary: 'List all tags used in media library',
+                responses: {
+                    '200': {
+                        description: 'Distinct tags with usage counts',
+                        content: {
+                            'application/json': {
+                                schema: {
+                                    type: 'object',
+                                    required: ['items'],
+                                    properties: {
+                                        items: {
+                                            type: 'array',
+                                            items: {
+                                                type: 'object',
+                                                required: ['tag', 'count'],
+                                                properties: {
+                                                    tag: { type: 'string' },
+                                                    count: { type: 'integer', minimum: 0 },
+                                                },
+                                            },
+                                        },
+                                    },
                                 },
                             },
                         },

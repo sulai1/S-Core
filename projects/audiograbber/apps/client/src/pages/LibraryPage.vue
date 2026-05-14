@@ -11,7 +11,7 @@
       <q-separator />
       <q-card-section>
         <div class="row q-col-gutter-sm q-mb-md">
-          <div class="col-12 col-md-6">
+          <div class="col-12 col-md-4">
             <q-input
               v-model="keyword"
               outlined
@@ -32,8 +32,38 @@
               @update:model-value="load"
             />
           </div>
-          <div class="col-12 col-md-3 flex items-end">
+          <div class="col-12 col-md-3">
+            <q-select
+              v-model="selectedTags"
+              outlined
+              multiple
+              use-chips
+              use-input
+              clearable
+              emit-value
+              map-options
+              label="Tags"
+              :options="tagOptions"
+              @update:model-value="load"
+            />
+          </div>
+          <div class="col-12 col-md-2 flex items-end">
             <q-btn color="primary" class="full-width" icon="search" label="Apply" :loading="isLoading" @click="load" />
+          </div>
+        </div>
+        <div class="row q-col-gutter-sm q-mb-md">
+          <div class="col-12 col-md-6">
+            <q-btn-toggle
+              v-model="tagMode"
+              spread
+              unelevated
+              toggle-color="primary"
+              :options="[
+                { label: 'Match all tags', value: 'all' },
+                { label: 'Match any tag', value: 'any' },
+              ]"
+              @update:model-value="load"
+            />
           </div>
         </div>
 
@@ -60,6 +90,30 @@
               <q-badge :color="statusColor(props.value)">{{ props.value }}</q-badge>
             </q-td>
           </template>
+          <template #body-cell-tags="props">
+            <q-td :props="props">
+              <div v-if="props.row.tags?.length" class="row q-gutter-xs">
+                <q-chip
+                  v-for="tag in props.row.tags.slice(0, 3)"
+                  :key="tag"
+                  dense
+                  color="blue-1"
+                  text-color="blue-9"
+                >
+                  {{ tag }}
+                </q-chip>
+                <q-chip
+                  v-if="props.row.tags.length > 3"
+                  dense
+                  color="grey-3"
+                  text-color="grey-8"
+                >
+                  +{{ props.row.tags.length - 3 }}
+                </q-chip>
+              </div>
+              <span v-else class="text-grey-6">-</span>
+            </q-td>
+          </template>
         </q-table>
       </q-card-section>
     </q-card>
@@ -81,8 +135,10 @@
             <q-img :src="selectedRow.thumbnailUrl" alt="thumbnail" style="max-width: 220px" />
           </div>
           <div><strong>ID:</strong> {{ selectedRow.id }}</div>
+          <div><strong>Title:</strong> {{ selectedRow.title }}</div>
           <div><strong>Artist:</strong> {{ selectedRow.artist ?? '-' }}</div>
           <div><strong>Album:</strong> {{ selectedRow.album ?? '-' }}</div>
+          <div><strong>Tags:</strong> {{ selectedRow.tags.length > 0 ? selectedRow.tags.join(', ') : '-' }}</div>
           <div><strong>Year:</strong> {{ selectedRow.year ?? '-' }}</div>
           <div><strong>Estimated BPM:</strong> {{ selectedRow.estimatedBpm ?? '-' }}</div>
           <div><strong>Estimated Key:</strong> {{ selectedRow.estimatedKey ?? '-' }}</div>
@@ -101,11 +157,13 @@
 </template>
 
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted, ref } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 import { useQuasar, type QTableColumn } from 'quasar';
 import { apiClient } from 'boot/api';
 
 type LibraryMediaType = 'all' | 'audio' | 'video';
+type TagSearchMode = 'all' | 'any';
+type TagUsage = { tag: string; count: number };
 
 type VideoRow = {
   id: string;
@@ -113,6 +171,7 @@ type VideoRow = {
   status: 'ready' | 'processing' | 'failed';
   artist: string | null;
   album: string | null;
+  tags: string[];
   year: number | null;
   estimatedBpm: number | null;
   estimatedKey: string | null;
@@ -132,6 +191,9 @@ const isLoading = ref(false);
 const rows = ref<VideoRow[]>([]);
 const keyword = ref('');
 const mediaType = ref<LibraryMediaType>('all');
+const selectedTags = ref<string[]>([]);
+const tagMode = ref<TagSearchMode>('all');
+const availableTags = ref<TagUsage[]>([]);
 const isMetadataDialogOpen = ref(false);
 const selectedRow = ref<VideoRow | null>(null);
 const thumbnailObjectUrls = ref<string[]>([]);
@@ -142,12 +204,18 @@ const mediaTypeOptions: Array<{ label: string; value: LibraryMediaType }> = [
   { label: 'Video', value: 'video' },
 ];
 
+const tagOptions = computed(() => availableTags.value.map((item) => ({
+  label: `${item.tag} (${item.count})`,
+  value: item.tag,
+})));
+
 const columns: QTableColumn<VideoRow>[] = [
   { name: 'thumbnailUrl', label: 'Thumb', field: 'thumbnailUrl', align: 'left' },
   { name: 'id', label: 'ID', field: 'id', align: 'left' },
   { name: 'title', label: 'Title', field: 'title', align: 'left' },
   { name: 'artist', label: 'Artist', field: (row) => row.artist ?? '-', align: 'left' },
   { name: 'album', label: 'Album', field: (row) => row.album ?? '-', align: 'left' },
+  { name: 'tags', label: 'Tags', field: (row) => row.tags.join(', '), align: 'left' },
   { name: 'year', label: 'Year', field: (row) => row.year ?? '-', align: 'left' },
   { name: 'status', label: 'Status', field: 'status', align: 'left' },
 ];
@@ -197,9 +265,9 @@ const materializeThumbnailUrls = async (items: VideoRow[]): Promise<VideoRow[]> 
         thumbnailUrl: objectUrl,
       };
     } catch {
+      const { ...rest } = item;
       return {
-        ...item,
-        thumbnailUrl: undefined,
+        ...rest,
       };
     }
   }));
@@ -217,6 +285,8 @@ const load = async (): Promise<void> => {
         limit: 100,
         keyword: trimmedKeyword.length > 0 ? trimmedKeyword : undefined,
         mediaType: mediaType.value,
+        tags: selectedTags.value.length > 0 ? selectedTags.value : undefined,
+        tagMode: tagMode.value,
       }
     });
     rows.value = await materializeThumbnailUrls(response.items as VideoRow[]);
@@ -228,6 +298,18 @@ const load = async (): Promise<void> => {
   }
 };
 
-onMounted(load);
+const loadTags = async (): Promise<void> => {
+  try {
+    const { data } = await apiClient.get<{ items: TagUsage[] }>('/library/tags');
+    availableTags.value = data.items;
+  } catch (error) {
+    console.error(error);
+    availableTags.value = [];
+  }
+};
+
+onMounted(async () => {
+  await Promise.all([loadTags(), load()]);
+});
 onBeforeUnmount(revokeThumbnailObjectUrls);
 </script>

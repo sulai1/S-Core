@@ -284,6 +284,10 @@ export interface paths {
             parameters: {
                 query?: {
                     limit?: number;
+                    keyword?: string;
+                    mediaType?: "all" | "audio" | "video";
+                    tags?: string[];
+                    tagMode?: "all" | "any";
                 };
                 header?: never;
                 path?: never;
@@ -303,6 +307,62 @@ export interface paths {
                                 title: string;
                                 /** @enum {string} */
                                 status: "ready" | "processing" | "failed";
+                                artist: string | null;
+                                album: string | null;
+                                tags: string[];
+                                year: number | null;
+                                estimatedBpm: number | null;
+                                estimatedKey: string | null;
+                                thumbnailUrl?: string;
+                                metadata: {
+                                    fileName: string;
+                                    extension: string;
+                                    mediaType: "audio" | "video";
+                                    sizeBytes: number;
+                                    createdAt: string;
+                                    modifiedAt: string;
+                                };
+                            }[];
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/library/tags": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List all tags used in media library */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Distinct tags with usage counts */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            items: {
+                                tag: string;
+                                count: number;
                             }[];
                         };
                     };
