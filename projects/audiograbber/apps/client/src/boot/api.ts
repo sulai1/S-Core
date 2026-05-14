@@ -3,7 +3,7 @@ import { createOpenApiClient, type Client } from '@s-core/client';
 import type { OpenApiModule } from '@s-core/core';
 import axios from 'axios';
 import { Buffer } from 'buffer';
-import type { paths } from '../../../AudioGrabber/src/server/api/index.js';
+import type { paths } from '../../../server/src/server/api/index.js';
 import { apiSchema } from 'src/api/schema';
 
 if (typeof window !== 'undefined') {

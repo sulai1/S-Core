@@ -14,13 +14,13 @@ const port = Number(process.env.PORT || 3800);
 
 function validateStartupEnv(): void {
     const workerMode = (process.env.AUDIOGRABBER_WORKER_MODE ?? "stub").toLowerCase();
-    if (!["ytdlp", "python"].includes(workerMode)) {
+    if (workerMode !== "python") {
         return;
     }
 
     const apiKey = (process.env.AUDIOGRABBER_YT_API_KEY ?? "").trim();
     if (!apiKey) {
-        throw new Error("Missing required AUDIOGRABBER_YT_API_KEY for ytdlp worker mode.");
+        throw new Error("Missing required AUDIOGRABBER_YT_API_KEY for python worker mode.");
     }
 }
 

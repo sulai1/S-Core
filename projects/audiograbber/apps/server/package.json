@@ -1,5 +1,5 @@
 {
-  "name": "@s-core/audiograbber-api",
+  "name": "@s-core/audiograbber-server",
   "version": "0.0.1",
   "description": "AudioGrabber API service",
   "type": "module",

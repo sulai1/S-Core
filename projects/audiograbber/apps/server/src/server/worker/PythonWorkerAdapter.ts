@@ -2,11 +2,14 @@ import { randomUUID } from "node:crypto";
 import { spawn } from "node:child_process";
 import { existsSync, mkdirSync, readdirSync, renameSync, rmSync } from "node:fs";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 import ffmpegStatic from "ffmpeg-static";
 import nodeID3 from "node-id3";
 import { DownloadRequest, SyncRequest, WorkerSubmission } from "../types.js";
 
 const resolvedFfmpegPath = typeof ffmpegStatic === "string" ? ffmpegStatic : undefined;
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 export interface WorkerAdapter {
     submitDownload(request: DownloadRequest): Promise<WorkerSubmission>;
@@ -93,6 +96,7 @@ export class YtDlpWorkerAdapter implements WorkerAdapter {
             "--no-warnings",
             "--quiet",
             "--no-playlist",
+            "--write-info-json",
             "--output",
             path.join(this.downloadFolder, "%(title)s %(id)s.%(ext)s"),
             "--format",
@@ -188,11 +192,19 @@ export class YtDlpWorkerAdapter implements WorkerAdapter {
             return configured;
         }
 
+        const virtualEnv = (process.env.VIRTUAL_ENV ?? "").trim();
+        const appRoot = path.resolve(__dirname, "../../..");
+        const workspaceRoot = path.resolve(appRoot, "../../..");
+
         const candidates = [
+            virtualEnv ? path.join(virtualEnv, "bin/yt-dlp") : "",
+            path.resolve(appRoot, ".venv/bin/yt-dlp"),
             path.resolve(process.cwd(), ".venv/bin/yt-dlp"),
+            path.resolve(process.cwd(), "projects/audiograbber/apps/server/.venv/bin/yt-dlp"),
+            path.resolve(workspaceRoot, "projects/audiograbber/apps/server/.venv/bin/yt-dlp"),
             path.resolve(process.cwd(), "projects/ytdownloader/apps/AudioGrabber/.venv/bin/yt-dlp"),
             "yt-dlp",
-        ];
+        ].filter(Boolean);
 
         for (const candidate of candidates) {
             if (!candidate.includes(path.sep) || existsSync(candidate)) {

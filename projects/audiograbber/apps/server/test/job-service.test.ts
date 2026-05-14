@@ -1,10 +1,13 @@
 import { mkdtempSync, writeFileSync, rmSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import { DataSource } from "typeorm";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { JobService } from "../src/server/services/JobService.js";
+import { MediaFileEntity } from "../src/database/entities/media-file.entity.js";
 import type { DownloadRequest, SyncRequest, WorkerSubmission } from "../src/server/types.js";
 import type { WorkerAdapter } from "../src/server/worker/PythonWorkerAdapter.js";
+import { createTestDataSource } from "./helpers/test-data-source.js";
 
 class FakeWorker implements WorkerAdapter {
     public downloadCalls: DownloadRequest[] = [];
@@ -27,18 +30,16 @@ afterEach(() => {
 
 describe("JobService", () => {
     test("skips download work when matching file already exists", async () => {
+        const dataSource = await createTestDataSource();
         const tempDir = mkdtempSync(path.join(os.tmpdir(), "audiograbber-job-service-"));
         try {
             writeFileSync(path.join(tempDir, "Glitchosaurus Rex abc123xyz99.mp3"), "existing");
 
             const worker = new FakeWorker();
-            const service = new JobService(worker, {
-                load: () => [],
-                save: vi.fn(),
-            } as never);
+            const service = new JobService(worker, dataSource as DataSource);
             (service as unknown as { downloadFolder: string }).downloadFolder = tempDir;
 
-            const job = service.queueDownload({
+            const job = await service.queueDownload({
                 videoId: "abc123xyz99",
                 songTitle: "Glitchosaurus Rex",
                 artist: "Jhesha, Cocodrilo",
@@ -48,8 +49,14 @@ describe("JobService", () => {
             expect(job.state).toBe("success");
             expect(job.progress).toBe(100);
             expect(worker.downloadCalls).toHaveLength(0);
+
+            const mediaRepo = dataSource.getRepository(MediaFileEntity);
+            const media = await mediaRepo.findOneBy({ youtubeVideoId: "abc123xyz99" });
+            expect(media).toBeTruthy();
+            expect(media?.artist).toBe("Jhesha, Cocodrilo");
         } finally {
             rmSync(tempDir, { recursive: true, force: true });
+            await dataSource.destroy();
         }
     });
 });
