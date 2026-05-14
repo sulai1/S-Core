@@ -6,7 +6,7 @@ dist
 coverage
 .vscode
 
-download
+.data
 client_secret*
 # Ansible vault password file - NEVER commit this
 .vault_pass

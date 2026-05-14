@@ -2,12 +2,13 @@ import { existsSync, mkdirSync, readFileSync, readdirSync, statSync, unlinkSync 
 import { spawnSync } from "node:child_process";
 import path from "node:path";
 import ffmpegPath from "ffmpeg-static";
-import { DataSource, Repository } from "typeorm";
+import { DataSource, In, Repository } from "typeorm";
 import { JobRepository } from "../../database/repositories/job.repository.js";
 import { DbJob } from "../../database/entities/job.entity.js";
 import { AudioFingerprint, AudioFingerprintEntity } from "../../database/entities/audio-fingerprint.entity.js";
 import { MediaFile, MediaFileEntity } from "../../database/entities/media-file.entity.js";
 import { DownloadRequest, JobRecord, LibraryVideo, SyncRequest } from "../types.js";
+import { parseMusicMetadata } from "../musicMetadata.js";
 import { WorkerAdapter } from "../worker/PythonWorkerAdapter.js";
 import {
     AUDIOGRABBER_DOWNLOAD_FAILED_FOLDER,
@@ -87,7 +88,7 @@ export class JobService {
         return job ? toJobRecord(job) : undefined;
     }
 
-    listVideos(limit?: number, keyword?: string, mediaType: "all" | "audio" | "video" = "all"): { items: LibraryVideo[] } {
+    async listVideos(limit?: number, keyword?: string, mediaType: "all" | "audio" | "video" = "all"): Promise<{ items: LibraryVideo[] }> {
         if (!existsSync(this.downloadFolder)) {
             return { items: [] };
         }
@@ -129,6 +130,12 @@ export class JobService {
                     id,
                     title: title.length > 0 ? title : baseName,
                     status: "ready" as const,
+                    artist: null as string | null,
+                    album: null as string | null,
+                    year: null as number | null,
+                    estimatedBpm: null as number | null,
+                    estimatedKey: null as string | null,
+                    thumbnailUrl: this.findThumbnailUrl(id),
                     metadata: {
                         fileName,
                         extension: normalizedExt,
@@ -141,6 +148,29 @@ export class JobService {
             })
             .sort((a, b) => a.title.localeCompare(b.title));
 
+        const videoIds = [...new Set(items.map((item) => item.id).filter((id) => /^[a-zA-Z0-9_-]{11}$/.test(id)))];
+        if (videoIds.length > 0) {
+            const mediaRows = await this.mediaRepo.find({
+                where: {
+                    youtubeVideoId: In(videoIds),
+                },
+            });
+            const mediaByVideoId = new Map(mediaRows.map((row) => [row.youtubeVideoId, row]));
+
+            for (const item of items) {
+                const media = mediaByVideoId.get(item.id);
+                if (!media) {
+                    continue;
+                }
+
+                item.artist = media.artist;
+                item.album = media.album;
+                item.year = media.year;
+                item.estimatedBpm = media.estimatedBpm;
+                item.estimatedKey = media.estimatedKey;
+            }
+        }
+
         if (typeof limit === "number" && limit > 0) {
             return { items: items.slice(0, limit) };
         }
@@ -148,12 +178,34 @@ export class JobService {
         return { items };
     }
 
+    private findThumbnailUrl(videoId: string): string | undefined {
+        if (!/^[a-zA-Z0-9_-]{11}$/.test(videoId)) {
+            return undefined;
+        }
+
+        return `/library/thumbnail/${encodeURIComponent(videoId)}`;
+    }
+
     private async dispatchDownload(jobId: string, request: DownloadRequest): Promise<void> {
         await this.jobRepo.patch(jobId, { state: "running", progress: 15 });
-        const result = await this.worker.submitDownload(request);
+
+        let lastProgress = 15;
+        const result = await this.worker.submitDownload(request, (progressUpdate) => {
+            const reported = typeof progressUpdate.percent === "number" ? progressUpdate.percent : 0;
+            const normalized = Math.max(15, Math.min(90, Math.round(reported)));
+            if (normalized <= lastProgress) {
+                return;
+            }
+
+            lastProgress = normalized;
+            void this.jobRepo.patch(jobId, { state: "running", progress: normalized });
+        });
+
         if (!result.accepted) {
             throw new Error(result.message ?? "worker-rejected-download");
         }
+
+        await this.jobRepo.patch(jobId, { state: "running", progress: Math.max(lastProgress, 95) });
 
         const media = await this.persistMediaFile(request.videoId, request);
         await this.processFingerprint(media);
@@ -204,9 +256,23 @@ export class JobService {
         const info = this.readInfoJson(videoId);
 
         const titleFromFile = output.baseName.replace(/\s+[a-zA-Z0-9_-]{11}$/, "").trim();
-        const title = (request.songTitle ?? "").trim() || (info?.title ?? "").trim() || titleFromFile || output.baseName;
-        const artist = (request.artist ?? "").trim() || (typeof info?.artist === "string" ? info.artist.trim() : "") || null;
-        const album = (request.album ?? "").trim() || (typeof info?.album === "string" ? info.album.trim() : "") || null;
+        const infoTitle = typeof info?.title === "string" ? info.title.trim() : "";
+        const infoDescription = typeof info?.description === "string" ? info.description : undefined;
+        const parsedMusicMetadata = parseMusicMetadata(infoTitle || titleFromFile || output.baseName, infoDescription);
+
+        const title = (request.songTitle ?? "").trim()
+            || infoTitle
+            || (parsedMusicMetadata.songTitle ?? "").trim()
+            || titleFromFile
+            || output.baseName;
+        const artist = (request.artist ?? "").trim()
+            || (typeof info?.artist === "string" ? info.artist.trim() : "")
+            || (parsedMusicMetadata.artist ?? "").trim()
+            || null;
+        const album = (request.album ?? "").trim()
+            || (typeof info?.album === "string" ? info.album.trim() : "")
+            || (parsedMusicMetadata.album ?? "").trim()
+            || null;
 
         const tags = Array.isArray(info?.tags)
             ? info.tags.filter((value): value is string => typeof value === "string").map((value) => value.trim()).filter(Boolean)
@@ -244,7 +310,9 @@ export class JobService {
                 estimatedBpm,
                 estimatedKey,
             });
-            return await this.mediaRepo.findOneByOrFail({ id: existing.id });
+            const updated = await this.mediaRepo.findOneByOrFail({ id: existing.id });
+            this.cleanupInfoJsonFiles(videoId);
+            return updated;
         }
 
         const entry = this.mediaRepo.create({
@@ -264,7 +332,9 @@ export class JobService {
             estimatedKey,
             createdAt: stats.birthtime,
         });
-        return await this.mediaRepo.save(entry);
+        const saved = await this.mediaRepo.save(entry);
+        this.cleanupInfoJsonFiles(videoId);
+        return saved;
     }
 
     private async processFingerprint(media: MediaFile): Promise<void> {
@@ -568,21 +638,8 @@ export class JobService {
         };
     }
 
-    private readInfoJson(videoId: string): { title?: string; artist?: string; album?: string; tags?: unknown[]; duration?: number; release_year?: number; upload_date?: string; bpm?: number; key?: string; musical_key?: string } | undefined {
-        if (!existsSync(this.downloadFolder)) {
-            return undefined;
-        }
-
-        const jsonFiles = readdirSync(this.downloadFolder)
-            .filter((fileName) => fileName.includes(videoId) && fileName.endsWith(".info.json"))
-            .map((fileName) => {
-                const fullPath = path.join(this.downloadFolder, fileName);
-                return {
-                    fullPath,
-                    modifiedAt: statSync(fullPath).mtimeMs,
-                };
-            })
-            .sort((a, b) => b.modifiedAt - a.modifiedAt);
+    private readInfoJson(videoId: string): { title?: string; artist?: string; album?: string; description?: string; tags?: unknown[]; duration?: number; release_year?: number; upload_date?: string; bpm?: number; key?: string; musical_key?: string } | undefined {
+        const jsonFiles = this.getInfoJsonFiles(videoId);
 
         if (jsonFiles.length === 0) {
             return undefined;
@@ -594,6 +651,7 @@ export class JobService {
                 title?: string;
                 artist?: string;
                 album?: string;
+                description?: string;
                 tags?: unknown[];
                 duration?: number;
                 release_year?: number;
@@ -606,6 +664,34 @@ export class JobService {
         } catch {
             return undefined;
         }
+    }
+
+    private cleanupInfoJsonFiles(videoId: string): void {
+        const jsonFiles = this.getInfoJsonFiles(videoId);
+        for (const file of jsonFiles) {
+            try {
+                unlinkSync(file.fullPath);
+            } catch {
+                // best effort cleanup for yt-dlp info sidecar files
+            }
+        }
+    }
+
+    private getInfoJsonFiles(videoId: string): Array<{ fullPath: string; modifiedAt: number }> {
+        if (!existsSync(this.downloadFolder)) {
+            return [];
+        }
+
+        return readdirSync(this.downloadFolder)
+            .filter((fileName) => fileName.includes(videoId) && fileName.endsWith(".info.json"))
+            .map((fileName) => {
+                const fullPath = path.join(this.downloadFolder, fileName);
+                return {
+                    fullPath,
+                    modifiedAt: statSync(fullPath).mtimeMs,
+                };
+            })
+            .sort((a, b) => b.modifiedAt - a.modifiedAt);
     }
 
     private inferMimeType(extension: string): string {

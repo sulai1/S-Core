@@ -30,6 +30,7 @@
             </q-item-section>
             <q-item-section side style="min-width: 140px">
               <q-linear-progress :value="(row.progress ?? 0) / 100" rounded size="10px" color="teal" track-color="grey-3" />
+              <div class="text-caption text-grey-7 text-right q-mt-xs">{{ Math.max(0, Math.min(100, Math.round(row.progress ?? 0))) }}%</div>
             </q-item-section>
             <q-item-section side>
               <q-btn flat dense icon="delete" @click="remove(row.id)" />

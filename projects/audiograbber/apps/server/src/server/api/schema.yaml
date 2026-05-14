@@ -317,6 +317,23 @@ paths:
                         status:
                           type: string
                           enum: [ready, processing, failed]
+                        artist:
+                          type: string
+                          nullable: true
+                        album:
+                          type: string
+                          nullable: true
+                        year:
+                          type: integer
+                          nullable: true
+                        estimatedBpm:
+                          type: number
+                          nullable: true
+                        estimatedKey:
+                          type: string
+                          nullable: true
+                        thumbnailUrl:
+                          type: string
                         metadata:
                           type: object
                           required: [fileName, extension, mediaType, sizeBytes, createdAt, modifiedAt]
@@ -337,6 +354,30 @@ paths:
                             modifiedAt:
                               type: string
                               format: date-time
+
+  /system/info:
+    get:
+      summary: System info including yt-dlp version
+      security: []
+      responses:
+        "200":
+          description: System info
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [ytDlp]
+                properties:
+                  ytDlp:
+                    type: object
+                    required: [version, latestVersion, upToDate]
+                    properties:
+                      version:
+                        type: string
+                      latestVersion:
+                        type: string
+                      upToDate:
+                        type: boolean
 
 components:
   securitySchemes:

@@ -47,6 +47,14 @@
           @row-click="openMetadata"
           no-data-label="No videos yet"
         >
+          <template #body-cell-thumbnailUrl="props">
+            <q-td :props="props">
+              <q-avatar v-if="props.row.thumbnailUrl" square size="56px">
+                <img :src="props.row.thumbnailUrl" alt="thumbnail" />
+              </q-avatar>
+              <span v-else class="text-grey-6">-</span>
+            </q-td>
+          </template>
           <template #body-cell-status="props">
             <q-td :props="props">
               <q-badge :color="statusColor(props.value)">{{ props.value }}</q-badge>
@@ -69,7 +77,15 @@
         </q-card-section>
         <q-separator />
         <q-card-section v-if="selectedRow" class="q-gutter-sm">
+          <div v-if="selectedRow.thumbnailUrl" class="q-mb-sm">
+            <q-img :src="selectedRow.thumbnailUrl" alt="thumbnail" style="max-width: 220px" />
+          </div>
           <div><strong>ID:</strong> {{ selectedRow.id }}</div>
+          <div><strong>Artist:</strong> {{ selectedRow.artist ?? '-' }}</div>
+          <div><strong>Album:</strong> {{ selectedRow.album ?? '-' }}</div>
+          <div><strong>Year:</strong> {{ selectedRow.year ?? '-' }}</div>
+          <div><strong>Estimated BPM:</strong> {{ selectedRow.estimatedBpm ?? '-' }}</div>
+          <div><strong>Estimated Key:</strong> {{ selectedRow.estimatedKey ?? '-' }}</div>
           <div><strong>File:</strong> {{ selectedRow.metadata.fileName }}</div>
           <div><strong>Extension:</strong> {{ selectedRow.metadata.extension }}</div>
           <div><strong>Size:</strong> {{ formatBytes(selectedRow.metadata.sizeBytes) }}</div>
@@ -85,7 +101,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue';
+import { onBeforeUnmount, onMounted, ref } from 'vue';
 import { useQuasar, type QTableColumn } from 'quasar';
 import { apiClient } from 'boot/api';
 
@@ -95,6 +111,12 @@ type VideoRow = {
   id: string;
   title: string;
   status: 'ready' | 'processing' | 'failed';
+  artist: string | null;
+  album: string | null;
+  year: number | null;
+  estimatedBpm: number | null;
+  estimatedKey: string | null;
+  thumbnailUrl?: string;
   metadata: {
     fileName: string;
     extension: string;
@@ -112,6 +134,7 @@ const keyword = ref('');
 const mediaType = ref<LibraryMediaType>('all');
 const isMetadataDialogOpen = ref(false);
 const selectedRow = ref<VideoRow | null>(null);
+const thumbnailObjectUrls = ref<string[]>([]);
 
 const mediaTypeOptions: Array<{ label: string; value: LibraryMediaType }> = [
   { label: 'All', value: 'all' },
@@ -120,8 +143,12 @@ const mediaTypeOptions: Array<{ label: string; value: LibraryMediaType }> = [
 ];
 
 const columns: QTableColumn<VideoRow>[] = [
+  { name: 'thumbnailUrl', label: 'Thumb', field: 'thumbnailUrl', align: 'left' },
   { name: 'id', label: 'ID', field: 'id', align: 'left' },
   { name: 'title', label: 'Title', field: 'title', align: 'left' },
+  { name: 'artist', label: 'Artist', field: (row) => row.artist ?? '-', align: 'left' },
+  { name: 'album', label: 'Album', field: (row) => row.album ?? '-', align: 'left' },
+  { name: 'year', label: 'Year', field: (row) => row.year ?? '-', align: 'left' },
   { name: 'status', label: 'Status', field: 'status', align: 'left' },
 ];
 
@@ -148,9 +175,42 @@ const formatBytes = (bytes: number): string => {
   return `${gb.toFixed(2)} GB`;
 };
 
+const revokeThumbnailObjectUrls = (): void => {
+  for (const url of thumbnailObjectUrls.value) {
+    URL.revokeObjectURL(url);
+  }
+  thumbnailObjectUrls.value = [];
+};
+
+const materializeThumbnailUrls = async (items: VideoRow[]): Promise<VideoRow[]> => {
+  const resolved = await Promise.all(items.map(async (item) => {
+    if (!item.thumbnailUrl) {
+      return item;
+    }
+
+    try {
+      const { data } = await apiClient.get<Blob>(item.thumbnailUrl, { responseType: 'blob' });
+      const objectUrl = URL.createObjectURL(data);
+      thumbnailObjectUrls.value.push(objectUrl);
+      return {
+        ...item,
+        thumbnailUrl: objectUrl,
+      };
+    } catch {
+      return {
+        ...item,
+        thumbnailUrl: undefined,
+      };
+    }
+  }));
+
+  return resolved;
+};
+
 const load = async (): Promise<void> => {
   try {
     isLoading.value = true;
+    revokeThumbnailObjectUrls();
     const trimmedKeyword = keyword.value.trim();
     const { data: response } = await apiClient.get('/library/videos', {
       params: {
@@ -159,7 +219,7 @@ const load = async (): Promise<void> => {
         mediaType: mediaType.value,
       }
     });
-    rows.value = response.items;
+    rows.value = await materializeThumbnailUrls(response.items as VideoRow[]);
   } catch (error) {
     console.error(error);
     $q.notify({ color: 'negative', message: 'Failed to load library.' });
@@ -169,4 +229,5 @@ const load = async (): Promise<void> => {
 };
 
 onMounted(load);
+onBeforeUnmount(revokeThumbnailObjectUrls);
 </script>

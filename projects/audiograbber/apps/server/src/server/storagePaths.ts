@@ -13,12 +13,12 @@ export const AUDIOGRABBER_DOWNLOAD_FOLDER = resolvePathFromEnv(
 
 export const AUDIOGRABBER_DOWNLOAD_TMP_FOLDER = resolvePathFromEnv(
     "AUDIOGRABBER_DOWNLOAD_TMP_FOLDER",
-    path.join(AUDIOGRABBER_DOWNLOAD_FOLDER, "tmp"),
+    ".data/audiograbber/tmp",
 );
 
 export const AUDIOGRABBER_DOWNLOAD_FAILED_FOLDER = resolvePathFromEnv(
     "AUDIOGRABBER_DOWNLOAD_FAILED_FOLDER",
-    path.join(AUDIOGRABBER_DOWNLOAD_FOLDER, "failed"),
+    ".data/audiograbber/failed",
 );
 
 export const AUDIOGRABBER_JOB_STORE_PATH = resolvePathFromEnv(

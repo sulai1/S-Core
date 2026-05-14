@@ -283,5 +283,34 @@ export const apiSchema: OpenAPIV3_1.Document = {
                 },
             },
         },
+        '/system/info': {
+            get: {
+                summary: 'System info including yt-dlp version',
+                responses: {
+                    '200': {
+                        description: 'System info',
+                        content: {
+                            'application/json': {
+                                schema: {
+                                    type: 'object',
+                                    required: ['ytDlp'],
+                                    properties: {
+                                        ytDlp: {
+                                            type: 'object',
+                                            required: ['version', 'latestVersion', 'upToDate'],
+                                            properties: {
+                                                version: { type: 'string' },
+                                                latestVersion: { type: 'string' },
+                                                upToDate: { type: 'boolean' },
+                                            },
+                                        },
+                                    },
+                                },
+                            },
+                        },
+                    },
+                },
+            },
+        },
     },
 };

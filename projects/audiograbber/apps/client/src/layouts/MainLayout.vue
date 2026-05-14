@@ -21,6 +21,16 @@
           @click="onLogout"
         />
         <q-chip color="black" text-color="amber-4" icon="podcasts">Phase 4 MVP</q-chip>
+        <q-chip
+          v-if="ytDlpInfo"
+          :color="ytDlpInfo.upToDate ? 'green-9' : 'orange-9'"
+          text-color="white"
+          :icon="ytDlpInfo.upToDate ? 'check_circle' : 'warning'"
+          :title="ytDlpInfo.upToDate ? 'yt-dlp is up to date' : `Latest: ${ytDlpInfo.latestVersion}`"
+          dense
+        >
+          yt-dlp {{ ytDlpInfo.version }}
+        </q-chip>
       </q-toolbar>
     </q-header>
 
@@ -48,10 +58,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 import { authState, logoutWithKeycloak } from 'src/auth/keycloak';
+import { apiClient } from 'boot/api';
 
 const leftDrawerOpen = ref(true);
+
+type YtDlpInfo = { version: string; latestVersion: string; upToDate: boolean };
+const ytDlpInfo = ref<YtDlpInfo | null>(null);
 
 const onLogout = async (): Promise<void> => {
   await logoutWithKeycloak();
@@ -65,4 +79,13 @@ const navItems = [
   { to: '/library', label: 'Library', icon: 'library_music' },
   { to: '/settings', label: 'Settings', icon: 'tune' },
 ];
+
+onMounted(async () => {
+  try {
+    const { data } = await apiClient.get<{ ytDlp: YtDlpInfo }>('/system/info');
+    ytDlpInfo.value = data.ytDlp;
+  } catch {
+    // not critical — leave chip hidden
+  }
+});
 </script>

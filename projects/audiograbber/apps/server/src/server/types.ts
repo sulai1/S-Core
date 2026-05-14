@@ -48,5 +48,11 @@ export type LibraryVideo = {
     id: string;
     title: string;
     status: "ready" | "processing" | "failed";
+    artist: string | null;
+    album: string | null;
+    year: number | null;
+    estimatedBpm: number | null;
+    estimatedKey: string | null;
+    thumbnailUrl?: string;
     metadata: LibraryVideoMetadata;
 };
