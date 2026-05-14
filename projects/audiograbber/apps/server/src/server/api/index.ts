@@ -61,11 +61,17 @@ export interface paths {
                         videoId: string;
                         playlistId?: string;
                         priority?: number;
+                        /**
+                         * @description mp3 converts/extracts audio as MP3, source keeps original downloaded format.
+                         * @default mp3
+                         * @enum {string}
+                         */
                         outputFormat?: "mp3" | "source";
+                        /**
+                         * @description Embed available metadata tags into the output media file.
+                         * @default true
+                         */
                         embedMetadata?: boolean;
-                        songTitle?: string;
-                        artist?: string;
-                        album?: string;
                     };
                 };
             };
@@ -205,10 +211,14 @@ export interface paths {
         /** Fetch channel overview and videos */
         get: {
             parameters: {
-                query: {
-                    channel: string;
+                query?: {
+                    /** @description Channel reference, either @channel_name or channel ID (UC...). */
+                    channel?: string;
+                    /** @description Optional alias for channel using channel ID (UC...). */
                     channelId?: string;
+                    /** @description Optional alias for channel using @channel_name. */
                     handle?: string;
+                    /** @description Max number of videos to return. */
                     maxResults?: number;
                 };
                 header?: never;
@@ -234,8 +244,21 @@ export interface paths {
                             videos?: {
                                 videoId: string;
                                 title: string;
+                                /** Format: date-time */
                                 publishedAt: string;
                                 thumbnailUrl?: string;
+                                /** @description ISO 8601 duration format (e.g., PT5M30S) */
+                                duration?: string;
+                                viewCount?: number;
+                                likeCount?: number;
+                                description?: string;
+                                tags?: string[];
+                                /** @description Extracted artist name from YouTube Music metadata */
+                                artist?: string;
+                                /** @description Extracted song title from YouTube Music metadata */
+                                songTitle?: string;
+                                /** @description Extracted album name from YouTube Music metadata */
+                                album?: string;
                             }[];
                         };
                     };
@@ -284,9 +307,13 @@ export interface paths {
             parameters: {
                 query?: {
                     limit?: number;
+                    /** @description Case-insensitive match against downloaded file names. */
                     keyword?: string;
+                    /** @description Filter library entries by media type. */
                     mediaType?: "all" | "audio" | "video";
+                    /** @description Filter by tag names. Repeat query key for multiple tags. */
                     tags?: string[];
+                    /** @description all = media must have all provided tags, any = media may have any provided tag. */
                     tagMode?: "all" | "any";
                 };
                 header?: never;
@@ -307,19 +334,22 @@ export interface paths {
                                 title: string;
                                 /** @enum {string} */
                                 status: "ready" | "processing" | "failed";
-                                artist: string | null;
-                                album: string | null;
-                                tags: string[];
-                                year: number | null;
-                                estimatedBpm: number | null;
-                                estimatedKey: string | null;
+                                artists: string[];
+                                albums: string[];
+                                tags?: string[];
+                                year?: number | null;
+                                estimatedBpm?: number | null;
+                                estimatedKey?: string | null;
                                 thumbnailUrl?: string;
                                 metadata: {
                                     fileName: string;
                                     extension: string;
+                                    /** @enum {string} */
                                     mediaType: "audio" | "video";
                                     sizeBytes: number;
+                                    /** Format: date-time */
                                     createdAt: string;
+                                    /** Format: date-time */
                                     modifiedAt: string;
                                 };
                             }[];

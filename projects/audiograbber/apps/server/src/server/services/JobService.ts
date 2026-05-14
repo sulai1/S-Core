@@ -3,6 +3,8 @@ import { spawnSync } from "node:child_process";
 import path from "node:path";
 import ffmpegPath from "ffmpeg-static";
 import { DataSource, In, Repository } from "typeorm";
+import { Artist, ArtistEntity } from "../../database/entities/artist.entity.js";
+import { Album, AlbumEntity } from "../../database/entities/album.entity.js";
 import { JobRepository } from "../../database/repositories/job.repository.js";
 import { DbJob } from "../../database/entities/job.entity.js";
 import { AudioFingerprint, AudioFingerprintEntity } from "../../database/entities/audio-fingerprint.entity.js";
@@ -10,6 +12,8 @@ import { MediaFile, MediaFileEntity } from "../../database/entities/media-file.e
 import { MediaTag, MediaTagEntity } from "../../database/entities/media-tag.entity.js";
 import { Tag, TagEntity } from "../../database/entities/tag.entity.js";
 import { DownloadRequest, JobRecord, LibraryTagUsage, LibraryVideo, SyncRequest, TagSearchMode } from "../types.js";
+import { splitArtistNames, uniqueArtistNames } from "../artistNames.js";
+import { normalizeAlbumName, uniqueAlbumNames } from "../albumNames.js";
 import { parseMusicMetadata } from "../musicMetadata.js";
 import { WorkerAdapter } from "../worker/PythonWorkerAdapter.js";
 import {
@@ -34,6 +38,8 @@ function toJobRecord(job: DbJob): JobRecord {
 export class JobService {
     private readonly jobRepo: JobRepository;
     private readonly mediaRepo: Repository<MediaFile>;
+    private readonly artistRepo: Repository<Artist>;
+    private readonly albumRepo: Repository<Album>;
     private readonly fingerprintRepo: Repository<AudioFingerprint>;
     private readonly tagRepo: Repository<Tag>;
     private readonly mediaTagRepo: Repository<MediaTag>;
@@ -50,6 +56,8 @@ export class JobService {
     ) {
         this.jobRepo = new JobRepository(dataSource);
         this.mediaRepo = dataSource.getRepository(MediaFileEntity);
+        this.artistRepo = dataSource.getRepository(ArtistEntity);
+        this.albumRepo = dataSource.getRepository(AlbumEntity);
         this.fingerprintRepo = dataSource.getRepository(AudioFingerprintEntity);
         this.tagRepo = dataSource.getRepository(TagEntity);
         this.mediaTagRepo = dataSource.getRepository(MediaTagEntity);
@@ -143,8 +151,8 @@ export class JobService {
                     id,
                     title: title.length > 0 ? title : baseName,
                     status: "ready" as const,
-                    artist: null as string | null,
-                    album: null as string | null,
+                    artists: [] as string[],
+                    albums: [] as string[],
                     tags: [] as string[],
                     year: null as number | null,
                     estimatedBpm: null as number | null,
@@ -168,6 +176,10 @@ export class JobService {
             const mediaRows = await this.mediaRepo.find({
                 where: {
                     youtubeVideoId: In(videoIds),
+                },
+                relations: {
+                    artists: true,
+                    albums: true,
                 },
             });
 
@@ -194,8 +206,8 @@ export class JobService {
                     continue;
                 }
 
-                item.artist = media.artist;
-                item.album = media.album;
+                item.artists = media.artists?.map((artist) => artist.name) ?? [];
+                item.albums = media.albums?.map((album) => album.name) ?? [];
                 item.tags = tagsByMediaId.get(media.id) ?? [];
                 item.year = media.year;
                 item.estimatedBpm = media.estimatedBpm;
@@ -322,14 +334,16 @@ export class JobService {
             || infoTitle
             || titleFromFile
             || output.baseName;
-        const artist = (request.artist ?? "").trim()
-            || (typeof info?.artist === "string" ? info.artist.trim() : "")
-            || (parsedMusicMetadata.artist ?? "").trim()
-            || null;
-        const album = (request.album ?? "").trim()
-            || (typeof info?.album === "string" ? info.album.trim() : "")
-            || (parsedMusicMetadata.album ?? "").trim()
-            || null;
+        const albumNames = uniqueAlbumNames([
+            (request.album ?? "").trim(),
+            typeof info?.album === "string" ? info.album.trim() : "",
+            (parsedMusicMetadata.album ?? "").trim(),
+        ]);
+        const artistNames = uniqueArtistNames([
+            ...splitArtistNames(request.artist),
+            ...splitArtistNames(typeof info?.artist === "string" ? info.artist : undefined),
+            ...splitArtistNames(parsedMusicMetadata.artist),
+        ]);
 
         const tags = Array.isArray(info?.tags)
             ? info.tags.filter((value): value is string => typeof value === "string").map((value) => value.trim()).filter(Boolean)
@@ -360,13 +374,13 @@ export class JobService {
                 mimeType,
                 durationSecs,
                 title,
-                artist,
-                album,
                 year,
                 estimatedBpm,
                 estimatedKey,
             });
             const updated = await this.mediaRepo.findOneByOrFail({ id: existing.id });
+            await this.replaceMediaArtists(updated.id, artistNames);
+            await this.replaceMediaAlbums(updated.id, albumNames);
             await this.replaceMediaTags(updated.id, tags);
             this.cleanupInfoJsonFiles(videoId);
             return updated;
@@ -381,17 +395,121 @@ export class JobService {
             visibility: "owner",
             allowedGroups: null,
             title,
-            artist,
-            album,
             year,
             estimatedBpm,
             estimatedKey,
             createdAt: stats.birthtime,
         });
         const saved = await this.mediaRepo.save(entry);
+        await this.replaceMediaArtists(saved.id, artistNames);
+        await this.replaceMediaAlbums(saved.id, albumNames);
         await this.replaceMediaTags(saved.id, tags);
         this.cleanupInfoJsonFiles(videoId);
         return saved;
+    }
+
+    private async replaceMediaArtists(mediaFileId: string, rawArtistNames: string[]): Promise<void> {
+        const normalizedToDisplay = new Map<string, string>();
+        for (const rawArtistName of rawArtistNames) {
+            const displayName = rawArtistName.trim();
+            if (!displayName) {
+                continue;
+            }
+
+            const normalizedName = displayName.toLowerCase().replace(/\s+/g, " ").trim();
+            if (!normalizedName || normalizedToDisplay.has(normalizedName)) {
+                continue;
+            }
+
+            normalizedToDisplay.set(normalizedName, displayName);
+        }
+
+        const relation = this.mediaRepo.createQueryBuilder().relation(MediaFileEntity, "artists").of(mediaFileId);
+        const currentArtists = await relation.loadMany<Artist>();
+        if (currentArtists.length > 0) {
+            await relation.remove(currentArtists.map((artist) => artist.id));
+        }
+
+        if (normalizedToDisplay.size === 0) {
+            return;
+        }
+
+        const values = [...normalizedToDisplay.values()].map((displayName) => ({
+            name: displayName,
+            normalizedName: displayName.toLowerCase().replace(/\s+/g, " ").trim(),
+        }));
+
+        await this.artistRepo.createQueryBuilder()
+            .insert()
+            .into(ArtistEntity)
+            .values(values)
+            .orIgnore()
+            .execute();
+
+        const normalizedNames = [...normalizedToDisplay.keys()];
+        const artists = await this.artistRepo.find({
+            where: {
+                normalizedName: In(normalizedNames),
+            },
+        });
+
+        if (artists.length === 0) {
+            return;
+        }
+
+        await relation.add(artists.map((artist) => artist.id));
+    }
+
+    private async replaceMediaAlbums(mediaFileId: string, rawAlbumNames: string[]): Promise<void> {
+        const normalizedToDisplay = new Map<string, string>();
+        for (const rawAlbumName of rawAlbumNames) {
+            const displayName = rawAlbumName.trim();
+            if (!displayName) {
+                continue;
+            }
+
+            const normalizedName = normalizeAlbumName(displayName);
+            if (!normalizedName || normalizedToDisplay.has(normalizedName)) {
+                continue;
+            }
+
+            normalizedToDisplay.set(normalizedName, displayName);
+        }
+
+        const relation = this.mediaRepo.createQueryBuilder().relation(MediaFileEntity, "albums").of(mediaFileId);
+        const currentAlbums = await relation.loadMany<Album>();
+        if (currentAlbums.length > 0) {
+            await relation.remove(currentAlbums.map((album) => album.id));
+        }
+
+        if (normalizedToDisplay.size === 0) {
+            return;
+        }
+
+        const values = [...normalizedToDisplay.values()].map((displayName) => ({
+            name: displayName,
+            normalizedName: normalizeAlbumName(displayName),
+        }));
+
+        await this.albumRepo.createQueryBuilder()
+            .insert()
+            .into(AlbumEntity)
+            .values(values)
+            .orIgnore()
+            .execute();
+
+        const normalizedNames = [...normalizedToDisplay.keys()];
+        const albums = await this.albumRepo.find({
+            where: {
+                normalizedName: In(normalizedNames),
+            },
+        });
+
+        if (albums.length === 0) {
+            return;
+        }
+
+        await relation.add(albums.map((album) => album.id));
     }
 
     private normalizeTagName(value: string): string {

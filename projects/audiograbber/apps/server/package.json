@@ -17,7 +17,7 @@
     "canary": ".venv/bin/python3 python/canary.py",
     "canary:live": ".venv/bin/python3 python/canary.py --live",
     "check-deps": "bash scripts/check-deps.sh",
-    "typeorm": "node --loader ts-node/esm ./node_modules/typeorm/cli.js",
+    "typeorm": "node --loader ts-node/esm $(node --print \"require.resolve('typeorm/cli')\")",
     "migration:run": "npm run typeorm -- migration:run -d src/data-source.ts",
     "migration:revert": "npm run typeorm -- migration:revert -d src/data-source.ts",
     "migration:show": "npm run typeorm -- migration:show -d src/data-source.ts",

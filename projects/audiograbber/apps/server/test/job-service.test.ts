@@ -51,9 +51,12 @@ describe("JobService", () => {
             expect(worker.downloadCalls).toHaveLength(0);
 
             const mediaRepo = dataSource.getRepository(MediaFileEntity);
-            const media = await mediaRepo.findOneBy({ youtubeVideoId: "abc123xyz99" });
+            const media = await mediaRepo.findOne({
+                where: { youtubeVideoId: "abc123xyz99" },
+                relations: { artists: true },
+            });
             expect(media).toBeTruthy();
-            expect(media?.artist).toBe("Jhesha, Cocodrilo");
+            expect(media?.artists?.map((artist) => artist.name)).toEqual(["Jhesha", "Cocodrilo"]);
         } finally {
             rmSync(tempDir, { recursive: true, force: true });
             await dataSource.destroy();

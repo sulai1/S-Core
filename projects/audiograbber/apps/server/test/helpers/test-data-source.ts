@@ -1,4 +1,6 @@
 import { DataSource } from "typeorm";
+import { ArtistEntity } from "../../src/database/entities/artist.entity.js";
+import { AlbumEntity } from "../../src/database/entities/album.entity.js";
 import { UserEntity } from "../../src/database/entities/user.entity.js";
 import { MediaFileEntity } from "../../src/database/entities/media-file.entity.js";
 import { JobEntity } from "../../src/database/entities/job.entity.js";
@@ -10,7 +12,7 @@ export async function createTestDataSource(): Promise<DataSource> {
         database: ":memory:",
         synchronize: true,
         logging: false,
-        entities: [UserEntity, MediaFileEntity, JobEntity, AudioFingerprintEntity],
+        entities: [UserEntity, ArtistEntity, AlbumEntity, MediaFileEntity, JobEntity, AudioFingerprintEntity],
     });
     await ds.initialize();
     return ds;

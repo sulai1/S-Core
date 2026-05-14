@@ -48,8 +48,8 @@ export type LibraryVideo = {
     id: string;
     title: string;
     status: "ready" | "processing" | "failed";
-    artist: string | null;
-    album: string | null;
+    artists: string[];
+    albums: string[];
     tags: string[];
     year: number | null;
     estimatedBpm: number | null;

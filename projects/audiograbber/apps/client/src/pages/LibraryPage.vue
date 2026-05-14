@@ -136,8 +136,8 @@
           </div>
           <div><strong>ID:</strong> {{ selectedRow.id }}</div>
           <div><strong>Title:</strong> {{ selectedRow.title }}</div>
-          <div><strong>Artist:</strong> {{ selectedRow.artist ?? '-' }}</div>
-          <div><strong>Album:</strong> {{ selectedRow.album ?? '-' }}</div>
+          <div><strong>Artist:</strong> {{ selectedRow.artists.length > 0 ? selectedRow.artists.join(', ') : '-' }}</div>
+          <div><strong>Album:</strong> {{ selectedRow.albums.length > 0 ? selectedRow.albums.join(', ') : '-' }}</div>
           <div><strong>Tags:</strong> {{ selectedRow.tags.length > 0 ? selectedRow.tags.join(', ') : '-' }}</div>
           <div><strong>Year:</strong> {{ selectedRow.year ?? '-' }}</div>
           <div><strong>Estimated BPM:</strong> {{ selectedRow.estimatedBpm ?? '-' }}</div>
@@ -169,8 +169,8 @@ type VideoRow = {
   id: string;
   title: string;
   status: 'ready' | 'processing' | 'failed';
-  artist: string | null;
-  album: string | null;
+  artists: string[];
+  albums: string[];
   tags: string[];
   year: number | null;
   estimatedBpm: number | null;
@@ -213,8 +213,8 @@ const columns: QTableColumn<VideoRow>[] = [
   { name: 'thumbnailUrl', label: 'Thumb', field: 'thumbnailUrl', align: 'left' },
   { name: 'id', label: 'ID', field: 'id', align: 'left' },
   { name: 'title', label: 'Title', field: 'title', align: 'left' },
-  { name: 'artist', label: 'Artist', field: (row) => row.artist ?? '-', align: 'left' },
-  { name: 'album', label: 'Album', field: (row) => row.album ?? '-', align: 'left' },
+  { name: 'artist', label: 'Artist', field: (row) => row.artists.length > 0 ? row.artists.join(', ') : '-', align: 'left' },
+  { name: 'album', label: 'Album', field: (row) => row.albums.length > 0 ? row.albums.join(', ') : '-', align: 'left' },
   { name: 'tags', label: 'Tags', field: (row) => row.tags.join(', '), align: 'left' },
   { name: 'year', label: 'Year', field: (row) => row.year ?? '-', align: 'left' },
   { name: 'status', label: 'Status', field: 'status', align: 'left' },

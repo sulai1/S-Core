@@ -326,7 +326,7 @@ paths:
                     type: array
                     items:
                       type: object
-                      required: [id, title, status, metadata]
+                      required: [id, title, status, metadata, artists, albums]
                       properties:
                         id:
                           type: string
@@ -335,12 +335,14 @@ paths:
                         status:
                           type: string
                           enum: [ready, processing, failed]
-                        artist:
-                          type: string
-                          nullable: true
-                        album:
-                          type: string
-                          nullable: true
+                        artists:
+                          type: array
+                          items:
+                            type: string
+                        albums:
+                          type: array
+                          items:
+                            type: string
                         tags:
                           type: array
                           items:
