@@ -130,4 +130,30 @@ describe("parseMusicMetadata", () => {
             songTitle: "WAVER RAVER",
         });
     });
+
+    test("treats vs as artist separator in dashed titles", () => {
+        expect(parseMusicMetadata("Astrix vs Ace Ventura - Valley of Stevie", "")).toEqual({
+            artist: "Astrix, Ace Ventura",
+            songTitle: "Valley of Stevie",
+        });
+    });
+
+    test("treats feat and ft as artist separators in dashed titles", () => {
+        expect(parseMusicMetadata("Astrix feat. Ace Ventura - Valley of Stevie", "")).toEqual({
+            artist: "Astrix, Ace Ventura",
+            songTitle: "Valley of Stevie",
+        });
+
+        expect(parseMusicMetadata("Astrix ft Ace Ventura - Valley of Stevie", "")).toEqual({
+            artist: "Astrix, Ace Ventura",
+            songTitle: "Valley of Stevie",
+        });
+    });
+
+    test("treats x as artist separator in dashed titles", () => {
+        expect(parseMusicMetadata("Astrix x Ace Ventura - Valley of Stevie", "")).toEqual({
+            artist: "Astrix, Ace Ventura",
+            songTitle: "Valley of Stevie",
+        });
+    });
 });

@@ -334,8 +334,7 @@ export class JobService {
         const parsedMusicMetadata = parseMusicMetadata(infoTitle || titleFromFile || output.baseName, infoDescription);
         const parsedAlbumMetadata = parseAlbumMetadata(infoDescription, typeof info?.upload_date === "string" ? info.upload_date : undefined);
 
-        const title = (request.songTitle ?? "").trim()
-            || (parsedMusicMetadata.songTitle ?? "").trim()
+        const title = (parsedMusicMetadata.songTitle ?? "").trim()
             || infoTitle
             || titleFromFile
             || output.baseName;

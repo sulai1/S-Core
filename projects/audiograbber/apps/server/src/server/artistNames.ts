@@ -4,7 +4,7 @@ export function splitArtistNames(value: string | null | undefined): string[] {
     }
 
     return value
-        .split(/\s*,\s*|\s+&\s+/)
+        .split(/\s*,\s*|\s+&\s+|\s+vs\.?\s+|\s+feat\.?\s+|\s+ft\.?\s+|\s+x\s+/i)
         .map((part) => part.trim())
         .filter(Boolean);
 }

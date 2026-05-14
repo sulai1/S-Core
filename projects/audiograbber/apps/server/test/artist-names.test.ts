@@ -13,4 +13,17 @@ describe("splitArtistNames", () => {
     test("keeps a single artist intact", () => {
         expect(splitArtistNames("Simon Garfunkel")).toEqual(["Simon Garfunkel"]);
     });
+
+    test("splits artists separated by vs", () => {
+        expect(splitArtistNames("Astrix vs Ace Ventura")).toEqual(["Astrix", "Ace Ventura"]);
+    });
+
+    test("splits artists separated by feat or ft", () => {
+        expect(splitArtistNames("Astrix feat. Ace Ventura")).toEqual(["Astrix", "Ace Ventura"]);
+        expect(splitArtistNames("Astrix ft Ace Ventura")).toEqual(["Astrix", "Ace Ventura"]);
+    });
+
+    test("splits artists separated by x", () => {
+        expect(splitArtistNames("Astrix x Ace Ventura")).toEqual(["Astrix", "Ace Ventura"]);
+    });
 });

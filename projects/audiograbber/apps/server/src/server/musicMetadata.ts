@@ -77,7 +77,15 @@ function splitTitleFallback(videoTitle: string): { artist?: string; songTitle?: 
         return { songTitle: cleanedTitle };
     }
 
-    const normalizedArtist = cleanText(separatorMatch[1]?.replace(/\s*&\s*/g, ", ")?.replace(/[\s\-\u2010\u2011\u2012\u2013\u2014\u2212_]+$/, ""));
+    const normalizedArtist = cleanText(
+        separatorMatch[1]
+            ?.replace(/\s*&\s*/gi, ", ")
+            ?.replace(/\s+vs\.?\s+/gi, ", ")
+            ?.replace(/\s+feat\.?\s+/gi, ", ")
+            ?.replace(/\s+ft\.?\s+/gi, ", ")
+            ?.replace(/\s+x\s+/gi, ", ")
+            ?.replace(/[\s\-\u2010\u2011\u2012\u2013\u2014\u2212_]+$/, ""),
+    );
 
     return {
         artist: normalizedArtist,
@@ -101,19 +109,30 @@ export function parseMusicMetadata(videoTitle: string, description?: string): {
         .trim();
 
     const tryCompactTitleParse = (): void => {
-        const tokens = compactVideoTitle.split(/\s+/).filter(Boolean);
-        if (tokens.length < 4 || !/[&,]/.test(compactVideoTitle)) {
+        if (/\s*[-\u2010\u2011\u2012\u2013\u2014\u2212_]\s*/.test(compactVideoTitle)) {
             return;
         }
 
+        const tokens = compactVideoTitle.split(/\s+/).filter(Boolean);
+        if (tokens.length < 4 || !(/[&,]/.test(compactVideoTitle) || /\bvs\.?\b/i.test(compactVideoTitle) || /\bfeat\.?\b/i.test(compactVideoTitle) || /\bft\.?\b/i.test(compactVideoTitle) || /\bx\b/i.test(compactVideoTitle))) {
+            return;
+        }
+
+        const normalizedCompactArtistText = (text: string): string => text
+            .replace(/\s*&\s*/gi, ", ")
+            .replace(/\s+vs\.?\s+/gi, ", ")
+            .replace(/\s+feat\.?\s+/gi, ", ")
+            .replace(/\s+ft\.?\s+/gi, ", ")
+            .replace(/\s+x\s+/gi, ", ");
+
         if (tokens.length >= 5) {
-            result.artist = result.artist ?? cleanText(tokens.slice(0, -2).join(" ").replace(/\s*&\s*/g, ", "));
+            result.artist = result.artist ?? cleanText(normalizedCompactArtistText(tokens.slice(0, -2).join(" ")));
             result.songTitle = result.songTitle ?? cleanText(tokens.slice(-2).join(" "));
             return;
         }
 
         if (tokens.length === 4) {
-            result.artist = result.artist ?? cleanText(tokens.slice(0, -1).join(" ").replace(/\s*&\s*/g, ", "));
+            result.artist = result.artist ?? cleanText(normalizedCompactArtistText(tokens.slice(0, -1).join(" ")));
             result.songTitle = result.songTitle ?? cleanText(tokens[tokens.length - 1]);
         }
     };
