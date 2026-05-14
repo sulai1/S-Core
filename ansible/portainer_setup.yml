@@ -1,0 +1,76 @@
+- name: Install and run Portainer in Docker
+  hosts: all
+  become: true
+  vars:
+    portainer_version: "2.27.4"
+    portainer_image: "portainer/portainer-ce:{{ portainer_version }}"
+    portainer_container_name: "portainer"
+    portainer_base_dir: "/srv/portainer"
+    portainer_data_dir: "{{ portainer_base_dir }}/data"
+    portainer_compose_file: "{{ portainer_base_dir }}/docker-compose.yml"
+    portainer_host_https_port: 9443
+    portainer_host_http_port: 9000
+    portainer_host_edge_port: 8000
+    portainer_bind_address: "0.0.0.0"
+    portainer_host_owner: "{{ ansible_user | default('root') }}"
+    portainer_host_group: "{{ ansible_user | default('root') }}"
+
+  tasks:
+    - name: Install Docker runtime dependencies
+      ansible.builtin.apt:
+        name:
+          - docker.io
+          - docker-compose-plugin
+        state: present
+        update_cache: true
+
+    - name: Ensure Docker service is enabled and running
+      ansible.builtin.systemd:
+        name: docker
+        enabled: true
+        state: started
+
+    - name: Ensure Portainer host directories exist
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        owner: "{{ portainer_host_owner }}"
+        group: "{{ portainer_host_group }}"
+        mode: "0775"
+      loop:
+        - "{{ portainer_base_dir }}"
+        - "{{ portainer_data_dir }}"
+
+    - name: Write Docker Compose file for Portainer
+      ansible.builtin.copy:
+        dest: "{{ portainer_compose_file }}"
+        mode: "0644"
+        content: |
+          services:
+            portainer:
+              image: {{ portainer_image }}
+              container_name: {{ portainer_container_name }}
+              restart: unless-stopped
+              ports:
+                - "{{ portainer_bind_address }}:{{ portainer_host_https_port }}:9443"
+                - "{{ portainer_bind_address }}:{{ portainer_host_http_port }}:9000"
+                - "{{ portainer_bind_address }}:{{ portainer_host_edge_port }}:8000"
+              volumes:
+                - /var/run/docker.sock:/var/run/docker.sock
+                - {{ portainer_data_dir }}:/data
+
+    - name: Pull and start Portainer container via Docker Compose
+      ansible.builtin.command:
+        cmd: docker compose -f {{ portainer_compose_file }} up -d
+      changed_when: false
+
+    - name: Wait for Portainer API to be ready
+      ansible.builtin.uri:
+        url: "https://localhost:{{ portainer_host_https_port }}/api/status"
+        method: GET
+        status_code: 200
+        validate_certs: false
+      register: portainer_health
+      until: portainer_health.status == 200
+      retries: 30
+      delay: 5

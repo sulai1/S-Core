@@ -1,0 +1,262 @@
+- name: Install and run Keycloak in Docker
+  hosts: all
+  become: true
+  vars:
+    keycloak_version: "26.0.7"
+    keycloak_image: "quay.io/keycloak/keycloak:{{ keycloak_version }}"
+    keycloak_container_name: "keycloak"
+    keycloak_base_dir: "/srv/keycloak"
+    keycloak_data_dir: "{{ keycloak_base_dir }}/data"
+    keycloak_conf_dir: "{{ keycloak_base_dir }}/conf"
+    keycloak_providers_dir: "{{ keycloak_base_dir }}/providers"
+    keycloak_themes_dir: "{{ keycloak_base_dir }}/themes"
+    keycloak_import_dir: "{{ keycloak_base_dir }}/import"
+    keycloak_export_dir: "{{ keycloak_base_dir }}/export"
+    keycloak_logs_dir: "{{ keycloak_base_dir }}/logs"
+    keycloak_backups_dir: "{{ keycloak_base_dir }}/backups"
+    keycloak_compose_file: "{{ keycloak_base_dir }}/docker-compose.yml"
+    # Permanent admin account — override these before running in production
+    keycloak_perm_admin_user: "admin"
+    keycloak_perm_admin_password: "changeme"
+    keycloak_perm_admin_email: "admin@example.com"
+    keycloak_perm_admin_firstname: "Admin"
+    keycloak_perm_admin_lastname: "User"
+    keycloak_app_realm_name: "apps"
+    keycloak_app_realm_display_name: "Applications"
+    keycloak_app_realm_enabled: true
+    keycloak_create_portainer_client: false
+    keycloak_portainer_client_id: "portainer"
+    keycloak_portainer_client_name: "Portainer"
+    keycloak_portainer_client_secret: "changeme-portainer-secret"
+    keycloak_portainer_base_url: "http://localhost:9000"
+    keycloak_portainer_redirect_uris:
+      - "http://localhost:9000/*"
+    keycloak_portainer_web_origins:
+      - "http://localhost:9000"
+    keycloak_host_http_port: 8087
+    keycloak_host_management_port: 9007
+    keycloak_http_host: "0.0.0.0"
+    keycloak_bind_address: "0.0.0.0"
+    keycloak_host_owner: "{{ ansible_user | default('root') }}"
+    keycloak_host_group: "{{ ansible_user | default('root') }}"
+
+  tasks:
+    - name: Install Docker runtime dependencies
+      ansible.builtin.apt:
+        name:
+          - docker.io
+          - docker-compose-plugin
+        state: present
+        update_cache: true
+
+    - name: Ensure Docker service is enabled and running
+      ansible.builtin.systemd:
+        name: docker
+        enabled: true
+        state: started
+
+    - name: Ensure Keycloak host directories exist
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        owner: "{{ keycloak_host_owner }}"
+        group: "{{ keycloak_host_group }}"
+        mode: "0775"
+      loop:
+        - "{{ keycloak_base_dir }}"
+        - "{{ keycloak_data_dir }}"
+        - "{{ keycloak_conf_dir }}"
+        - "{{ keycloak_providers_dir }}"
+        - "{{ keycloak_themes_dir }}"
+        - "{{ keycloak_import_dir }}"
+        - "{{ keycloak_export_dir }}"
+        - "{{ keycloak_logs_dir }}"
+        - "{{ keycloak_backups_dir }}"
+
+    - name: Write Docker Compose file for Keycloak
+      ansible.builtin.copy:
+        dest: "{{ keycloak_compose_file }}"
+        mode: "0644"
+        content: |
+          services:
+            keycloak:
+              image: {{ keycloak_image }}
+              container_name: {{ keycloak_container_name }}
+              restart: unless-stopped
+              command:
+                - start-dev
+                - --http-host={{ keycloak_http_host }}
+                - --health-enabled=true
+              environment:
+                KEYCLOAK_ADMIN: dummy-admin
+                KEYCLOAK_ADMIN_PASSWORD: dummy-password
+                KC_DB: dev-file
+              ports:
+                - "{{ keycloak_bind_address }}:{{ keycloak_host_http_port }}:8080"
+                - "{{ keycloak_bind_address }}:{{ keycloak_host_management_port }}:9000"
+              volumes:
+                - {{ keycloak_data_dir }}:/opt/keycloak/data
+                - {{ keycloak_conf_dir }}:/opt/keycloak/conf
+                - {{ keycloak_providers_dir }}:/opt/keycloak/providers
+                - {{ keycloak_themes_dir }}:/opt/keycloak/themes
+                - {{ keycloak_import_dir }}:/opt/keycloak/data/import
+                - {{ keycloak_export_dir }}:/opt/keycloak/data/export
+                - {{ keycloak_logs_dir }}:/opt/keycloak/data/log
+                - {{ keycloak_backups_dir }}:/opt/keycloak/backups
+
+    - name: Pull and start Keycloak container via Docker Compose
+      ansible.builtin.command:
+        cmd: docker compose -f {{ keycloak_compose_file }} up -d
+      changed_when: false
+
+    - name: Wait for Keycloak to be ready
+      ansible.builtin.uri:
+        url: "http://localhost:{{ keycloak_host_management_port }}/health/ready"
+        method: GET
+        status_code: 200
+      register: keycloak_health
+      until: keycloak_health.status == 200
+      retries: 30
+      delay: 5
+
+    - name: Obtain admin token from bootstrap credentials
+      ansible.builtin.uri:
+        url: "http://localhost:{{ keycloak_host_http_port }}/realms/master/protocol/openid-connect/token"
+        method: POST
+        body_format: form-urlencoded
+        body:
+          grant_type: password
+          client_id: admin-cli
+          username: "dummy-admin"
+          password: "dummy-password"
+        status_code: 200
+      register: keycloak_token_response
+      no_log: true
+
+    - name: Set admin token fact
+      ansible.builtin.set_fact:
+        keycloak_token: "{{ keycloak_token_response.json.access_token }}"
+      no_log: true
+
+    - name: Check if application realm already exists
+      ansible.builtin.uri:
+        url: "http://localhost:{{ keycloak_host_http_port }}/admin/realms/{{ keycloak_app_realm_name | urlencode }}"
+        method: GET
+        headers:
+          Authorization: "Bearer {{ keycloak_token }}"
+        status_code:
+          - 200
+          - 404
+      register: keycloak_app_realm_check
+
+    - name: Create application realm
+      ansible.builtin.uri:
+        url: "http://localhost:{{ keycloak_host_http_port }}/admin/realms"
+        method: POST
+        headers:
+          Authorization: "Bearer {{ keycloak_token }}"
+          Content-Type: application/json
+        body_format: json
+        body:
+          realm: "{{ keycloak_app_realm_name }}"
+          displayName: "{{ keycloak_app_realm_display_name }}"
+          enabled: "{{ keycloak_app_realm_enabled }}"
+          registrationAllowed: false
+          resetPasswordAllowed: true
+          rememberMe: true
+          loginWithEmailAllowed: true
+          duplicateEmailsAllowed: false
+          sslRequired: "external"
+        status_code: 201
+      when: keycloak_app_realm_check.status == 404
+
+    - name: Check if permanent admin already exists
+      ansible.builtin.uri:
+        url: "http://localhost:{{ keycloak_host_http_port }}/admin/realms/master/users?username={{ keycloak_perm_admin_user | urlencode }}&exact=true"
+        method: GET
+        headers:
+          Authorization: "Bearer {{ keycloak_token }}"
+        status_code: 200
+      register: keycloak_existing_users
+
+    - name: Create permanent admin user
+      ansible.builtin.uri:
+        url: "http://localhost:{{ keycloak_host_http_port }}/admin/realms/master/users"
+        method: POST
+        headers:
+          Authorization: "Bearer {{ keycloak_token }}"
+          Content-Type: application/json
+        body_format: json
+        body:
+          username: "{{ keycloak_perm_admin_user }}"
+          email: "{{ keycloak_perm_admin_email }}"
+          firstName: "{{ keycloak_perm_admin_firstname }}"
+          lastName: "{{ keycloak_perm_admin_lastname }}"
+          enabled: true
+          emailVerified: true
+          credentials:
+            - type: password
+              value: "{{ keycloak_perm_admin_password }}"
+              temporary: false
+        status_code: 201
+      no_log: true
+      when: keycloak_existing_users.json | length == 0
+
+    - name: Fetch permanent admin user ID
+      ansible.builtin.uri:
+        url: "http://localhost:{{ keycloak_host_http_port }}/admin/realms/master/users?username={{ keycloak_perm_admin_user | urlencode }}&exact=true"
+        method: GET
+        headers:
+          Authorization: "Bearer {{ keycloak_token }}"
+        status_code: 200
+      register: keycloak_perm_admin_lookup
+
+    - name: Set permanent admin user ID fact
+      ansible.builtin.set_fact:
+        keycloak_perm_admin_id: "{{ keycloak_perm_admin_lookup.json[0].id }}"
+
+    - name: Fetch available realm-level admin roles
+      ansible.builtin.uri:
+        url: "http://localhost:{{ keycloak_host_http_port }}/admin/realms/master/users/{{ keycloak_perm_admin_id }}/role-mappings/realm/available"
+        method: GET
+        headers:
+          Authorization: "Bearer {{ keycloak_token }}"
+        status_code: 200
+      register: keycloak_available_roles
+
+    - name: Set admin role fact
+      ansible.builtin.set_fact:
+        keycloak_admin_role: "{{ keycloak_available_roles.json | selectattr('name', 'equalto', 'admin') | list }}"
+
+    - name: Assign admin role to permanent admin user
+      ansible.builtin.uri:
+        url: "http://localhost:{{ keycloak_host_http_port }}/admin/realms/master/users/{{ keycloak_perm_admin_id }}/role-mappings/realm"
+        method: POST
+        headers:
+          Authorization: "Bearer {{ keycloak_token }}"
+          Content-Type: application/json
+        body_format: json
+        body: "{{ keycloak_admin_role }}"
+        status_code: 204
+      when: keycloak_admin_role | length > 0
+
+    - name: Fetch bootstrap admin user ID
+      ansible.builtin.uri:
+        url: "http://localhost:{{ keycloak_host_http_port }}/admin/realms/master/users?username=dummy-admin&exact=true"
+        method: GET
+        headers:
+          Authorization: "Bearer {{ keycloak_token }}"
+        status_code: 200
+      register: keycloak_temp_admin_lookup
+
+    - name: Delete bootstrap admin user
+      ansible.builtin.uri:
+        url: "http://localhost:{{ keycloak_host_http_port }}/admin/realms/master/users/{{ keycloak_temp_admin_lookup.json[0].id }}"
+        method: DELETE
+        headers:
+          Authorization: "Bearer {{ keycloak_token }}"
+        status_code: 204
+      when:
+        - keycloak_temp_admin_lookup.json | length > 0
+        - keycloak_temp_admin_lookup.json[0].id != keycloak_perm_admin_id
+
