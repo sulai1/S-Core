@@ -51,6 +51,21 @@ function stripTrailingVideoIdToken(value: string): string {
     return value.replace(/\s+[A-Za-z0-9_-]{11}\s*$/, "").trim();
 }
 
+function stripBracketContent(value: string): string {
+    return value.replace(/\s*\[[^\]]*\]/g, "").trim();
+}
+
+function extractRemixArtists(title: string): string[] {
+    const match = title.match(/\(([^)]+?)\s+Remix\s*\)/i);
+    if (!match) {
+        return [];
+    }
+    return match[1]
+        .split(/\s*,\s*|\s+&\s+|\s+vs\.?\s+|\s+feat\.?\s+|\s+ft\.?\s+|\s+x\s+/i)
+        .map((part) => part.trim())
+        .filter(Boolean);
+}
+
 function looksLikeMetadataNoise(value: string): boolean {
     const compact = value.toLowerCase();
     if (value.length > 180) {
@@ -97,8 +112,9 @@ export function parseMusicMetadata(videoTitle: string, description?: string): {
     artist?: string;
     songTitle?: string;
     album?: string;
+    remixArtists?: string[];
 } {
-    const result: { artist?: string; songTitle?: string; album?: string } = {};
+    const result: { artist?: string; songTitle?: string; album?: string; remixArtists?: string[] } = {};
     let outNowArtist: string | undefined;
     const titleFallback = splitTitleFallback(videoTitle);
 
@@ -270,6 +286,14 @@ export function parseMusicMetadata(videoTitle: string, description?: string): {
         const fallback = splitTitleFallback(videoTitle);
         result.artist = result.artist || fallback.artist;
         result.songTitle = fallback.songTitle;
+    }
+
+    if (result.songTitle) {
+        const remixArtists = extractRemixArtists(result.songTitle);
+        if (remixArtists.length > 0) {
+            result.remixArtists = remixArtists;
+        }
+        result.songTitle = stripBracketContent(result.songTitle) || result.songTitle;
     }
 
     return result;

@@ -209,7 +209,7 @@ export class JobService {
                     filtered.push(item);
                     continue;
                 }
-
+                item.title = media.title ?? item.title;
                 item.artists = media.artists?.map((artist) => artist.name) ?? [];
                 item.albums = media.albums?.map((album) => album.name) ?? [];
                 item.tags = tagsByMediaId.get(media.id) ?? [];
@@ -348,11 +348,10 @@ export class JobService {
             ...splitArtistNames(request.artist),
             ...splitArtistNames(typeof info?.artist === "string" ? info.artist : undefined),
             ...splitArtistNames(parsedMusicMetadata.artist),
+            ...(parsedMusicMetadata.remixArtists ?? []),
         ]);
 
-        const tags = Array.isArray(info?.tags)
-            ? info.tags.filter((value): value is string => typeof value === "string").map((value) => value.trim()).filter(Boolean)
-            : [];
+        const tags = this.extractDescriptionHashtags(infoDescription);
 
         const features = this.estimateAudioFeatures(outputPath);
 
@@ -598,6 +597,27 @@ export class JobService {
 
     private normalizeTagName(value: string): string {
         return value.toLowerCase().replace(/\s+/g, " ").trim();
+    }
+
+    private extractDescriptionHashtags(description?: string): string[] {
+        if (!description) {
+            return [];
+        }
+
+        const normalizedToDisplay = new Map<string, string>();
+        const hashtagMatches = description.match(/#[^\s#]+/g) ?? [];
+
+        for (const token of hashtagMatches) {
+            const display = token.slice(1).replace(/[.,;:!?]+$/g, "").trim();
+            const normalized = this.normalizeTagName(display);
+            if (!normalized || normalizedToDisplay.has(normalized)) {
+                continue;
+            }
+
+            normalizedToDisplay.set(normalized, display);
+        }
+
+        return [...normalizedToDisplay.values()];
     }
 
     private async replaceMediaTags(mediaFileId: string, rawTags: string[]): Promise<void> {

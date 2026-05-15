@@ -63,4 +63,30 @@ describe("JobService", () => {
             await dataSource.destroy();
         }
     });
+
+    test("stores only hashtag tags from the description", async () => {
+        const worker = new FakeWorker();
+        const service = new JobService(worker, ({ getRepository: () => ({}) } as unknown as DataSource));
+        const hashtags = (service as unknown as { extractDescriptionHashtags(description?: string): string[] }).extractDescriptionHashtags([
+            "1,502 views  Mar 27, 2026  #PsychedelicTrance #Psytrance #AceVentura",
+            "",
+            "#Psytrance #PsychedelicTrance #Trance #PsytranceLife #AceVentura #Faders #Blazy",
+            "psytrance",
+            "psychedelic trance",
+            "goa trance",
+            "Psy Trance",
+            "best trance",
+            "Ace Ventura - Rebirth (Faders & Blazy Remix) [Psychedelic Visuals]",
+        ].join("\n"));
+
+        expect(hashtags).toEqual([
+            "PsychedelicTrance",
+            "Psytrance",
+            "AceVentura",
+            "Trance",
+            "PsytranceLife",
+            "Faders",
+            "Blazy",
+        ]);
+    });
 });

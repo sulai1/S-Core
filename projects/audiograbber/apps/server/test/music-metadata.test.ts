@@ -73,6 +73,7 @@ describe("parseMusicMetadata", () => {
         expect(parseMusicMetadata("Chromarepo - Higher State (Superluminal Remix) SmoSPyPR-uk", noisyDescription)).toEqual({
             artist: "Chromarepo",
             songTitle: "Higher State (Superluminal Remix)",
+            remixArtists: ["Superluminal"],
         });
     });
 
@@ -154,6 +155,29 @@ describe("parseMusicMetadata", () => {
         expect(parseMusicMetadata("Astrix x Ace Ventura - Valley of Stevie", "")).toEqual({
             artist: "Astrix, Ace Ventura",
             songTitle: "Valley of Stevie",
+        });
+    });
+
+    test("extracts remix artists from (X Remix) parentheses in song title", () => {
+        expect(parseMusicMetadata("Sonic Species & Mr Peculiar - Unleash The Beat (Arcana, DigiCult & MoRsei Remix)", ""))
+            .toEqual({
+                artist: "Sonic Species, Mr Peculiar",
+                songTitle: "Unleash The Beat (Arcana, DigiCult & MoRsei Remix)",
+                remixArtists: ["Arcana", "DigiCult", "MoRsei"],
+            });
+    });
+
+    test("strips [] bracket content from song title", () => {
+        expect(parseMusicMetadata("Nevo - Between Heaven And Hell [Psychedelic Visuals]", "")).toEqual({
+            artist: "Nevo",
+            songTitle: "Between Heaven And Hell",
+        });
+    });
+
+    test("strips [] bracket content and splits feat. artists from title", () => {
+        expect(parseMusicMetadata("Altruism & Outsiders & Burn In Noise feat. Noa Zulu - Root Tone [Psychedelic Visuals]", "")).toEqual({
+            artist: "Altruism, Outsiders, Burn In Noise, Noa Zulu",
+            songTitle: "Root Tone",
         });
     });
 });
