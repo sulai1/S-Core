@@ -46,6 +46,17 @@ function parseReleaseDate(value: string | undefined): Date | undefined {
     return new Date(Date.UTC(parsed.getFullYear(), parsed.getMonth(), parsed.getDate()));
 }
 
+/**
+ * Convert a year to a date (January 1 of that year)
+ */
+export function yearToDate(year: number | null | undefined): Date | undefined {
+    if (typeof year !== "number" || year < 1 || year > 9999) {
+        return undefined;
+    }
+
+    return new Date(Date.UTC(year, 0, 1));
+}
+
 function collectTags(values: Array<string | undefined>): string[] {
     const normalizedToDisplay = new Map<string, string>();
 

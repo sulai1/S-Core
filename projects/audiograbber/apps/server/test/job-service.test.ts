@@ -5,6 +5,7 @@ import { DataSource } from "typeorm";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { JobService } from "../src/server/services/JobService.js";
 import { MediaFileEntity } from "../src/database/entities/media-file.entity.js";
+import { VideoEntity } from "../src/database/entities/video.entity.js";
 import type { DownloadRequest, SyncRequest, WorkerSubmission } from "../src/server/types.js";
 import type { WorkerAdapter } from "../src/server/worker/PythonWorkerAdapter.js";
 import { createTestDataSource } from "./helpers/test-data-source.js";
@@ -50,9 +51,15 @@ describe("JobService", () => {
             expect(job.progress).toBe(100);
             expect(worker.downloadCalls).toHaveLength(0);
 
+            const videoRepo = dataSource.getRepository(VideoEntity);
+            const video = await videoRepo.findOne({
+                where: { youtubeVideoId: "abc123xyz99" },
+            });
+            expect(video).toBeTruthy();
+
             const mediaRepo = dataSource.getRepository(MediaFileEntity);
             const media = await mediaRepo.findOne({
-                where: { youtubeVideoId: "abc123xyz99" },
+                where: { id: video!.mediaFileId },
                 relations: { artists: true },
             });
             expect(media).toBeTruthy();

@@ -347,8 +347,9 @@ paths:
                           type: array
                           items:
                             type: string
-                        year:
-                          type: integer
+                        date:
+                          type: string
+                          format: date-time
                           nullable: true
                         estimatedBpm:
                           type: number

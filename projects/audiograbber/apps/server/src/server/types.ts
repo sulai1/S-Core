@@ -51,7 +51,7 @@ export type LibraryVideo = {
     artists: string[];
     albums: string[];
     tags: string[];
-    year: number | null;
+    date: string | null;
     estimatedBpm: number | null;
     estimatedKey: string | null;
     thumbnailUrl?: string;

@@ -337,7 +337,8 @@ export interface paths {
                                 artists: string[];
                                 albums: string[];
                                 tags?: string[];
-                                year?: number | null;
+                                /** Format: date-time */
+                                date?: string | null;
                                 estimatedBpm?: number | null;
                                 estimatedKey?: string | null;
                                 thumbnailUrl?: string;

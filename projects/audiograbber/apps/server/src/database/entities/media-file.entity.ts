@@ -6,7 +6,6 @@ export type Visibility = "owner" | "groups" | "public";
 
 export type MediaFile = {
     id: string;
-    youtubeVideoId: string;
     filePath: string;
     mimeType: string;
     durationSecs: number | null;
@@ -16,7 +15,7 @@ export type MediaFile = {
     title: string | null;
     artists?: Artist[];
     albums?: Album[];
-    year: number | null;
+    date: Date | null;
     estimatedBpm: number | null;
     estimatedKey: string | null;
     createdAt: Date;
@@ -27,7 +26,6 @@ export const MediaFileEntity = new EntitySchema<MediaFile>({
     tableName: "media_files",
     columns: {
         id: { type: "uuid", primary: true, generated: "uuid" },
-        youtubeVideoId: { type: "varchar", unique: true },
         filePath: { type: "text" },
         mimeType: { type: "varchar" },
         durationSecs: { type: "float", nullable: true },
@@ -35,7 +33,7 @@ export const MediaFileEntity = new EntitySchema<MediaFile>({
         visibility: { type: "varchar", default: "owner" },
         allowedGroups: { type: "text", nullable: true },
         title: { type: "text", nullable: true },
-        year: { type: "int", nullable: true },
+        date: { type: "timestamptz", nullable: true },
         estimatedBpm: { type: "float", nullable: true },
         estimatedKey: { type: "varchar", nullable: true },
         createdAt: { type: "timestamp", createDate: true },

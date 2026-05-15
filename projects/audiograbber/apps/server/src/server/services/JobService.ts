@@ -6,15 +6,17 @@ import { DataSource, In, Repository } from "typeorm";
 import { Artist, ArtistEntity } from "../../database/entities/artist.entity.js";
 import { Album, AlbumEntity } from "../../database/entities/album.entity.js";
 import { AlbumTag, AlbumTagEntity } from "../../database/entities/album-tag.entity.js";
+import { Channel, ChannelEntity } from "../../database/entities/channel.entity.js";
 import { JobRepository } from "../../database/repositories/job.repository.js";
 import { DbJob } from "../../database/entities/job.entity.js";
 import { AudioFingerprint, AudioFingerprintEntity } from "../../database/entities/audio-fingerprint.entity.js";
 import { MediaFile, MediaFileEntity } from "../../database/entities/media-file.entity.js";
 import { MediaTag, MediaTagEntity } from "../../database/entities/media-tag.entity.js";
 import { Tag, TagEntity } from "../../database/entities/tag.entity.js";
+import { Video, VideoEntity } from "../../database/entities/video.entity.js";
 import { DownloadRequest, JobRecord, LibraryTagUsage, LibraryVideo, SyncRequest, TagSearchMode } from "../types.js";
 import { splitArtistNames, uniqueArtistNames } from "../artistNames.js";
-import { parseAlbumMetadata } from "../albumMetadata.js";
+import { parseAlbumMetadata, yearToDate } from "../albumMetadata.js";
 import { normalizeAlbumName, uniqueAlbumNames } from "../albumNames.js";
 import { parseMusicMetadata } from "../musicMetadata.js";
 import { WorkerAdapter } from "../worker/PythonWorkerAdapter.js";
@@ -40,6 +42,8 @@ function toJobRecord(job: DbJob): JobRecord {
 export class JobService {
     private readonly jobRepo: JobRepository;
     private readonly mediaRepo: Repository<MediaFile>;
+    private readonly videoRepo: Repository<Video>;
+    private readonly channelRepo: Repository<Channel>;
     private readonly artistRepo: Repository<Artist>;
     private readonly albumRepo: Repository<Album>;
     private readonly albumTagRepo: Repository<AlbumTag>;
@@ -59,6 +63,8 @@ export class JobService {
     ) {
         this.jobRepo = new JobRepository(dataSource);
         this.mediaRepo = dataSource.getRepository(MediaFileEntity);
+        this.videoRepo = dataSource.getRepository(VideoEntity);
+        this.channelRepo = dataSource.getRepository(ChannelEntity);
         this.artistRepo = dataSource.getRepository(ArtistEntity);
         this.albumRepo = dataSource.getRepository(AlbumEntity);
         this.albumTagRepo = dataSource.getRepository(AlbumTagEntity);
@@ -158,7 +164,7 @@ export class JobService {
                     artists: [] as string[],
                     albums: [] as string[],
                     tags: [] as string[],
-                    year: null as number | null,
+                    date: null as string | null,
                     estimatedBpm: null as number | null,
                     estimatedKey: null as string | null,
                     thumbnailUrl: this.findThumbnailUrl(id),
@@ -177,9 +183,17 @@ export class JobService {
         const videoIds = [...new Set(items.map((item) => item.id).filter((id) => /^[a-zA-Z0-9_-]{11}$/.test(id)))];
         let allowedMediaIds: Set<string> | undefined;
         if (videoIds.length > 0) {
-            const mediaRows = await this.mediaRepo.find({
+            // Query mediafiles through videos table
+            const videoRows = await this.videoRepo.find({
                 where: {
                     youtubeVideoId: In(videoIds),
+                },
+            });
+
+            const mediaIds = videoRows.map((row) => row.mediaFileId);
+            const mediaRows = await this.mediaRepo.find({
+                where: {
+                    id: In(mediaIds),
                 },
                 relations: {
                     artists: true,
@@ -187,18 +201,19 @@ export class JobService {
                 },
             });
 
-            const mediaIds = mediaRows.map((row) => row.id);
             const tagsByMediaId = await this.getTagsByMediaId(mediaIds);
 
             if (normalizedTagFilters.length > 0) {
                 allowedMediaIds = await this.filterMediaIdsByTags(mediaIds, normalizedTagFilters, tagMode);
             }
 
-            const mediaByVideoId = new Map(mediaRows.map((row) => [row.youtubeVideoId, row]));
+            const videoByYoutubeId = new Map(videoRows.map((row) => [row.youtubeVideoId, row]));
+            const mediaByMediaId = new Map(mediaRows.map((row) => [row.id, row]));
 
             const filtered: LibraryVideo[] = [];
             for (const item of items) {
-                const media = mediaByVideoId.get(item.id);
+                const video = videoByYoutubeId.get(item.id);
+                const media = video ? mediaByMediaId.get(video.mediaFileId) : undefined;
                 if (normalizedTagFilters.length > 0) {
                     if (!media || !allowedMediaIds?.has(media.id)) {
                         continue;
@@ -213,7 +228,7 @@ export class JobService {
                 item.artists = media.artists?.map((artist) => artist.name) ?? [];
                 item.albums = media.albums?.map((album) => album.name) ?? [];
                 item.tags = tagsByMediaId.get(media.id) ?? [];
-                item.year = media.year;
+                item.date = media.date ? media.date.toISOString() : null;
                 item.estimatedBpm = media.estimatedBpm;
                 item.estimatedKey = media.estimatedKey;
                 filtered.push(item);
@@ -352,16 +367,21 @@ export class JobService {
         ]);
 
         const tags = this.extractDescriptionHashtags(infoDescription);
-
         const features = this.estimateAudioFeatures(outputPath);
 
         const mimeType = this.inferMimeType(output.extension);
         const durationSecs = typeof info?.duration === "number" ? info.duration : null;
+
+        // Extract date from release_year or upload_date, default to January 1
         const year = typeof info?.release_year === "number"
             ? info.release_year
             : typeof info?.upload_date === "string" && info.upload_date.length >= 4
                 ? parseInt(info.upload_date.slice(0, 4), 10)
                 : null;
+        const date = yearToDate(year) ?? yearToDate(year === null && typeof info?.upload_date === "string"
+            ? parseInt(info.upload_date.slice(0, 4), 10)
+            : null);
+
         const estimatedBpm = typeof info?.bpm === "number" ? info.bpm : features.estimatedBpm;
         const estimatedKey = this.normalizeEstimatedKey(
             typeof info?.key === "string"
@@ -370,30 +390,27 @@ export class JobService {
                     ? info.musical_key
                     : features.estimatedKey,
         );
-        const existing = await this.mediaRepo.findOneBy({ youtubeVideoId: videoId });
 
-        if (existing) {
-            const nextOwnerId = existing.ownerId ?? ownerId ?? null;
-            await this.mediaRepo.update(existing.id, {
-                filePath: outputPath,
-                mimeType,
-                durationSecs,
-                title,
-                ownerId: nextOwnerId,
-                year,
-                estimatedBpm,
-                estimatedKey,
-            });
-            const updated = await this.mediaRepo.findOneByOrFail({ id: existing.id });
-            await this.replaceMediaArtists(updated.id, artistNames);
-            await this.replaceMediaAlbums(updated.id, albumNames, parsedAlbumMetadata);
-            await this.replaceMediaTags(updated.id, tags);
-            this.cleanupInfoJsonFiles(videoId);
-            return updated;
+        // Extract and store channel information
+        const channelId = typeof info?.channel_id === "string" ? info.channel_id : null;
+        const channelDescription = typeof info?.channel_description === "string"
+            ? info.channel_description
+            : typeof info?.channel === "string"
+                ? info.channel
+                : null;
+        const channelDateStr = typeof info?.channel_join_date === "string" ? info.channel_join_date : null;
+        let storedChannelId: string | null = null;
+
+        if (channelId) {
+            storedChannelId = await this.ensureChannel(
+                channelId,
+                channelDescription,
+                channelDateStr,
+            );
         }
 
+        // Create new mediafile
         const entry = this.mediaRepo.create({
-            youtubeVideoId: videoId,
             filePath: outputPath,
             mimeType,
             durationSecs,
@@ -401,12 +418,24 @@ export class JobService {
             allowedGroups: null,
             title,
             ownerId: ownerId ?? null,
-            year,
+            date,
             estimatedBpm,
             estimatedKey,
             createdAt: stats.birthtime,
         });
         const saved = await this.mediaRepo.save(entry);
+
+        // Create video entry
+        const videoEntry = this.videoRepo.create({
+            mediaFileId: saved.id,
+            youtubeVideoId: videoId,
+            videoDescription: infoDescription ?? null,
+            date: date ?? null,
+            channelId: storedChannelId,
+        });
+        await this.videoRepo.save(videoEntry);
+
+        // Set up metadata relations
         await this.replaceMediaArtists(saved.id, artistNames);
         await this.replaceMediaAlbums(saved.id, albumNames, parsedAlbumMetadata);
         await this.replaceMediaTags(saved.id, tags);
@@ -710,6 +739,59 @@ export class JobService {
         return new Set(rows.map((row) => row.mediaFileId));
     }
 
+    private async ensureChannel(
+        channelId: string,
+        channelDescription: string | null,
+        channelDateStr: string | null,
+    ): Promise<string> {
+        const existing = await this.channelRepo.findOneBy({ id: channelId });
+        if (existing) {
+            // Update only if we have new information and it's empty
+            const patch: Partial<Channel> = {};
+            if (!existing.description && channelDescription) {
+                patch.description = channelDescription;
+            }
+            if (!existing.joinedDate && channelDateStr) {
+                patch.joinedDate = this.parseChannelDate(channelDateStr);
+            }
+
+            if (Object.keys(patch).length > 0) {
+                await this.channelRepo.update(channelId, patch);
+            }
+
+            return channelId;
+        }
+
+        // Create new channel
+        const joinedDate = channelDateStr ? this.parseChannelDate(channelDateStr) : null;
+        const channel = this.channelRepo.create({
+            id: channelId,
+            description: channelDescription,
+            joinedDate,
+        });
+        await this.channelRepo.save(channel);
+        return channelId;
+    }
+
+    private parseChannelDate(dateStr: string): Date | null {
+        if (!dateStr) {
+            return null;
+        }
+
+        // Handle YYYYMMDD format from yt-dlp
+        if (/^\d{8}$/.test(dateStr)) {
+            const year = parseInt(dateStr.slice(0, 4), 10);
+            const month = parseInt(dateStr.slice(4, 6), 10);
+            const day = parseInt(dateStr.slice(6, 8), 10);
+            const date = new Date(Date.UTC(year, month - 1, day));
+            return Number.isNaN(date.getTime()) ? null : date;
+        }
+
+        // Try parsing as ISO date
+        const parsed = new Date(dateStr);
+        return Number.isNaN(parsed.getTime()) ? null : new Date(Date.UTC(parsed.getFullYear(), parsed.getMonth(), parsed.getDate()));
+    }
+
     private async processFingerprint(media: MediaFile): Promise<void> {
         const fingerprint = this.generateFingerprint(media.filePath);
         if (!fingerprint) {
@@ -720,6 +802,48 @@ export class JobService {
         if (duplicate && duplicate.mediaFileId !== media.id) {
             const existingMedia = await this.mediaRepo.findOneBy({ id: duplicate.mediaFileId });
             if (existingMedia) {
+                // Get the video entry for the current mediafile
+                const videoEntry = await this.videoRepo.findOne({
+                    where: { mediaFileId: media.id },
+                });
+
+                if (videoEntry) {
+                    // Move video entry to existing mediafile
+                    await this.videoRepo.update(videoEntry.id, {
+                        mediaFileId: existingMedia.id,
+                    });
+
+                    // Update existing mediafile date if new video is older
+                    const newDate = videoEntry.date;
+                    const existingDate = existingMedia.date;
+                    if (newDate && (!existingDate || newDate < existingDate)) {
+                        await this.mediaRepo.update(existingMedia.id, { date: newDate });
+                    }
+
+                    // Merge tags from all videos of the existing mediafile
+                    const allVideos = await this.videoRepo.find({
+                        where: { mediaFileId: existingMedia.id },
+                    });
+
+                    // Collect tags from all video descriptions
+                    const allTags = new Set<string>();
+                    for (const video of allVideos) {
+                        if (video.videoDescription) {
+                            const videoTags = this.extractDescriptionHashtags(video.videoDescription);
+                            videoTags.forEach((tag) => allTags.add(tag));
+                        }
+                    }
+
+                    // Update tags for the existing mediafile
+                    if (allTags.size > 0) {
+                        await this.replaceMediaTags(existingMedia.id, Array.from(allTags));
+                    }
+                }
+
+                // Clean up the current mediafile (cascade will delete video entries)
+                await this.mediaRepo.remove(media);
+
+                // Delete the duplicate file if it exists
                 const currentPath = media.filePath;
                 const canonicalPath = existingMedia.filePath;
                 if (currentPath !== canonicalPath && existsSync(currentPath)) {
@@ -729,9 +853,8 @@ export class JobService {
                         // best effort cleanup of duplicate file
                     }
                 }
-
-                await this.mediaRepo.update(media.id, { filePath: canonicalPath });
             }
+            return;
         }
 
         const existingFingerprint = await this.fingerprintRepo.findOneBy({ mediaFileId: media.id });
@@ -1011,7 +1134,23 @@ export class JobService {
         };
     }
 
-    private readInfoJson(videoId: string): { title?: string; artist?: string; album?: string; description?: string; tags?: unknown[]; duration?: number; release_year?: number; upload_date?: string; bpm?: number; key?: string; musical_key?: string } | undefined {
+    private readInfoJson(videoId: string): {
+        title?: string;
+        artist?: string;
+        album?: string;
+        description?: string;
+        tags?: unknown[];
+        duration?: number;
+        release_year?: number;
+        upload_date?: string;
+        bpm?: number;
+        key?: string;
+        musical_key?: string;
+        channel_id?: string;
+        channel?: string;
+        channel_description?: string;
+        channel_join_date?: string;
+    } | undefined {
         const jsonFiles = this.getInfoJsonFiles(videoId);
 
         if (jsonFiles.length === 0) {
@@ -1032,6 +1171,10 @@ export class JobService {
                 bpm?: number;
                 key?: string;
                 musical_key?: string;
+                channel_id?: string;
+                channel?: string;
+                channel_description?: string;
+                channel_join_date?: string;
             };
             return parsed;
         } catch {

@@ -6,6 +6,8 @@ import { AlbumEntity } from "./database/entities/album.entity.js";
 import { AlbumTagEntity } from "./database/entities/album-tag.entity.js";
 import { UserEntity } from "./database/entities/user.entity.js";
 import { MediaFileEntity } from "./database/entities/media-file.entity.js";
+import { VideoEntity } from "./database/entities/video.entity.js";
+import { ChannelEntity } from "./database/entities/channel.entity.js";
 import { JobEntity } from "./database/entities/job.entity.js";
 import { AudioFingerprintEntity } from "./database/entities/audio-fingerprint.entity.js";
 import { TagEntity } from "./database/entities/tag.entity.js";
@@ -23,7 +25,7 @@ export const AppDataSource = new DataSource({
     database: process.env.DB_NAME ?? "audiograbber",
     synchronize: false,
     logging: false,
-    entities: [UserEntity, ArtistEntity, AlbumEntity, AlbumTagEntity, MediaFileEntity, JobEntity, AudioFingerprintEntity, TagEntity, MediaTagEntity],
+    entities: [UserEntity, ArtistEntity, AlbumEntity, AlbumTagEntity, ChannelEntity, MediaFileEntity, VideoEntity, JobEntity, AudioFingerprintEntity, TagEntity, MediaTagEntity],
     migrations: [
         path.join(__dirname, "../migrations/*.ts"),
         path.join(__dirname, "../migrations/*.js"),
