@@ -16,6 +16,44 @@ const __dirname = path.dirname(__filename);
 const apiSchema = path.resolve(__dirname, "./server/api/schema.yaml");
 const port = Number(process.env.PORT || 3800);
 
+let lifecycleHooksRegistered = false;
+
+function describeActiveHandles(): string[] {
+    const processWithInternals = process as unknown as {
+        _getActiveHandles?: () => unknown[];
+    };
+    const handles = processWithInternals._getActiveHandles?.() ?? [];
+    return handles.map((handle) => {
+        const name = (handle as { constructor?: { name?: string } })?.constructor?.name;
+        return name && name.length > 0 ? name : "UnknownHandle";
+    });
+}
+
+function registerLifecycleDiagnostics(): void {
+    if (lifecycleHooksRegistered) {
+        return;
+    }
+    lifecycleHooksRegistered = true;
+
+    process.on("beforeExit", (code) => {
+        const handles = describeActiveHandles();
+        console.error(`[${new Date().toISOString()}] Process beforeExit(${code}) with ${handles.length} active handle(s): ${handles.join(", ") || "none"}`);
+        console.error("  Server process is leaving the event loop. This usually means no listener/timer/socket is still referenced.");
+    });
+
+    process.on("exit", (code) => {
+        console.error(`[${new Date().toISOString()}] Process exit(${code})`);
+    });
+
+    process.on("uncaughtException", (error) => {
+        console.error(`[${new Date().toISOString()}] Uncaught exception`, error);
+    });
+
+    process.on("unhandledRejection", (reason) => {
+        console.error(`[${new Date().toISOString()}] Unhandled promise rejection`, reason);
+    });
+}
+
 function findLibraryMediaByVideoId(videoId: string): string | undefined {
     if (!existsSync(AUDIOGRABBER_DOWNLOAD_FOLDER)) {
         return undefined;
@@ -76,6 +114,7 @@ function validateStartupEnv(): void {
 }
 
 async function bootstrap(): Promise<void> {
+    registerLifecycleDiagnostics();
     validateStartupEnv();
 
     await AppDataSource.initialize();
@@ -141,7 +180,7 @@ async function bootstrap(): Promise<void> {
     console.info(`AudioGrabber API listening on http://localhost:${port}/api`);
 }
 
-bootstrap().catch((error: unknown) => {
+await bootstrap().catch((error: unknown) => {
     console.error("AudioGrabber API bootstrap failed", error);
     process.exitCode = 1;
 });

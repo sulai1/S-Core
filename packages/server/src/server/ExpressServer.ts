@@ -1,4 +1,5 @@
 import express, { Application, Request, Response } from 'express';
+import { Server as HttpServer } from 'node:http';
 import { ExpressRouter } from './ExpressRouter.js';
 import { Server } from './index.js';
 
@@ -14,6 +15,8 @@ export class ExpressServer<
     Req extends Request = Request,
     Res extends Response = Response,
 > extends ExpressRouter<Req, Res> implements Server<Req, Res> {
+    private nodeServer?: HttpServer;
+
     constructor(readonly app: Application = express()) {
         super(app);
     }
@@ -39,10 +42,17 @@ export class ExpressServer<
 
         return new Promise<Server<Req, Res>>((resolve, reject) => {
             const server = this.app.listen(port, () => {
+                this.nodeServer = server;
+                // Explicitly ref the HTTP listener so it keeps the event loop alive.
+                server.ref();
                 console.info(`Server is listening on http://localhost:${port}`);
                 resolve(this);
             });
-            
+
+            server.on('close', () => {
+                console.warn(`HTTP server on port ${port} was closed.`);
+            });
+
             server.on('error', (err: Error & { code?: string }) => {
                 if (err.code === 'EADDRINUSE') {
                     reject(new Error(`Port ${port} is already in use. Please stop the existing server or use a different port.`));

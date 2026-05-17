@@ -75,6 +75,7 @@ const navItems = [
   { to: '/download', label: 'Download', icon: 'download' },
   { to: '/channels', label: 'Channel Overview', icon: 'video_library' },
   { to: '/sync', label: 'Sync', icon: 'sync' },
+  { to: '/schedules', label: 'Schedules', icon: 'event_repeat' },
   { to: '/jobs', label: 'Jobs', icon: 'manage_history' },
   { to: '/library', label: 'Library', icon: 'library_music' },
   { to: '/settings', label: 'Settings', icon: 'tune' },

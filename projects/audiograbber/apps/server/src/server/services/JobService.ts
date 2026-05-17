@@ -14,7 +14,17 @@ import { MediaFile, MediaFileEntity } from "../../database/entities/media-file.e
 import { MediaTag, MediaTagEntity } from "../../database/entities/media-tag.entity.js";
 import { Tag, TagEntity } from "../../database/entities/tag.entity.js";
 import { Video, VideoEntity } from "../../database/entities/video.entity.js";
-import { DownloadRequest, JobRecord, LibraryTagUsage, LibraryVideo, SyncRequest, TagSearchMode } from "../types.js";
+import { SyncSchedule, SyncScheduleEntity, SyncScheduleInterval } from "../../database/entities/sync-schedule.entity.js";
+import {
+    DownloadRequest,
+    JobRecord,
+    LibraryTagUsage,
+    LibraryVideo,
+    SyncRequest,
+    SyncScheduleRunLog,
+    SyncScheduleSummary,
+    TagSearchMode,
+} from "../types.js";
 import { splitArtistNames, uniqueArtistNames } from "../artistNames.js";
 import { parseAlbumMetadata, yearToDate } from "../albumMetadata.js";
 import { normalizeAlbumName, uniqueAlbumNames } from "../albumNames.js";
@@ -39,11 +49,24 @@ function toJobRecord(job: DbJob): JobRecord {
     };
 }
 
+function toSyncScheduleRunLog(job: DbJob): SyncScheduleRunLog {
+    return {
+        jobId: job.id,
+        state: job.state,
+        channelId: job.channelId ?? "",
+        createdAt: job.createdAt.toISOString(),
+        finishedAt: job.updatedAt.toISOString(),
+        videosDownloaded: job.videosDownloaded ?? null,
+        error: job.error ?? undefined,
+    };
+}
+
 export class JobService {
     private readonly jobRepo: JobRepository;
     private readonly mediaRepo: Repository<MediaFile>;
     private readonly videoRepo: Repository<Video>;
     private readonly channelRepo: Repository<Channel>;
+    private readonly syncScheduleRepo: Repository<SyncSchedule>;
     private readonly artistRepo: Repository<Artist>;
     private readonly albumRepo: Repository<Album>;
     private readonly albumTagRepo: Repository<AlbumTag>;
@@ -65,6 +88,7 @@ export class JobService {
         this.mediaRepo = dataSource.getRepository(MediaFileEntity);
         this.videoRepo = dataSource.getRepository(VideoEntity);
         this.channelRepo = dataSource.getRepository(ChannelEntity);
+        this.syncScheduleRepo = dataSource.getRepository(SyncScheduleEntity);
         this.artistRepo = dataSource.getRepository(ArtistEntity);
         this.albumRepo = dataSource.getRepository(AlbumEntity);
         this.albumTagRepo = dataSource.getRepository(AlbumTagEntity);
@@ -97,14 +121,173 @@ export class JobService {
         return toJobRecord(job);
     }
 
-    async queueSync(request: SyncRequest): Promise<JobRecord> {
-        const job = await this.jobRepo.create({ kind: "sync" });
+    async queueSync(
+        request: SyncRequest,
+        ownerId?: string,
+        options?: { scheduleId?: string },
+    ): Promise<JobRecord> {
+        const job = await this.jobRepo.create({
+            kind: "sync",
+            ownerId: ownerId ?? null,
+            channelId: request.channelId,
+            scheduleId: options?.scheduleId ?? null,
+        });
 
         this.dispatchSync(job.id, request).catch((error: unknown) => {
             this.failJob(job.id, error);
         });
 
         return toJobRecord(job);
+    }
+
+    async scheduleSync(request: SyncRequest, ownerId?: string): Promise<SyncSchedule> {
+        const interval = request.interval;
+        if (interval !== "daily" && interval !== "weekly") {
+            throw new Error("invalid-sync-interval");
+        }
+
+        const schedule = this.syncScheduleRepo.create({
+            channelId: request.channelId,
+            ownerId: ownerId ?? null,
+            interval,
+            maxResults: typeof request.maxResults === "number" ? request.maxResults : null,
+            minDurationSeconds: typeof request.minDurationSeconds === "number" ? request.minDurationSeconds : null,
+            maxDurationSeconds: typeof request.maxDurationSeconds === "number" ? request.maxDurationSeconds : null,
+            enabled: true,
+            lastRunAt: null,
+            nextRunAt: new Date(),
+        });
+
+        return await this.syncScheduleRepo.save(schedule);
+    }
+
+    async runDueSyncSchedules(): Promise<number> {
+        const now = new Date();
+        const dueSchedules = await this.syncScheduleRepo.createQueryBuilder("schedule")
+            .where('schedule."enabled" = true')
+            .andWhere('schedule."nextRunAt" <= :now', { now: now.toISOString() })
+            .orderBy('schedule."nextRunAt"', "ASC")
+            .getMany();
+
+        let executed = 0;
+        for (const schedule of dueSchedules) {
+            try {
+                await this.executeSchedule(schedule);
+
+                executed += 1;
+            } catch (error) {
+                const lastRunAt = new Date();
+                const nextRunAt = this.computeNextRun(schedule.interval, lastRunAt);
+                await this.syncScheduleRepo.update(schedule.id, {
+                    lastRunAt,
+                    nextRunAt,
+                });
+
+                const message = error instanceof Error ? error.message : String(error);
+                console.error(`[sync-schedule] Failed to execute schedule ${schedule.id}: ${message}`);
+            }
+        }
+
+        return executed;
+    }
+
+    async listSyncSchedules(ownerId?: string): Promise<SyncScheduleSummary[]> {
+        const scheduleQuery = this.syncScheduleRepo.createQueryBuilder("schedule")
+            .orderBy('schedule."updatedAt"', "DESC");
+
+        if (ownerId) {
+            scheduleQuery.where('schedule."ownerId" = :ownerId', { ownerId });
+        }
+
+        const schedules = await scheduleQuery.getMany();
+        if (schedules.length === 0) {
+            return [];
+        }
+
+        const scheduleIds = schedules.map((schedule) => schedule.id);
+        const maxJobRows = Math.max(20, schedules.length * 12);
+        const syncJobs = await this.jobRepo.listSyncJobsForSchedules(scheduleIds, maxJobRows);
+
+        const runsByScheduleId = new Map<string, SyncScheduleRunLog[]>();
+        for (const job of syncJobs) {
+            const scheduleId = job.scheduleId;
+            if (!scheduleId) {
+                continue;
+            }
+
+            const rows = runsByScheduleId.get(scheduleId) ?? [];
+            if (rows.length >= 10) {
+                continue;
+            }
+
+            rows.push(toSyncScheduleRunLog(job));
+            runsByScheduleId.set(scheduleId, rows);
+        }
+
+        return schedules.map((schedule) => ({
+            scheduleId: schedule.id,
+            channelId: schedule.channelId,
+            interval: schedule.interval,
+            enabled: schedule.enabled,
+            maxResults: schedule.maxResults,
+            minDurationSeconds: schedule.minDurationSeconds,
+            maxDurationSeconds: schedule.maxDurationSeconds,
+            lastRunAt: schedule.lastRunAt ? schedule.lastRunAt.toISOString() : null,
+            nextRunAt: schedule.nextRunAt.toISOString(),
+            recentRuns: runsByScheduleId.get(schedule.id) ?? [],
+        }));
+    }
+
+    async runScheduleNow(scheduleId: string, ownerId?: string): Promise<JobRecord | undefined> {
+        const query = this.syncScheduleRepo.createQueryBuilder("schedule")
+            .where('schedule."id" = :scheduleId', { scheduleId });
+
+        if (ownerId) {
+            query.andWhere('schedule."ownerId" = :ownerId', { ownerId });
+        }
+
+        const schedule = await query.getOne();
+        if (!schedule) {
+            return undefined;
+        }
+
+        return this.executeSchedule(schedule);
+    }
+
+    private computeNextRun(interval: SyncScheduleInterval, from: Date): Date {
+        const next = new Date(from.getTime());
+        if (interval === "weekly") {
+            next.setUTCDate(next.getUTCDate() + 7);
+            return next;
+        }
+
+        next.setUTCDate(next.getUTCDate() + 1);
+        return next;
+    }
+
+    private async executeSchedule(schedule: SyncSchedule): Promise<JobRecord> {
+        const queuedJob = await this.queueSync({
+            channelId: schedule.channelId,
+            maxResults: schedule.maxResults ?? undefined,
+            minDurationSeconds: schedule.minDurationSeconds ?? undefined,
+            maxDurationSeconds: schedule.maxDurationSeconds ?? undefined,
+            interval: "immediate",
+        }, schedule.ownerId ?? undefined, {
+            scheduleId: schedule.id,
+        });
+
+        const lastRunAt = new Date();
+        const shouldAdvanceNextRun = schedule.nextRunAt.getTime() <= lastRunAt.getTime();
+        const nextRunAt = shouldAdvanceNextRun
+            ? this.computeNextRun(schedule.interval, lastRunAt)
+            : schedule.nextRunAt;
+
+        await this.syncScheduleRepo.update(schedule.id, {
+            lastRunAt,
+            nextRunAt,
+        });
+
+        return queuedJob;
     }
 
     async getJob(jobId: string): Promise<JobRecord | undefined> {
@@ -312,11 +495,24 @@ export class JobService {
             throw new Error(result.message ?? "worker-rejected-sync");
         }
 
+        const downloadedCount = this.extractDownloadedCount(result.message);
+
         await this.jobRepo.patch(jobId, {
             state: "success",
             progress: 100,
             externalJobId: result.externalJobId,
+            videosDownloaded: downloadedCount,
         });
+    }
+
+    private extractDownloadedCount(message?: string): number | null {
+        const match = (message ?? "").match(/sync-complete:(\d+)-new/);
+        if (!match) {
+            return null;
+        }
+
+        const parsed = Number.parseInt(match[1] ?? "", 10);
+        return Number.isFinite(parsed) ? parsed : null;
     }
 
     private async failJob(jobId: string, error: unknown): Promise<void> {

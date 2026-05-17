@@ -136,6 +136,22 @@ export const apiSchema: OpenAPIV3_1.Document = {
                                 type: 'object',
                                 properties: {
                                     maxResults: { type: 'integer', minimum: 1, maximum: 1000 },
+                                    minDurationSeconds: {
+                                        type: 'integer',
+                                        minimum: 1,
+                                        description: 'Only sync videos with a duration greater than or equal to this number of seconds.',
+                                    },
+                                    maxDurationSeconds: {
+                                        type: 'integer',
+                                        minimum: 1,
+                                        description: 'Only sync videos with a duration less than or equal to this number of seconds.',
+                                    },
+                                    interval: {
+                                        type: 'string',
+                                        enum: ['immediate', 'daily', 'weekly'],
+                                        default: 'immediate',
+                                        description: 'immediate queues sync now; daily/weekly create a recurring schedule.',
+                                    },
                                 },
                             },
                         },
@@ -151,9 +167,108 @@ export const apiSchema: OpenAPIV3_1.Document = {
                                     properties: {
                                         jobId: { type: 'string' },
                                         channelId: { type: 'string' },
-                                        state: { type: 'string', enum: ['queued'] },
+                                        scheduleId: { type: 'string' },
+                                        nextRunAt: { type: 'string', format: 'date-time' },
+                                        state: { type: 'string', enum: ['queued', 'scheduled'] },
                                     },
                                     required: ['jobId', 'channelId', 'state'],
+                                },
+                            },
+                        },
+                    },
+                },
+            },
+        },
+        '/sync/schedules': {
+            get: {
+                summary: 'List sync schedules with recent run logs',
+                responses: {
+                    '200': {
+                        description: 'Schedules and recent run history',
+                        content: {
+                            'application/json': {
+                                schema: {
+                                    type: 'object',
+                                    properties: {
+                                        items: {
+                                            type: 'array',
+                                            items: {
+                                                type: 'object',
+                                                properties: {
+                                                    scheduleId: { type: 'string' },
+                                                    channelId: { type: 'string' },
+                                                    interval: { type: 'string', enum: ['daily', 'weekly'] },
+                                                    enabled: { type: 'boolean' },
+                                                    maxResults: { type: 'integer', nullable: true },
+                                                    minDurationSeconds: { type: 'integer', nullable: true },
+                                                    maxDurationSeconds: { type: 'integer', nullable: true },
+                                                    lastRunAt: { type: 'string', format: 'date-time', nullable: true },
+                                                    nextRunAt: { type: 'string', format: 'date-time' },
+                                                    recentRuns: {
+                                                        type: 'array',
+                                                        items: {
+                                                            type: 'object',
+                                                            properties: {
+                                                                jobId: { type: 'string' },
+                                                                state: { type: 'string', enum: ['queued', 'running', 'success', 'failed'] },
+                                                                channelId: { type: 'string' },
+                                                                createdAt: { type: 'string', format: 'date-time' },
+                                                                finishedAt: { type: 'string', format: 'date-time' },
+                                                                videosDownloaded: { type: 'integer', nullable: true },
+                                                                error: { type: 'string' },
+                                                            },
+                                                            required: ['jobId', 'state', 'channelId', 'createdAt', 'finishedAt'],
+                                                        },
+                                                    },
+                                                },
+                                                required: ['scheduleId', 'channelId', 'interval', 'enabled', 'nextRunAt', 'recentRuns'],
+                                            },
+                                        },
+                                    },
+                                    required: ['items'],
+                                },
+                            },
+                        },
+                    },
+                },
+            },
+        },
+        '/sync/schedules/{scheduleId}/run': {
+            post: {
+                summary: 'Trigger a schedule immediately',
+                parameters: [
+                    {
+                        name: 'scheduleId',
+                        in: 'path',
+                        required: true,
+                        schema: { type: 'string' },
+                    },
+                ],
+                responses: {
+                    '202': {
+                        description: 'Schedule execution queued',
+                        content: {
+                            'application/json': {
+                                schema: {
+                                    type: 'object',
+                                    properties: {
+                                        scheduleId: { type: 'string' },
+                                        jobId: { type: 'string' },
+                                        state: { type: 'string', enum: ['queued'] },
+                                    },
+                                    required: ['scheduleId', 'jobId', 'state'],
+                                },
+                            },
+                        },
+                    },
+                    '404': {
+                        description: 'Schedule not found',
+                        content: {
+                            'application/json': {
+                                schema: {
+                                    type: 'object',
+                                    properties: { error: { type: 'string' } },
+                                    required: ['error'],
                                 },
                             },
                         },

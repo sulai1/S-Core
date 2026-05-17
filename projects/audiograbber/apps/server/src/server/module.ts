@@ -145,25 +145,32 @@ async function resolveChannelId(channelRef: string, apiKey: string): Promise<str
         return channelRef;
     }
 
-    const normalized = channelRef.startsWith("@") ? channelRef.slice(1) : channelRef;
-    if (!normalized) {
-        return null;
-    }
+    const handle = channelRef.startsWith("@") ? channelRef : `@${channelRef}`;
 
-    const searchResult = await youtubeGet<{ snippet?: { channelId?: string } }>("search", {
+    const result = await youtubeGet<{ id?: string }>("channels", {
         key: apiKey,
-        part: "snippet",
-        type: "channel",
-        q: normalized,
+        part: "id",
+        forHandle: handle,
         maxResults: "1",
     });
 
-    return searchResult.items?.[0]?.snippet?.channelId ?? null;
+    return result.items?.[0]?.id ?? null;
 }
 
 export function createAudioGrabberModule(dataSource: DataSource): OpenApiModule<paths> {
     const worker = new YtDlpWorkerAdapter();
     const jobService = new JobService(worker, dataSource);
+    const schedulerIntervalMsRaw = Number(process.env.AUDIOGRABBER_SYNC_SCHEDULER_INTERVAL_MS ?? 60000);
+    const schedulerIntervalMs = Number.isFinite(schedulerIntervalMsRaw) && schedulerIntervalMsRaw >= 10000
+        ? schedulerIntervalMsRaw
+        : 60000;
+
+    const schedulerHandle = setInterval(() => {
+        void jobService.runDueSyncSchedules().catch((error: unknown) => {
+            const message = error instanceof Error ? error.message : String(error);
+            console.error(`[sync-scheduler] execution failed: ${message}`);
+        });
+    }, schedulerIntervalMs);
 
     return {
         "/health": {
@@ -226,14 +233,126 @@ export function createAudioGrabberModule(dataSource: DataSource): OpenApiModule<
             },
         },
         "/sync/channels/{channelId}": {
-            post: async (_request, options) => {
-                const channelId = (options as any)?.channelId as string | undefined ?? "unknown";
+            post: async (request, options) => {
+                const channelRef = ((options as any)?.channelId as string | undefined ?? "").trim();
+                const authContext = (options as { authContext?: AuthContext } | undefined)?.authContext;
+                if (!channelRef) {
+                    throw {
+                        status: 400,
+                        error: "Invalid channel",
+                        details: "A channel ID or @handle is required.",
+                    };
+                }
+
+                const apiKey = getApiKey();
+                if (!apiKey) {
+                    throw {
+                        status: 400,
+                        error: "Missing API key",
+                        details: "AUDIOGRABBER_YT_API_KEY is required for channel sync.",
+                    };
+                }
+
+                const resolvedChannelId = await resolveChannelId(channelRef, apiKey);
+                if (!resolvedChannelId) {
+                    throw {
+                        status: 404,
+                        error: "Channel not found",
+                        details: `Could not resolve channel '${channelRef}'.`,
+                    };
+                }
+
+                const rawInterval = (request as { interval?: string } | undefined)?.interval;
+                const interval = rawInterval === "daily" || rawInterval === "weekly" || rawInterval === "immediate"
+                    ? rawInterval
+                    : "immediate";
+
+                const parsedMaxResults = Number((request as { maxResults?: number } | undefined)?.maxResults);
+                const maxResults = Number.isFinite(parsedMaxResults) && parsedMaxResults > 0
+                    ? Math.min(1000, Math.max(1, Math.round(parsedMaxResults)))
+                    : undefined;
+
+                const parsedMaxDurationSeconds = Number((request as { maxDurationSeconds?: number } | undefined)?.maxDurationSeconds);
+                const maxDurationSeconds = Number.isFinite(parsedMaxDurationSeconds) && parsedMaxDurationSeconds > 0
+                    ? Math.round(parsedMaxDurationSeconds)
+                    : undefined;
+
+                const parsedMinDurationSeconds = Number((request as { minDurationSeconds?: number } | undefined)?.minDurationSeconds);
+                const minDurationSeconds = Number.isFinite(parsedMinDurationSeconds) && parsedMinDurationSeconds > 0
+                    ? Math.round(parsedMinDurationSeconds)
+                    : undefined;
+
+                if (typeof minDurationSeconds === "number" && typeof maxDurationSeconds === "number" && minDurationSeconds > maxDurationSeconds) {
+                    throw {
+                        status: 400,
+                        error: "Invalid duration range",
+                        details: "minDurationSeconds must be less than or equal to maxDurationSeconds.",
+                    };
+                }
+
+                if (interval === "daily" || interval === "weekly") {
+                    const schedule = await jobService.scheduleSync({
+                        channelId: resolvedChannelId,
+                        maxResults,
+                        minDurationSeconds,
+                        maxDurationSeconds,
+                        interval,
+                    }, authContext?.userId);
+
+                    return {
+                        jobId: schedule.id,
+                        channelId: resolvedChannelId,
+                        scheduleId: schedule.id,
+                        nextRunAt: schedule.nextRunAt.toISOString(),
+                        state: "scheduled" as const,
+                    };
+                }
+
                 const job = await jobService.queueSync({
-                    channelId,
-                });
+                    channelId: resolvedChannelId,
+                    maxResults,
+                    minDurationSeconds,
+                    maxDurationSeconds,
+                    interval,
+                }, authContext?.userId);
                 return {
                     jobId: job.jobId,
-                    channelId,
+                    channelId: resolvedChannelId,
+                    state: "queued" as const,
+                };
+            },
+        },
+        "/sync/schedules": {
+            get: async (options) => {
+                const authContext = (options as { authContext?: AuthContext } | undefined)?.authContext;
+                const items = await jobService.listSyncSchedules(authContext?.userId);
+                return { items };
+            },
+        },
+        "/sync/schedules/{scheduleId}/run": {
+            post: async (_request, options) => {
+                const scheduleId = ((options as any)?.scheduleId as string | undefined ?? "").trim();
+                const authContext = (options as { authContext?: AuthContext } | undefined)?.authContext;
+                if (!scheduleId) {
+                    throw {
+                        status: 400,
+                        error: "Invalid schedule",
+                        details: "A scheduleId path parameter is required.",
+                    };
+                }
+
+                const job = await jobService.runScheduleNow(scheduleId, authContext?.userId);
+                if (!job) {
+                    throw {
+                        status: 404,
+                        error: "Schedule not found",
+                        details: `Schedule ${scheduleId} not found`,
+                    };
+                }
+
+                return {
+                    scheduleId,
+                    jobId: job.jobId,
                     state: "queued" as const,
                 };
             },
@@ -247,7 +366,6 @@ export function createAudioGrabberModule(dataSource: DataSource): OpenApiModule<
                         details: "Request options are missing",
                     };
                 }
-
                 const queryChannel = (options as any).channel as string | undefined;
                 const queryChannelId = (options as any).channelId as string | undefined;
                 const queryHandle = (options as any).handle as string | undefined;

@@ -27,6 +27,32 @@ export type DownloadRequest = {
 export type SyncRequest = {
     channelId: string;
     maxResults?: number;
+    minDurationSeconds?: number;
+    maxDurationSeconds?: number;
+    interval?: "immediate" | "daily" | "weekly";
+};
+
+export type SyncScheduleRunLog = {
+    jobId: string;
+    state: JobState;
+    channelId: string;
+    createdAt: string;
+    finishedAt: string;
+    videosDownloaded: number | null;
+    error?: string;
+};
+
+export type SyncScheduleSummary = {
+    scheduleId: string;
+    channelId: string;
+    interval: "daily" | "weekly";
+    enabled: boolean;
+    maxResults: number | null;
+    minDurationSeconds: number | null;
+    maxDurationSeconds: number | null;
+    lastRunAt: string | null;
+    nextRunAt: string;
+    recentRuns: SyncScheduleRunLog[];
 };
 
 export type WorkerSubmission = {

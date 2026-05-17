@@ -9,6 +9,9 @@ export type DbJob = {
     state: DbJobState;
     progress: number;
     ownerId: string | null;
+    channelId: string | null;
+    scheduleId: string | null;
+    videosDownloaded: number | null;
     mediaFileId: string | null;
     externalJobId: string | null;
     error: string | null;
@@ -25,6 +28,9 @@ export const JobEntity = new EntitySchema<DbJob>({
         state: { type: "varchar", default: "queued" },
         progress: { type: "int", default: 0 },
         ownerId: { type: "uuid", nullable: true },
+        channelId: { type: "varchar", nullable: true },
+        scheduleId: { type: "uuid", nullable: true },
+        videosDownloaded: { type: "int", nullable: true },
         mediaFileId: { type: "uuid", nullable: true },
         externalJobId: { type: "varchar", nullable: true },
         error: { type: "text", nullable: true },

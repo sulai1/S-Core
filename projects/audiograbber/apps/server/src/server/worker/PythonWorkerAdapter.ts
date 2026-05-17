@@ -213,9 +213,29 @@ export class YtDlpWorkerAdapter implements WorkerAdapter {
             return { accepted: false, message: `uploads-playlist-not-found:${channelId}` };
         }
 
-        const maxResults = Math.max(1, Math.min(Number(request.maxResults ?? 50), 50));
-        const videoIds = await this.getPlaylistVideoIds(uploadsPlaylistId, maxResults);
-        const newIds = videoIds.filter((videoId) => !this.hasExistingDownload(videoId));
+        const maxResults = Math.max(1, Math.min(Number(request.maxResults ?? 50), 1000));
+        const minDurationSeconds = Number(request.minDurationSeconds);
+        const maxDurationSeconds = Number(request.maxDurationSeconds);
+
+        const normalizedMinDuration = Number.isFinite(minDurationSeconds) && minDurationSeconds > 0
+            ? Math.round(minDurationSeconds)
+            : undefined;
+        const normalizedMaxDuration = Number.isFinite(maxDurationSeconds) && maxDurationSeconds > 0
+            ? Math.round(maxDurationSeconds)
+            : undefined;
+
+        if (typeof normalizedMinDuration === "number"
+            && typeof normalizedMaxDuration === "number"
+            && normalizedMinDuration > normalizedMaxDuration) {
+            return { accepted: false, message: "invalid-duration-range" };
+        }
+
+        const newIds = await this.getEligibleNewVideoIds(
+            uploadsPlaylistId,
+            maxResults,
+            normalizedMinDuration,
+            normalizedMaxDuration,
+        );
 
         for (const videoId of newIds) {
             const result = await this.submitDownload({
@@ -641,17 +661,133 @@ export class YtDlpWorkerAdapter implements WorkerAdapter {
         return channelsResponse.items?.[0]?.contentDetails?.relatedPlaylists?.uploads;
     }
 
-    private async getPlaylistVideoIds(playlistId: string, maxResults: number): Promise<string[]> {
+    private async getPlaylistVideoIds(playlistId: string, pageToken?: string): Promise<{ ids: string[]; nextPageToken?: string }> {
         const response = await this.youtubeGet<{ snippet?: { resourceId?: { videoId?: string } } }>("playlistItems", {
             key: this.apiKey,
             part: "snippet",
             playlistId,
-            maxResults: String(maxResults),
+            maxResults: "50",
+            ...(pageToken ? { pageToken } : {}),
         });
 
-        return (response.items ?? [])
+        const ids = (response.items ?? [])
             .map((item) => item.snippet?.resourceId?.videoId)
             .filter((videoId): videoId is string => Boolean(videoId));
+
+        return { ids, nextPageToken: response.nextPageToken };
+    }
+
+    private async getEligibleNewVideoIds(
+        playlistId: string,
+        maxResults: number,
+        minDurationSeconds?: number,
+        maxDurationSeconds?: number,
+    ): Promise<string[]> {
+        const selected: string[] = [];
+        const seen = new Set<string>();
+        let nextPageToken: string | undefined;
+
+        while (selected.length < maxResults) {
+            const page = await this.getPlaylistVideoIds(playlistId, nextPageToken);
+            const pageIds = page.ids;
+            nextPageToken = page.nextPageToken;
+
+            if (pageIds.length === 0) {
+                break;
+            }
+
+            const newIds = pageIds.filter((id) => {
+                if (seen.has(id)) {
+                    return false;
+                }
+                seen.add(id);
+                return !this.hasExistingDownload(id);
+            });
+
+            if (newIds.length === 0) {
+                if (!nextPageToken) {
+                    break;
+                }
+                continue;
+            }
+
+            const durationFiltered = (typeof minDurationSeconds === "number" || typeof maxDurationSeconds === "number")
+                ? await this.filterVideoIdsByDurationRange(newIds, minDurationSeconds, maxDurationSeconds)
+                : newIds;
+
+            for (const id of durationFiltered) {
+                selected.push(id);
+                if (selected.length >= maxResults) {
+                    break;
+                }
+            }
+
+            if (!nextPageToken) {
+                break;
+            }
+        }
+
+        return selected;
+    }
+
+    private async filterVideoIdsByDurationRange(
+        videoIds: string[],
+        minDurationSeconds?: number,
+        maxDurationSeconds?: number,
+    ): Promise<string[]> {
+        if (videoIds.length === 0) {
+            return [];
+        }
+
+        const filtered: string[] = [];
+
+        for (let i = 0; i < videoIds.length; i += 50) {
+            const chunk = videoIds.slice(i, i + 50);
+            const response = await this.youtubeGet<{ id?: string; contentDetails?: { duration?: string } }>("videos", {
+                key: this.apiKey,
+                part: "contentDetails",
+                id: chunk.join(","),
+                maxResults: String(chunk.length),
+            });
+
+            for (const item of response.items ?? []) {
+                if (!item.id) {
+                    continue;
+                }
+
+                const duration = item.contentDetails?.duration;
+                const seconds = duration ? this.parseIso8601DurationToSeconds(duration) : null;
+                if (seconds === null) {
+                    continue;
+                }
+
+                const meetsMin = typeof minDurationSeconds !== "number" || seconds >= minDurationSeconds;
+                const meetsMax = typeof maxDurationSeconds !== "number" || seconds <= maxDurationSeconds;
+                if (meetsMin && meetsMax) {
+                    filtered.push(item.id);
+                }
+            }
+        }
+
+        return filtered;
+    }
+
+    private parseIso8601DurationToSeconds(value: string): number | null {
+        const match = value.match(/^P(?:(\d+)D)?T(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?$/i);
+        if (!match) {
+            return null;
+        }
+
+        const days = Number(match[1] ?? 0);
+        const hours = Number(match[2] ?? 0);
+        const minutes = Number(match[3] ?? 0);
+        const seconds = Number(match[4] ?? 0);
+
+        if (![days, hours, minutes, seconds].every((part) => Number.isFinite(part) && part >= 0)) {
+            return null;
+        }
+
+        return (days * 86400) + (hours * 3600) + (minutes * 60) + seconds;
     }
 
     private async youtubeGet<T>(resource: string, params: Record<string, string>): Promise<YoutubeApiListResponse<T>> {

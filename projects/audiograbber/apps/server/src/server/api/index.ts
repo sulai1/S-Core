@@ -167,6 +167,7 @@ export interface paths {
                 query?: never;
                 header?: never;
                 path: {
+                    /** @description Channel reference. Accepts canonical channel ID (UC...) or @channel_name handle. */
                     channelId: string;
                 };
                 cookie?: never;
@@ -174,7 +175,18 @@ export interface paths {
             requestBody?: {
                 content: {
                     "application/json": {
+                        /** @description Maximum number of new videos to download after duration filtering and excluding already-downloaded videos. */
                         maxResults?: number;
+                        /** @description Only sync videos with a duration greater than or equal to this number of seconds. */
+                        minDurationSeconds?: number;
+                        /** @description Only sync videos with a duration less than or equal to this number of seconds. */
+                        maxDurationSeconds?: number;
+                        /**
+                         * @description immediate queues sync now; daily/weekly create a recurring schedule.
+                         * @default immediate
+                         * @enum {string}
+                         */
+                        interval?: "immediate" | "daily" | "weekly";
                     };
                 };
             };
@@ -188,8 +200,128 @@ export interface paths {
                         "application/json": {
                             jobId: string;
                             channelId: string;
+                            scheduleId?: string;
+                            /** Format: date-time */
+                            nextRunAt?: string;
+                            /** @enum {string} */
+                            state: "queued" | "scheduled";
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/sync/schedules": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List sync schedules with recent run logs */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Schedules and recent run history */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            items: {
+                                scheduleId: string;
+                                channelId: string;
+                                /** @enum {string} */
+                                interval: "daily" | "weekly";
+                                enabled: boolean;
+                                maxResults?: number | null;
+                                minDurationSeconds?: number | null;
+                                maxDurationSeconds?: number | null;
+                                /** Format: date-time */
+                                lastRunAt?: string | null;
+                                /** Format: date-time */
+                                nextRunAt: string;
+                                recentRuns: {
+                                    jobId: string;
+                                    /** @enum {string} */
+                                    state: "queued" | "running" | "success" | "failed";
+                                    channelId: string;
+                                    /** Format: date-time */
+                                    createdAt: string;
+                                    /** Format: date-time */
+                                    finishedAt: string;
+                                    videosDownloaded?: number | null;
+                                    error?: string;
+                                }[];
+                            }[];
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/sync/schedules/{scheduleId}/run": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Trigger a schedule immediately */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    scheduleId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Schedule execution queued */
+                202: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            scheduleId: string;
+                            jobId: string;
                             /** @enum {string} */
                             state: "queued";
+                        };
+                    };
+                };
+                /** @description Schedule not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            error: string;
                         };
                     };
                 };
