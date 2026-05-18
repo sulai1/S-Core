@@ -35,6 +35,7 @@ import {
     AUDIOGRABBER_DOWNLOAD_FOLDER,
     AUDIOGRABBER_DOWNLOAD_TMP_FOLDER,
 } from "../storagePaths.js";
+import cron from "node-cron";
 
 function toJobRecord(job: DbJob): JobRecord {
     return {
@@ -80,6 +81,8 @@ export class JobService {
     private fpcalcAvailable: boolean | undefined;
     private ffmpegAvailable: boolean | undefined;
 
+    private syncJobs: Record<string, cron.ScheduledTask> = {};
+
     constructor(
         private readonly worker: WorkerAdapter,
         dataSource: DataSource,
@@ -102,6 +105,35 @@ export class JobService {
         mkdirSync(AUDIOGRABBER_DOWNLOAD_FAILED_FOLDER, { recursive: true });
 
         this.ensureFpcalcAvailable();
+
+        this.initializeJobs(this.syncJobs);
+    }
+
+    async initializeJobs(jobs: Record<string, cron.ScheduledTask>): Promise<void> {
+        const schedules = await this.syncScheduleRepo.find({
+            where: {
+                enabled: true,
+            },
+        });
+
+        for (const schedule of schedules) {
+            const interval = schedule.interval;
+            const cronExpression = interval === "daily" ? "0 0 * * *" : "0 0 * * 0";
+            const task = cron.schedule(cronExpression, () => {
+                this.executeSchedule(schedule).catch((error: unknown) => {
+                    const lastRunAt = new Date();
+                    const nextRunAt = this.computeNextRun(schedule.interval, lastRunAt);
+                    this.syncScheduleRepo.update(schedule.id, {
+                        lastRunAt,
+                        nextRunAt,
+                    });
+
+                    const message = error instanceof Error ? error.message : String(error);
+                    console.error(`[sync-schedule] Failed to execute schedule ${schedule.id}: ${message}`);
+                });
+            });
+            jobs[schedule.id] = task;
+        }
     }
 
     async queueDownload(request: DownloadRequest, ownerId?: string): Promise<JobRecord> {
@@ -156,6 +188,20 @@ export class JobService {
             enabled: true,
             lastRunAt: null,
             nextRunAt: new Date(),
+        });
+        const cronExpression = interval === "daily" ? "0 0 * * *" : "0 0 * * 0";
+        this.syncJobs[schedule.id] = cron.schedule(cronExpression, () => {
+            this.executeSchedule(schedule).catch((error: unknown) => {
+                const lastRunAt = new Date();
+                const nextRunAt = this.computeNextRun(schedule.interval, lastRunAt);
+                this.syncScheduleRepo.update(schedule.id, {
+                    lastRunAt,
+                    nextRunAt,
+                });
+
+                const message = error instanceof Error ? error.message : String(error);
+                console.error(`[sync-schedule] Failed to execute schedule ${schedule.id}: ${message}`);
+            });
         });
 
         return await this.syncScheduleRepo.save(schedule);
